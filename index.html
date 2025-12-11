@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>CineArch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --color-bg: #F3F3F1;
+        --color-card: #FFFFFF;
+        --color-ink: #121212;
+        --color-subtle: #666666;
+        --color-border: #E5E5E5;
+        --color-accent: #C73E1D; /* Vermilion */
+      }
+      body {
+        background-color: var(--color-bg);
+        color: var(--color-ink);
+        font-family: 'DM Sans', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      h1, h2, h3, h4, h5, h6, .font-serif {
+        font-family: 'Instrument Serif', serif;
+        font-weight: 400; /* Serif looks better lighter */
+      }
+      
+      /* Editorial Utilities */
+      .editorial-border {
+        border: 1px solid var(--color-border);
+      }
+      .editorial-shadow {
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+      }
+      
+      /* Form Resets */
+      input, select, textarea {
+        background: transparent;
+      }
+      
+      /* Hide scrollbar for clean UI */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "clsx": "https://aistudiocdn.com/clsx@^2.1.1",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
