@@ -44,3 +44,6 @@ firebase login
 
 ### 5) Run the app
 `npm run dev`
+
+## Product specification
+For the end-to-end product and data model direction (tax logic, union intelligence, gating, and open decisions), see [docs/product-spec.md](docs/product-spec.md).
