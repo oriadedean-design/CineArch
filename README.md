@@ -47,3 +47,6 @@ firebase login
 
 ## Product specification
 For the end-to-end product and data model direction (tax logic, union intelligence, gating, and open decisions), see [docs/product-spec.md](docs/product-spec.md).
+
+## Industry readiness checklist
+For a concise list of what remains to reach an industry-grade release (security, rule quality, testing, monitoring, and preview workflows), see [docs/industry-readiness.md](docs/industry-readiness.md).
