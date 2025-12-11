@@ -105,7 +105,7 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
         <div className="relative z-10 max-w-5xl animate-in fade-in slide-in-from-bottom-12 duration-1000">
           <div className="inline-flex items-center gap-3 mb-8">
             <div className="w-12 h-[1px] bg-[#C73E1D]"></div>
-            <span className="text-white/90 text-xs uppercase tracking-[0.25em] font-medium">Professional Interface v2.0</span>
+            <span className="text-white/90 text-xs uppercase tracking-[0.25em] font-medium">A platform dedicated to the crew</span>
           </div>
           
           <h1 className="font-serif text-6xl md:text-8xl lg:text-9xl text-[#F3F3F1] leading-[0.9] mb-8 tracking-tight drop-shadow-2xl">
@@ -172,22 +172,26 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
             </Heading>
             <div className="w-24 h-1 bg-[#C73E1D]"></div>
             <Text className="text-xl leading-relaxed text-neutral-600 font-light">
-              You didn't join this industry to manage spreadsheets or calculate fringe rates. You are here to tell stories. 
+              You didn't join this industry to manage spreadsheets or calculate fringe rates. You are here to tell stories.
               <br /><br />
               CineArch replaces the anxiety of "Did I qualify?" with the clarity of "I am ready." We account for all roles, all departments, and all possibilities.
             </Text>
-            
+
             <div className="space-y-4 pt-4">
               {[
-                "Automated Dues Calculation",
-                "Tentative Booking Forecasts",
-                "Instant Manager Dispatch"
+                "Automated due calculation",
+                "Tentative booking forecasts",
+                "Upload and store screenshots of vouchers and call sheets",
+                "Automatic tax calculation based on job location or business region"
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3 text-neutral-800">
                   <CheckCircle className="w-5 h-5 text-[#C73E1D]" />
                   <span className="font-medium tracking-wide">{item}</span>
                 </div>
               ))}
+              <Text className="text-sm text-neutral-500">
+                *CineArch provides tax estimates only and does not file your taxes.
+              </Text>
             </div>
           </div>
           
@@ -268,9 +272,15 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
              <div className="bg-[#121212] text-white p-8 relative transform md:-translate-y-4 shadow-xl">
                 <div className="absolute top-0 right-0 bg-[#C73E1D] text-white text-[10px] uppercase font-bold px-3 py-1 tracking-widest">Recommended</div>
                 <h3 className="font-serif text-3xl mb-2">Pro Member</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                   <span className="text-4xl font-bold">$10</span>
-                   <span className="text-white/50">/ month</span>
+                <div className="flex flex-col gap-1 mb-6">
+                   <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold">$10</span>
+                      <span className="text-white/50">/ month</span>
+                   </div>
+                   <div className="flex items-baseline gap-1 text-sm text-white/70">
+                      <span className="font-semibold">$90</span>
+                      <span className="text-white/50">/ year</span>
+                   </div>
                 </div>
                 <p className="text-sm text-white/60 mb-8 h-10">Advanced compliance & unlimited storage for working professionals.</p>
                 <ul className="space-y-4 mb-8 text-sm">
@@ -287,9 +297,15 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
              <div className="bg-white border border-neutral-200 p-8 hover:border-[#121212] transition-colors relative group">
                 <div className="absolute top-0 left-0 w-full h-1 bg-neutral-200 group-hover:bg-[#121212] transition-colors"></div>
                 <h3 className="font-serif text-3xl mb-2">Agency Portal</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                   <span className="text-4xl font-bold">$90</span>
-                   <span className="text-neutral-400">/ month</span>
+                <div className="flex flex-col gap-1 mb-6">
+                   <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold">$90</span>
+                      <span className="text-neutral-400">/ month</span>
+                   </div>
+                   <div className="flex items-baseline gap-1 text-sm text-neutral-500">
+                      <span className="font-semibold">$900</span>
+                      <span className="text-neutral-400">/ year</span>
+                   </div>
                 </div>
                 <p className="text-sm text-neutral-500 mb-8 h-10">Roster management for up to 50 active accounts.</p>
                 <ul className="space-y-4 mb-8 text-sm">
