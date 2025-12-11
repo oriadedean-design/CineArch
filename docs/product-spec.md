@@ -63,9 +63,12 @@ Register new features in the feature/plan config with minimum plan requirements:
 - `union_dues_projection` (Pro/Agency as decided)
 - Agency plan should enable multi-member dashboards and planning.
 
-## Open decisions / next steps
-- Prioritize which unions/locals seed at launch (e.g., ACTRA Toronto, UBCP/ACTRA, DGC Ontario, IATSE 873, NABET 700, Teamsters 155, WGC).
-- Decide who enters and maintains rule data and whether to version by year.
-- Define the work history model consistently (days worked, role, signatory status, department, union mapping).
-- Finalize UX for the “logic game” (onboarding vs dedicated tab) and where to surface legal/tax disclaimers.
-- Lock MVP scope for tax outputs (checklist-only vs simple estimates) and plan gating for each feature.
+## V1 launch decisions
+- **Launch cohort:** Wave 1 covers ACTRA Toronto, UBCP/ACTRA, DGC Ontario, IATSE 873, NABET 700, Teamsters 155, and WGC. Waves 2–3 add the remaining IATSE locals, Teamsters 362/879, ACFC West, DGC BC/MB, and AQTIS 514.
+- **Data stewardship:** maintain a single live copy of rules with `last_verified_at/by`, tracked sources, and a lightweight change log; Wave 1 reviewed every 6 months.
+- **Work history contract:** use the shared `WorkRecord` shape (project, role, department, signatory status, days, location, evidence) as the input to eligibility and finance modules.
+- **Logic game UX:** Phase 1 ships a dedicated "Union Roadmap" tab with progress, missing items, and projections; Phase 2 adds onboarding/contextual prompts.
+- **Tax MVP:** ship checklist plus CPP and GST/HST estimates first; deeper income tax calculations wait for CPA review.
+- **Plan gating:** Free = business profile + basic obligations; Pro = estimators, full roadmaps, dues projections, work history; Agency = Pro + multi-member dashboards.
+
+See `docs/v1-launch-plan.md` for the full task list and assignments that implement these decisions.
