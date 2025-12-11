@@ -107,7 +107,7 @@ export const Dashboard = ({ user }: { user: User }) => {
     if (targetUserId) fetchData();
   }, [targetUserId]);
 
-  if (loading) return <div className="p-12 text-center text-neutral-400">Loading Intelligence...</div>;
+  if (loading) return <div className="p-12 text-center text-neutral-400">Loading Dashboard...</div>;
 
   return (
     <div className="space-y-16">
