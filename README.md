@@ -32,7 +32,15 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
 VITE_FIREBASE_APP_ID=your-app-id
 ```
 
-If these values are missing, the app will start in a UI-only mode with mocked keys.
+Firebase is the only requirement—no Gemini API key is needed.
 
-### 4) Run the app
+### 4) (Optional) Verify Firebase tooling
+If you want to test against local emulators or deploy functions later, install the Firebase CLI:
+
+```
+npm install -g firebase-tools
+firebase login
+```
+
+### 5) Run the app
 `npm run dev`
