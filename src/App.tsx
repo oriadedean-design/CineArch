@@ -82,7 +82,10 @@ const App = () => {
   if (!user.isOnboarded) {
     return (
       <HashRouter>
-        <Onboarding user={user} onComplete={() => setUser({ ...user, isOnboarded: true })} />
+        <Onboarding
+          user={user}
+          onComplete={(updates) => setUser({ ...user, ...updates })}
+        />
       </HashRouter>
     );
   }

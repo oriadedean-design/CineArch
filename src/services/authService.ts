@@ -17,7 +17,7 @@ const mockUser: User = {
   name: 'Demo User',
   role: 'Actor',
   province: 'Ontario',
-  isOnboarded: true,
+  isOnboarded: false,
   isPremium: false,
   memberStatus: 'ASPIRING',
   accountType: 'INDIVIDUAL'

@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, CanadianProvince, FILM_ROLES, UNIONS, UserUnionTracking, UnionTier, DEPARTMENTS, AGENT_ROLES, AGENT_INDUSTRIES } from '../types';
+import { User, CanadianProvince, FILM_ROLES, UNIONS, UserUnionTracking, DEPARTMENTS, AGENT_ROLES, AGENT_INDUSTRIES } from '../types';
 import { api } from '../services/storage';
-import { Button, Input, Select, Heading, Text, Card, Badge } from '../components/ui';
-import { Check, ArrowRight, ArrowLeft, Briefcase, FileSpreadsheet, Plus, Users } from 'lucide-react';
+import { authService } from '../services/authService';
+import { Button, Input, Select, Heading, Text, Badge } from '../components/ui';
+import { Check, ArrowRight, FileSpreadsheet, Users } from 'lucide-react';
 
 interface OnboardingProps {
   user: User;
-  onComplete: () => void;
+  onComplete: (updates: Partial<User>) => void;
 }
 
 export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
@@ -38,7 +38,7 @@ export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
   const handleNext = () => setStep(s => s + 1);
   const handleBack = () => setStep(s => s - 1);
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     // Update Profile
     const updates: Partial<User> = {
       province: formData.province,
@@ -81,8 +81,8 @@ export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
         api.tracking.save(user.id, trackingData);
     }
 
-    api.auth.updateUser(updates);
-    onComplete();
+    await authService.updateUser(user.id, updates);
+    onComplete(updates);
   };
 
   // --- SHARED STEPS ---
