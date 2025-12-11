@@ -59,15 +59,14 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
             <>
               <Button
                 onClick={() => onEnter(true)}
-                className={`${scrolled ? 'bg-[#121212] text-white hover:bg-black' : 'bg-white text-[#121212] hover:bg-[#F3F3F1]'} px-5 py-3 uppercase tracking-widest text-xs`}
+                className={`${scrolled ? 'bg-[#121212] text-white hover:bg-black' : 'bg-white text-[#121212] hover:bg-[#F3F3F1]'} px-5 py-3 uppercase tracking-widest text-xs shadow-md`}
               >
                 <Briefcase className="w-3 h-3 mr-2" />
                 Agency Portal
               </Button>
               <Button
                 onClick={() => onEnter(false)}
-                variant="outline"
-                className={`${scrolled ? 'border-[#121212] text-[#121212]' : 'border-white text-white'} bg-transparent px-6 py-3 uppercase tracking-widest text-xs`}
+                className={`px-6 py-3 uppercase tracking-widest text-xs shadow-md ${scrolled ? 'bg-[#C73E1D] text-white hover:bg-[#A63216]' : 'bg-[#C73E1D] text-white hover:bg-[#A63216]'}`}
               >
                 Member Sign In
               </Button>
