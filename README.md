@@ -10,11 +10,52 @@ View your app in AI Studio: https://ai.studio/apps/drive/1VNSDubucdL9djMGIsE1qo2
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+**Prerequisites:** Node.js
 
+### 1) Install dependencies
+`npm install`
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+If you see a build error about `react-router-dom` (or any other package) not being found, reinstall using the checked-in `package-lock.json` to ensure all dependencies are present:
+
+```
+npm ci
+```
+
+### 2) Create a Firebase Web app
+1. Go to [Firebase Console](https://console.firebase.google.com/) and create a project.
+2. Add a **Web** app to the project to get your config object (API key, project ID, etc.).
+3. Enable the products you plan to use (Firestore, Auth, Storage, Functions).
+
+### 3) Add your Firebase config as environment variables
+Create a `.env.local` file in the project root with the values from the Firebase config snippet:
+
+```
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-auth-domain
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-storage-bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+VITE_FIREBASE_APP_ID=your-app-id
+```
+
+Firebase is the only requirement—no Gemini API key is needed.
+
+### 4) (Optional) Verify Firebase tooling
+If you want to test against local emulators or deploy functions later, install the Firebase CLI:
+
+```
+npm install -g firebase-tools
+firebase login
+```
+
+### 5) Run the app
+`npm run dev`
+
+## Product specification
+For the end-to-end product and data model direction (tax logic, union intelligence, gating, and open decisions), see [docs/product-spec.md](docs/product-spec.md).
+
+## V1 launch plan
+For concrete decisions, launch cohorts, and tasking to deliver the first production-ready release, see [docs/v1-launch-plan.md](docs/v1-launch-plan.md).
+
+## Industry readiness checklist
+For a concise list of what remains to reach an industry-grade release (security, rule quality, testing, monitoring, and preview workflows), see [docs/industry-readiness.md](docs/industry-readiness.md).
