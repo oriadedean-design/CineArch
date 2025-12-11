@@ -9,9 +9,10 @@ import { Check, ArrowRight, FileSpreadsheet, Users } from 'lucide-react';
 interface OnboardingProps {
   user: User;
   onComplete: (updates: Partial<User>) => void;
+  onSkipForever?: () => void;
 }
 
-export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
+export const Onboarding = ({ user, onComplete, onSkipForever }: OnboardingProps) => {
   // If user is Agent, use the Agent Flow logic, else Member Flow
   const isAgent = user.accountType === 'AGENT';
   
@@ -42,7 +43,8 @@ export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
     // Update Profile
     const updates: Partial<User> = {
       province: formData.province,
-      isOnboarded: true
+      isOnboarded: true,
+      onboardingOptOut: false
     };
 
     if (isAgent) {
@@ -467,6 +469,17 @@ export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
   // --- MAIN RENDER ---
   return (
     <div className="min-h-screen bg-[#F3F3F1] flex flex-col justify-center items-center p-6">
+      <div className="w-full max-w-3xl flex justify-end mb-4">
+        {onSkipForever && (
+          <Button
+            variant="outline"
+            className="bg-white text-neutral-800"
+            onClick={() => onSkipForever()}
+          >
+            Skip and don’t ask again
+          </Button>
+        )}
+      </div>
       <div className="w-full max-w-3xl">
         {step === 1 && <StepWelcome />}
         

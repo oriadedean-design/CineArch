@@ -10,6 +10,20 @@ export const Settings = ({ user: appUser }: { user: User }) => {
   const [user, setUser] = useState<User | null>(appUser);
   const [trackings, setTrackings] = useState<UserUnionTracking[]>([]);
   const [docs, setDocs] = useState<ResidencyDocument[]>([]);
+  const [roster, setRoster] = useState<User[]>(appUser.managedUsers || []);
+
+  // CSV import helpers for agency roster
+  const [csvPreview, setCsvPreview] = useState<{ headers: string[]; rows: string[][] }>({ headers: [], rows: [] });
+  const [csvError, setCsvError] = useState<string | null>(null);
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({
+    fullName: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: '',
+    province: '',
+    unionStatus: ''
+  });
 
   // Form states
   const [profileForm, setProfileForm] = useState<Partial<User>>({});
@@ -26,6 +40,7 @@ export const Settings = ({ user: appUser }: { user: User }) => {
     setProfileForm(u || {});
     setTrackings(api.tracking.get());
     setDocs(api.vault.list());
+    setRoster(u?.managedUsers || []);
   };
 
   const handleProfileSave = () => {
@@ -107,15 +122,108 @@ export const Settings = ({ user: appUser }: { user: User }) => {
          accountType: 'INDIVIDUAL'
      };
      api.auth.addClient(newClient);
+     setRoster(prev => [...prev, newClient]);
      setNewClientName('');
-     refreshData();
      alert(`Added ${newClientName} to Roster. Use the sidebar dropdown to manage them.`);
   };
 
-  const handleBulkClientUpload = () => {
-      alert("Simulated: Imported 15 clients from CSV with work history.");
-      // In real app, this would parse CSV and call addClient for each
-      refreshData();
+  const handleTemplateDownload = () => {
+    const sample = [
+      'first_name,last_name,email,role,province,union_status',
+      'Alex,Nguyen,alex.nguyen@example.com,Production Assistant,Ontario,NON_UNION',
+      'Priya,Patel,priya.patel@example.com,Camera Assistant,British Columbia,APPRENTICE'
+    ].join('\n');
+
+    const blob = new Blob([sample], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'cinearch_roster_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const parseCsvText = (text: string) => {
+    const rows = text.trim().split(/\r?\n/).filter(Boolean);
+    if (rows.length < 2) {
+      setCsvError('CSV appears empty. Please include a header row and at least one record.');
+      setCsvPreview({ headers: [], rows: [] });
+      return;
+    }
+    const headers = rows[0].split(',').map((h) => h.trim());
+    const dataRows = rows.slice(1).map((row) => row.split(',').map((c) => c.trim()));
+    setCsvPreview({ headers, rows: dataRows });
+    setCsvError(null);
+
+    // Auto-guess some mappings
+    const guess = (keyword: string) => headers.find((h) => h.toLowerCase().includes(keyword)) || '';
+    setColumnMapping((prev) => ({
+      ...prev,
+      firstName: guess('first'),
+      lastName: guess('last'),
+      fullName: guess('name'),
+      email: guess('mail'),
+      role: guess('role'),
+      province: guess('province'),
+      unionStatus: guess('union') || guess('status'),
+    }));
+  };
+
+  const handleCsvFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result?.toString() || '';
+      parseCsvText(text);
+    };
+    reader.readAsText(file);
+  };
+
+  const applyCsvImport = () => {
+    if (!csvPreview.headers.length || !csvPreview.rows.length) {
+      setCsvError('Upload a CSV before importing.');
+      return;
+    }
+
+    const requiredFields = ['email'];
+    for (const field of requiredFields) {
+      if (!columnMapping[field]) {
+        setCsvError(`Please map a column to ${field}.`);
+        return;
+      }
+    }
+
+    const headerIndex = (key: string) => csvPreview.headers.indexOf(columnMapping[key]);
+    const getValue = (row: string[], key: string) => {
+      const idx = headerIndex(key);
+      return idx >= 0 ? row[idx] : '';
+    };
+
+    const newClients: User[] = csvPreview.rows.map((row, idx) => {
+      const first = getValue(row, 'firstName');
+      const last = getValue(row, 'lastName');
+      const fullName = (getValue(row, 'fullName') || `${first} ${last}`).trim() || `Roster ${idx + 1}`;
+      const email = getValue(row, 'email') || `${fullName.replace(/\s+/g, '.').toLowerCase()}@example.com`;
+
+      const statusRaw = (getValue(row, 'unionStatus') || '').toUpperCase();
+      const normalizedStatus: User['memberStatus'] = statusRaw.includes('FULL') ? 'MEMBER' : 'ASPIRING';
+
+      return {
+        id: `client_${Date.now()}_${idx}`,
+        name: fullName,
+        email,
+        role: getValue(row, 'role') || 'Actor',
+        province: getValue(row, 'province') || 'Ontario',
+        isOnboarded: true,
+        accountType: 'INDIVIDUAL',
+        memberStatus: normalizedStatus,
+      };
+    });
+
+    newClients.forEach((client) => api.auth.addClient(client));
+    setRoster((prev) => [...prev, ...newClients]);
+    setCsvPreview({ headers: [], rows: [] });
+    setCsvError(null);
+    alert(`Imported ${newClients.length} clients. You can switch views from the sidebar.`);
   };
 
   const DangerZone = () => (
@@ -355,31 +463,114 @@ export const Settings = ({ user: appUser }: { user: User }) => {
                         </div>
                         <div className="text-right">
                            <Text variant="caption">Usage</Text>
-                           <span className="font-serif text-xl">{(user.managedUsers?.length || 0)} / {user.isPremium ? '50' : '5'}</span>
+                           <span className="font-serif text-xl">{roster.length} / {user.isPremium ? '50' : '5'}</span>
                         </div>
-                    </div>
-                    
-                    <div className="flex gap-4 mb-8">
-                        <div className="flex-1">
-                             <Input 
-                                placeholder="Client Full Name" 
-                                value={newClientName}
-                                onChange={e => setNewClientName(e.target.value)}
-                             />
-                        </div>
-                        <Button onClick={handleAddClient} disabled={!newClientName}>
-                            <Plus className="w-4 h-4 mr-2" /> Add Client
-                        </Button>
-                        <Button variant="secondary" onClick={handleBulkClientUpload}>
-                            <FileSpreadsheet className="w-4 h-4 mr-2" /> Bulk CSV Import
-                        </Button>
                     </div>
 
+                    <div className="grid md:grid-cols-2 gap-6 mb-8">
+                        <div className="space-y-3">
+                          <Text variant="caption">Quick add</Text>
+                          <div className="flex gap-3">
+                            <Input
+                              placeholder="Client Full Name"
+                              value={newClientName}
+                              onChange={e => setNewClientName(e.target.value)}
+                            />
+                            <Button onClick={handleAddClient} disabled={!newClientName}>
+                              <Plus className="w-4 h-4 mr-2" /> Add
+                            </Button>
+                          </div>
+                          <Text variant="subtle" className="text-xs">Adds a single roster entry instantly.</Text>
+                        </div>
+
+                        <div className="space-y-3">
+                          <Text variant="caption">Bulk upload</Text>
+                          <div className="flex flex-wrap gap-3 items-center">
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept=".csv"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleCsvFile(file);
+                                }}
+                              />
+                              <span className="inline-flex items-center px-4 py-3 border border-neutral-300 text-sm uppercase tracking-widest hover:border-[#121212]">
+                                <FileSpreadsheet className="w-4 h-4 mr-2" /> Upload CSV
+                              </span>
+                            </label>
+                            <Button variant="secondary" onClick={handleTemplateDownload}>
+                              Download Template
+                            </Button>
+                          </div>
+                          <Text variant="subtle" className="text-xs">Upload a spreadsheet, map columns, and bulk-create roster profiles.</Text>
+                        </div>
+                    </div>
+
+                    {csvPreview.headers.length > 0 && (
+                      <div className="border border-dashed border-neutral-300 p-4 mb-6 bg-neutral-50">
+                        <Heading level={4} className="text-lg mb-3">Map your columns</Heading>
+                        <div className="grid md:grid-cols-3 gap-3">
+                          {[
+                            { key: 'fullName', label: 'Full name' },
+                            { key: 'firstName', label: 'First name (optional)' },
+                            { key: 'lastName', label: 'Last name (optional)' },
+                            { key: 'email', label: 'Email' },
+                            { key: 'role', label: 'Role' },
+                            { key: 'province', label: 'Province' },
+                            { key: 'unionStatus', label: 'Union status' },
+                          ].map((field) => (
+                            <div key={field.key}>
+                              <label className="block text-xs font-medium uppercase tracking-widest text-neutral-500 mb-1">{field.label}</label>
+                              <Select
+                                value={columnMapping[field.key]}
+                                onChange={(e) => setColumnMapping({ ...columnMapping, [field.key]: e.target.value })}
+                                className="bg-white"
+                              >
+                                <option value="">Not mapped</option>
+                                {csvPreview.headers.map((header) => (
+                                  <option key={header} value={header}>{header}</option>
+                                ))}
+                              </Select>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-4">
+                          <Heading level={4} className="text-base mb-2">Preview (first 3 rows)</Heading>
+                          <div className="overflow-auto border border-neutral-200 bg-white">
+                            <table className="min-w-full text-sm">
+                              <thead className="bg-neutral-100">
+                                <tr>
+                                  {csvPreview.headers.map((h) => (<th key={h} className="text-left px-3 py-2 font-medium">{h}</th>))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {csvPreview.rows.slice(0, 3).map((row, idx) => (
+                                  <tr key={idx} className="border-t border-neutral-100">
+                                    {row.map((cell, cIdx) => <td key={cIdx} className="px-3 py-2">{cell}</td>)}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {csvError && <Text className="text-red-600 mt-3">{csvError}</Text>}
+
+                        <div className="mt-4 flex justify-end gap-3">
+                          <Button variant="secondary" onClick={() => { setCsvPreview({ headers: [], rows: [] }); setCsvError(null); }}>Clear</Button>
+                          <Button onClick={applyCsvImport}>Import & Align Columns</Button>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
-                        {user.managedUsers?.length === 0 ? (
+                        {roster.length === 0 ? (
                             <Text variant="subtle" className="text-center py-8 border border-dashed">No clients in roster.</Text>
                         ) : (
-                            user.managedUsers?.map(client => (
+                            roster.map(client => (
                                 <div key={client.id} className="flex justify-between items-center p-4 bg-neutral-50 border border-neutral-100">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-[#121212] rounded-full flex items-center justify-center text-white text-xs">

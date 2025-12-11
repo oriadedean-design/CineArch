@@ -11,6 +11,10 @@ export interface User {
   isOnboarded: boolean;
   isPremium?: boolean;
   memberStatus?: 'ASPIRING' | 'MEMBER';
+
+  // Onboarding control flags
+  onboardingOptOut?: boolean; // If true, we do not force the onboarding wizard
+  onboardingSkippedAt?: string; // Timestamp for last skip
   
   // Agency / Enterprise Fields
   accountType: 'INDIVIDUAL' | 'AGENT';

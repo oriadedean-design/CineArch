@@ -20,6 +20,7 @@ const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [authAgentMode, setAuthAgentMode] = useState(false);
 
   useEffect(() => {
     // Firebase Auth Listener
@@ -56,7 +57,8 @@ const App = () => {
     setShowWelcome(true);
   };
 
-  const handleWelcomeEnter = () => {
+  const handleWelcomeEnter = (asAgent = false) => {
+    setAuthAgentMode(asAgent);
     setShowWelcome(false);
   };
 
@@ -75,16 +77,21 @@ const App = () => {
 
   // Not logged in -> Show Auth
   if (!user) {
-    return <Auth onLogin={handleLogin} onBack={handleGoHome} />;
+    return <Auth onLogin={handleLogin} onBack={handleGoHome} initialAgentMode={authAgentMode} />;
   }
 
   // Logged in but new -> Show Onboarding
-  if (!user.isOnboarded) {
+  if (!user.isOnboarded && !user.onboardingOptOut) {
     return (
       <HashRouter>
         <Onboarding
           user={user}
           onComplete={(updates) => setUser({ ...user, ...updates })}
+          onSkipForever={async () => {
+            const timestamp = new Date().toISOString();
+            await authService.updateUser(user.id, { onboardingOptOut: true, onboardingSkippedAt: timestamp });
+            setUser({ ...user, onboardingOptOut: true, onboardingSkippedAt: timestamp });
+          }}
         />
       </HashRouter>
     );

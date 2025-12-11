@@ -57,28 +57,30 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
         <div className="flex gap-4 relative z-50">
           {!isLoggedIn ? (
             <>
-              <button 
-                onClick={() => onEnter(true)} // Enter as Agent
-                className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity px-4 py-3 flex items-center gap-2 ${scrolled ? 'text-[#121212]' : 'text-white'}`}
+              <Button
+                onClick={() => onEnter(true)}
+                className={`${scrolled ? 'bg-[#121212] text-white hover:bg-black' : 'bg-white text-[#121212] hover:bg-[#F3F3F1]'} px-5 py-3 uppercase tracking-widest text-xs`}
               >
-                <Briefcase className="w-3 h-3" />
+                <Briefcase className="w-3 h-3 mr-2" />
                 Agency Portal
-              </button>
-              <button 
-                onClick={() => onEnter(false)} // Enter as Individual
-                className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity border px-6 py-3 ${scrolled ? 'border-[#121212]' : 'border-white'}`}
+              </Button>
+              <Button
+                onClick={() => onEnter(false)}
+                variant="outline"
+                className={`${scrolled ? 'border-[#121212] text-[#121212]' : 'border-white text-white'} bg-transparent px-6 py-3 uppercase tracking-widest text-xs`}
               >
                 Member Sign In
-              </button>
+              </Button>
             </>
           ) : (
-            <button 
+            <Button
               onClick={() => onEnter(false)}
-              className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity border px-6 py-3 flex items-center gap-2 ${scrolled ? 'border-[#121212] text-[#121212]' : 'border-white text-white'}`}
+              variant="outline"
+              className={`${scrolled ? 'border-[#121212] text-[#121212]' : 'border-white text-white'} bg-transparent px-6 py-3 flex items-center gap-2 uppercase tracking-widest text-xs`}
             >
               <LayoutDashboard className="w-3 h-3" />
               Go to Dashboard
-            </button>
+            </Button>
           )}
         </div>
       </nav>

@@ -20,7 +20,8 @@ const mockUser: User = {
   isOnboarded: false,
   isPremium: false,
   memberStatus: 'ASPIRING',
-  accountType: 'INDIVIDUAL'
+  accountType: 'INDIVIDUAL',
+  onboardingOptOut: false
 };
 
 export const authService = {
@@ -38,10 +39,11 @@ export const authService = {
       accountType: isAgent ? 'AGENT' : 'INDIVIDUAL',
       province: 'Ontario', // Default
       isOnboarded: false,
-      isPremium: isAgent, 
+      isPremium: isAgent,
       memberStatus: 'ASPIRING',
       country: 'Canada',
-      language: 'English'
+      language: 'English',
+      onboardingOptOut: false
     };
 
     // Create Firestore Document
@@ -79,6 +81,7 @@ export const authService = {
   
   updateUser: async (uid: string, data: Partial<User>) => {
     if (db) await updateDoc(doc(db, "users", uid), data);
+    if (!auth) Object.assign(mockUser, data);
   },
 
   // Switch View (Client Management)
