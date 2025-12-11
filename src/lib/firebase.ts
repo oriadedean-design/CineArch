@@ -3,6 +3,7 @@ import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
 import { getFunctions, Functions } from "firebase/functions";
+import { getPerformance, FirebasePerformance } from "firebase/performance";
 
 // Configuration from Vite environment variables
 const firebaseConfig = {
@@ -19,6 +20,7 @@ let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 let functions: Functions | null = null;
+let perf: FirebasePerformance | null = null;
 
 const missingConfigKeys = Object.entries(firebaseConfig)
   .filter(([, value]) => !value)
@@ -35,6 +37,7 @@ if (missingConfigKeys.length) {
   db = getFirestore(app);
   storage = getStorage(app);
   functions = getFunctions(app);
+  perf = getPerformance(app);
 }
 
-export { app, auth, db, storage, functions };
+export { app, auth, db, storage, functions, perf };
