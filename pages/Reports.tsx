@@ -3,10 +3,11 @@ import React from 'react';
 import { Heading, Text, Card, Button } from '../components/ui';
 import { Download, Lock, FileSpreadsheet } from 'lucide-react';
 import { api } from '../services/storage';
+import { User } from '../types';
 
-export const Reports = () => {
+export const Reports = ({ user }: { user: User }) => {
   const jobs = api.jobs.list();
-  const user = api.auth.getUser();
+  // const user = api.auth.getUser(); // Use prop instead of local fetch
   const totalHours = jobs.reduce((acc, curr) => acc + curr.totalHours, 0);
   const totalEarnings = jobs.reduce((acc, curr) => acc + (curr.grossEarnings || 0), 0);
   const totalDeductions = jobs.reduce((acc, curr) => acc + (curr.unionDeductions || 0), 0);

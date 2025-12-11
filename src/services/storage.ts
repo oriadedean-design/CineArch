@@ -5,7 +5,7 @@
 import { authService } from './authService';
 import { jobService } from './jobService';
 import { trackingService } from './trackingService';
-import { User, Job, UserUnionTracking, ResidencyDocument } from '../types';
+import { User, Job, UserUnionTracking } from '../types';
 
 export const api = {
   auth: {
@@ -29,12 +29,8 @@ export const api = {
     calculateProgress: trackingService.calculateProgress
   },
   vault: {
-    list: (): ResidencyDocument[] => [],
-    add: (doc: ResidencyDocument) => {},
-    delete: (id: string) => {}
-  },
-  system: {
-    resetData: () => {},
-    deleteAccount: () => {}
+    list: () => [],
+    add: () => {},
+    delete: () => {}
   }
 };

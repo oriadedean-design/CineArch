@@ -1,8 +1,8 @@
 
 export interface User {
-  id: string;
-  name: string;
+  id: string; // matches uid
   email: string;
+  name: string;
   phone?: string;
   country?: string;
   language?: string;
@@ -11,15 +11,21 @@ export interface User {
   isOnboarded: boolean;
   isPremium?: boolean;
   memberStatus?: 'ASPIRING' | 'MEMBER';
-  notifications?: {
-    email: boolean;
-    push: boolean;
-  };
+  
   // Agency / Enterprise Fields
   accountType: 'INDIVIDUAL' | 'AGENT';
-  managedUsers?: User[]; // List of clients
+  managedUsers?: User[]; // Hydrated from agency_assignments
   activeViewId?: string; // ID of the user currently being managed/viewed
   primaryIndustry?: string;
+
+  // Firestore Aggregates (Updated by Cloud Functions)
+  stats?: {
+    totalHours: number;
+    totalEarnings: number;
+    totalDeductions: number;
+    unionStatus?: string;
+    lastUpdated?: string;
+  }
 }
 
 export type JobStatus = 'CONFIRMED' | 'TENTATIVE';
@@ -69,7 +75,7 @@ export interface Job {
   creditType?: 'PRINCIPAL' | 'ACTOR' | 'STUNT' | 'BACKGROUND' | 'CREW' | 'OTHER';
   isUpgrade?: boolean; 
   productionTier?: string; 
-  startDate: string;
+  startDate: string; // ISO Date String
   endDate?: string;
   totalHours: number;
   hourlyRate?: number;
@@ -77,16 +83,8 @@ export interface Job {
   unionDeductions?: number; 
   notes?: string;
   documentCount: number;
-  createdAt: string;
-}
-
-export interface Document {
-  id: string;
-  jobId: string;
-  fileName: string;
-  fileType: string;
-  url: string;
-  uploadedAt: string;
+  documentIds?: string[];
+  createdAt: string; // ISO or Firestore Timestamp
 }
 
 export interface ResidencyDocument {
@@ -94,6 +92,8 @@ export interface ResidencyDocument {
   userId: string;
   type: keyof typeof RESIDENCY_DOC_TYPES;
   fileName: string;
+  storagePath?: string;
+  url: string;
   uploadedAt: string;
   verified: boolean;
 }

@@ -5,9 +5,9 @@ import { User, UserUnionTracking, ResidencyDocument, RESIDENCY_DOC_TYPES, Canadi
 import { Heading, Text, Button, Input, Select, Badge } from '../components/ui';
 import { User as UserIcon, Shield, Crown, Phone, Globe, Trash2, Upload, CheckCircle, Briefcase, Users, Plus, FileSpreadsheet, Zap } from 'lucide-react';
 
-export const Settings = () => {
+export const Settings = ({ user: appUser }: { user: User }) => {
   const [activeTab, setActiveTab] = useState<'ACCOUNT' | 'PREMIUM' | 'GOALS' | 'VAULT' | 'ROSTER'>('ACCOUNT');
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(appUser);
   const [trackings, setTrackings] = useState<UserUnionTracking[]>([]);
   const [docs, setDocs] = useState<ResidencyDocument[]>([]);
 
@@ -21,7 +21,7 @@ export const Settings = () => {
   }, []);
 
   const refreshData = () => {
-    const u = api.auth.getUser();
+    const u = api.auth.getUser() || appUser;
     setUser(u);
     setProfileForm(u || {});
     setTrackings(api.tracking.get());
@@ -68,7 +68,7 @@ export const Settings = () => {
   const handleGoalUpdate = (id: string, updates: Partial<UserUnionTracking>) => {
     const updated = trackings.map(t => t.id === id ? { ...t, ...updates } : t);
     setTrackings(updated);
-    api.tracking.save(updated);
+    api.tracking.save(user!.id, updated);
   };
 
   const handleDocUpload = () => {
@@ -80,7 +80,8 @@ export const Settings = () => {
         type: newDocType as any,
         fileName: name,
         uploadedAt: new Date().toISOString(),
-        verified: false 
+        verified: false,
+        url: ''
       };
       api.vault.add(doc);
       refreshData();

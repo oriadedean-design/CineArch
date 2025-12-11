@@ -1,9 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
-import { api } from '../services/storage';
-import { UserUnionTracking, Job } from '../types';
-import { Heading, Text, Card, Badge, Button } from '../components/ui';
-import { Plus, ArrowUpRight, ArrowRight, DollarSign, Lock, AlertCircle } from 'lucide-react';
+import { trackingService } from '../services/trackingService';
+import { jobService } from '../services/jobService';
+import { UserUnionTracking, Job, User } from '../types';
+import { Heading, Text, Badge, Button } from '../components/ui';
+import { ArrowUpRight, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 
@@ -29,7 +30,7 @@ const DualProgressBar = ({ current, potential, max }: { current: number, potenti
 };
 
 const ProgressSection: React.FC<{ track: UserUnionTracking, jobs: Job[] }> = ({ track, jobs }) => {
-  const { current, potential, target, percent, potentialPercent } = api.tracking.calculateProgress(track.id, jobs);
+  const { current, potential, target, percent } = trackingService.calculateProgress(track, jobs);
   const isHours = track.targetType === 'HOURS';
   
   return (
@@ -68,25 +69,45 @@ const ProgressSection: React.FC<{ track: UserUnionTracking, jobs: Job[] }> = ({ 
   );
 };
 
-export const Dashboard = () => {
+export const Dashboard = ({ user }: { user: User }) => {
   const navigate = useNavigate();
   const [tracking, setTracking] = useState<UserUnionTracking[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [stats, setStats] = useState({ totalHours: 0, totalJobs: 0, totalDocs: 0, totalEarnings: 0, totalDeductions: 0 });
-  const user = api.auth.getUser();
+  const [loading, setLoading] = useState(true);
+
+  // Determine whose data to show
+  const targetUserId = user.activeViewId || user.id;
 
   useEffect(() => {
-    const t = api.tracking.get();
-    const j = api.jobs.list();
-    setTracking(t);
-    setJobs(j);
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [t, j] = await Promise.all([
+                trackingService.getTrackers(targetUserId),
+                jobService.getJobs(targetUserId)
+            ]);
+            
+            setTracking(t);
+            setJobs(j);
 
-    const totalHours = j.reduce((sum, job) => sum + (job.status === 'CONFIRMED' ? job.totalHours : 0), 0);
-    const totalDocs = j.reduce((sum, job) => sum + (job.documentCount || 0), 0);
-    const totalEarnings = j.reduce((sum, job) => sum + (job.grossEarnings || 0), 0);
-    const totalDeductions = j.reduce((sum, job) => sum + (job.unionDeductions || 0), 0);
-    setStats({ totalHours, totalJobs: j.length, totalDocs, totalEarnings, totalDeductions });
-  }, []);
+            // Calculate Aggregates (In production, these come from user.stats via Cloud Functions)
+            const totalHours = j.reduce((sum, job) => sum + (job.status === 'CONFIRMED' ? job.totalHours : 0), 0);
+            const totalDocs = j.reduce((sum, job) => sum + (job.documentCount || 0), 0);
+            const totalEarnings = j.reduce((sum, job) => sum + (job.grossEarnings || 0), 0);
+            const totalDeductions = j.reduce((sum, job) => sum + (job.unionDeductions || 0), 0);
+            setStats({ totalHours, totalJobs: j.length, totalDocs, totalEarnings, totalDeductions });
+        } catch(e) {
+            console.error("Dashboard Load Error", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    if (targetUserId) fetchData();
+  }, [targetUserId]);
+
+  if (loading) return <div className="p-12 text-center text-neutral-400">Loading Intelligence...</div>;
 
   return (
     <div className="space-y-16">

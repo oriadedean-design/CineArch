@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Heading, Text, Button, Card, Badge } from '../components/ui';
-import { ArrowRight, Shield, Layers, Feather, CheckCircle, Briefcase, Star, Users, Zap, Plus } from 'lucide-react';
+import { ArrowRight, Shield, Layers, Feather, CheckCircle, Briefcase, Star, Users, Zap, Plus, LayoutDashboard } from 'lucide-react';
 
 interface WelcomeProps {
   onEnter: (asAgent?: boolean) => void;
+  isLoggedIn?: boolean;
 }
 
 // Cinematic Asset Collection
@@ -23,7 +24,7 @@ const LOGOS = [
   { name: "CMPA", src: "https://cmpa.ca/wp-content/uploads/2023/11/CMPA-logo-colour-for-light-background.png", invert: false },
 ];
 
-export const Welcome = ({ onEnter }: WelcomeProps) => {
+export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [scrolled, setScrolled] = useState(false);
 
@@ -47,21 +48,38 @@ export const Welcome = ({ onEnter }: WelcomeProps) => {
       
       {/* --- Navigation --- */}
       <nav className={`fixed top-0 left-0 right-0 p-6 md:p-8 flex justify-between items-center z-50 transition-all duration-500 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-4 text-[#121212]' : 'bg-transparent text-white'}`}>
-        <span className="font-serif text-2xl tracking-tight relative z-50">CineArch</span>
+        <span 
+          className="font-serif text-2xl tracking-tight relative z-50 cursor-pointer"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          CineArch
+        </span>
         <div className="flex gap-4 relative z-50">
-          <button 
-            onClick={() => onEnter(true)} // Enter as Agent
-            className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity px-4 py-3 flex items-center gap-2 ${scrolled ? 'text-[#121212]' : 'text-white'}`}
-          >
-            <Briefcase className="w-3 h-3" />
-            Agency Portal
-          </button>
-          <button 
-            onClick={() => onEnter(false)} // Enter as Individual
-            className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity border px-6 py-3 ${scrolled ? 'border-[#121212]' : 'border-white'}`}
-          >
-            Member Sign In
-          </button>
+          {!isLoggedIn ? (
+            <>
+              <button 
+                onClick={() => onEnter(true)} // Enter as Agent
+                className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity px-4 py-3 flex items-center gap-2 ${scrolled ? 'text-[#121212]' : 'text-white'}`}
+              >
+                <Briefcase className="w-3 h-3" />
+                Agency Portal
+              </button>
+              <button 
+                onClick={() => onEnter(false)} // Enter as Individual
+                className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity border px-6 py-3 ${scrolled ? 'border-[#121212]' : 'border-white'}`}
+              >
+                Member Sign In
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={() => onEnter(false)}
+              className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity border px-6 py-3 flex items-center gap-2 ${scrolled ? 'border-[#121212] text-[#121212]' : 'border-white text-white'}`}
+            >
+              <LayoutDashboard className="w-3 h-3" />
+              Go to Dashboard
+            </button>
+          )}
         </div>
       </nav>
 
@@ -106,14 +124,16 @@ export const Welcome = ({ onEnter }: WelcomeProps) => {
               onClick={() => onEnter(false)} 
               className="bg-white text-[#121212] hover:bg-[#F3F3F1] hover:scale-105 transform transition-all duration-300 border-none px-10 py-5 text-sm tracking-widest uppercase h-auto shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
             >
-              And Action <ArrowRight className="w-4 h-4 ml-3" />
+              {isLoggedIn ? 'Resume Session' : 'And Action'} <ArrowRight className="w-4 h-4 ml-3" />
             </Button>
-            <Button 
-              onClick={() => onEnter(true)}
-              className="bg-[#121212] text-white hover:bg-neutral-900 border border-white/20 px-10 py-5 text-sm tracking-widest uppercase h-auto"
-            >
-              Manager Login
-            </Button>
+            {!isLoggedIn && (
+              <Button 
+                onClick={() => onEnter(true)}
+                className="bg-[#121212] text-white hover:bg-neutral-900 border border-white/20 px-10 py-5 text-sm tracking-widest uppercase h-auto"
+              >
+                Manager Login
+              </Button>
+            )}
           </div>
         </div>
 
@@ -241,7 +261,7 @@ export const Welcome = ({ onEnter }: WelcomeProps) => {
                    <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#121212]"/> <span>Standard PDF Exports</span></li>
                    <li className="flex items-center gap-3 text-neutral-400"><Shield className="w-4 h-4"/> <span>200MB Document Limit</span></li>
                 </ul>
-                <Button variant="outline" className="w-full" onClick={() => onEnter(false)}>Get Started</Button>
+                <Button variant="outline" className="w-full" onClick={() => onEnter(false)}>{isLoggedIn ? 'Access' : 'Get Started'}</Button>
              </div>
 
              {/* Premium Tier */}
@@ -260,7 +280,7 @@ export const Welcome = ({ onEnter }: WelcomeProps) => {
                    <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#C73E1D]"/> <span>Bulk CSV Import</span></li>
                    <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#C73E1D]"/> <span>Secure Residency Vault</span></li>
                 </ul>
-                <Button className="w-full bg-white text-[#121212] hover:bg-neutral-200 border-none" onClick={() => onEnter(false)}>Go Pro</Button>
+                <Button className="w-full bg-white text-[#121212] hover:bg-neutral-200 border-none" onClick={() => onEnter(false)}>{isLoggedIn ? 'Access' : 'Go Pro'}</Button>
              </div>
 
              {/* Agency Tier */}
@@ -281,7 +301,7 @@ export const Welcome = ({ onEnter }: WelcomeProps) => {
                       <Plus className="w-3 h-3"/> <span>Add-ons: +$35/mo (50 users)</span>
                    </li>
                 </ul>
-                <Button variant="outline" className="w-full" onClick={() => onEnter(true)}>Agency Login</Button>
+                <Button variant="outline" className="w-full" onClick={() => onEnter(true)}>{isLoggedIn ? 'Access' : 'Agency Login'}</Button>
              </div>
 
           </div>
@@ -298,7 +318,7 @@ export const Welcome = ({ onEnter }: WelcomeProps) => {
               onClick={() => onEnter(false)}
               className="bg-[#C73E1D] text-white hover:bg-[#A63216] hover:scale-105 transition-transform duration-300 border-none px-12 py-6 h-auto text-sm tracking-widest uppercase shadow-2xl"
             >
-              And Action
+              {isLoggedIn ? 'Resume' : 'And Action'}
             </Button>
           </div>
         </div>
@@ -315,4 +335,3 @@ export const Welcome = ({ onEnter }: WelcomeProps) => {
     </div>
   );
 };
-    

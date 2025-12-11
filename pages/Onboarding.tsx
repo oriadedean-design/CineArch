@@ -78,7 +78,7 @@ export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
             targetValue: t.targetValue!,
             startingValue: t.startingValue || 0
         }));
-        api.tracking.save(trackingData);
+        api.tracking.save(user.id, trackingData);
     }
 
     api.auth.updateUser(updates);

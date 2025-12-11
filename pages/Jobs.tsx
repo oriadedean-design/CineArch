@@ -1,37 +1,41 @@
+
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/storage';
-import { Job, UNIONS, DEPARTMENTS, FILM_ROLES, PRODUCTION_TIERS, JobStatus } from '../types';
+import { jobService } from '../services/jobService';
+import { User, Job, UNIONS, DEPARTMENTS, FILM_ROLES, JobStatus } from '../types';
 import { Heading, Text, Button, Input, Select, Badge } from '../components/ui';
 import { ArrowLeft, ArrowUpRight, Upload, FileText, Trash2, DollarSign, Lock, FileSpreadsheet, Send } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 // --- Job List View ---
-export const JobsList = () => {
+export const JobsList = ({ user }: { user: User }) => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filter, setFilter] = useState('ALL');
-  const user = api.auth.getUser();
+  const [loading, setLoading] = useState(true);
+
+  const targetUserId = user.activeViewId || user.id;
 
   useEffect(() => {
-    setJobs(api.jobs.list());
-  }, []);
+    const fetch = async () => {
+        setLoading(true);
+        const data = await jobService.getJobs(targetUserId);
+        setJobs(data);
+        setLoading(false);
+    }
+    fetch();
+  }, [targetUserId]);
 
   const handleBulkUpload = () => {
     if (!user?.isPremium) {
       alert("Bulk Upload is a Premium Feature. Go to Settings to upgrade.");
       return;
     }
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.csv, .xlsx';
-    input.onchange = () => {
-      alert("Simulated: 42 Jobs Imported from Spreadsheet.");
-      window.location.reload();
-    };
-    input.click();
+    alert("Simulated: Bulk Import UI would open here.");
   };
 
   const filteredJobs = filter === 'ALL' ? jobs : jobs.filter(j => j.unionName === filter || (!j.isUnion && filter === 'Non-Union'));
+
+  if (loading) return <div className="p-12 text-center text-neutral-400">Loading Production Data...</div>;
 
   return (
     <div className="space-y-12">
@@ -119,11 +123,11 @@ export const JobsList = () => {
 };
 
 // --- Job Detail / Edit View ---
-export const JobDetail = () => {
+export const JobDetail = ({ user }: { user: User }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === 'new';
-  const user = api.auth.getUser();
+  const targetUserId = user.activeViewId || user.id;
 
   const [form, setForm] = useState<Partial<Job>>({
     status: 'CONFIRMED',
@@ -145,27 +149,24 @@ export const JobDetail = () => {
     documentCount: 0
   });
 
-  const [docs, setDocs] = useState<{name: string, date: string}[]>([]);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!isNew && id) {
-      const existing = api.jobs.list().find(j => j.id === id);
-      if (existing) {
-        setForm(existing);
-        if(existing.documentCount > 0) {
-          setDocs([{name: 'CallSheet_Day1.pdf', date: existing.startDate}]);
-        }
-      } else {
-        navigate('/jobs');
-      }
+      jobService.getJobs(targetUserId).then(allJobs => {
+          const existing = allJobs.find(j => j.id === id);
+          if (existing) {
+            setForm(existing);
+          } else {
+            navigate('/jobs');
+          }
+      });
     }
-  }, [id, isNew, navigate]);
+  }, [id, isNew, navigate, targetUserId]);
 
   // Auto-calc deductions when earnings or union changes
   useEffect(() => {
     if (form.unionTypeId && form.grossEarnings && form.grossEarnings > 0) {
-       // Only auto-calc if user hasn't manually set it to something widely different (simple check)
-       // For MVP, just overwrite it to help the user reduce human error
        const union = UNIONS.find(u => u.id === form.unionTypeId);
        if (union && union.defaultDuesRate > 0) {
           const estimated = Math.round(form.grossEarnings * union.defaultDuesRate * 100) / 100;
@@ -176,14 +177,14 @@ export const JobDetail = () => {
     }
   }, [form.grossEarnings, form.unionTypeId]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.productionName || !form.startDate) return alert('Production Name and Date are required');
+    setSaving(true);
     
     const union = UNIONS.find(u => u.id === form.unionTypeId);
     
-    const jobData: Job = {
-      id: isNew ? `job_${Date.now()}` : id!,
-      userId: 'user_1',
+    const jobData: any = {
+      userId: targetUserId,
       status: form.status as JobStatus,
       productionName: form.productionName!,
       companyName: form.companyName || '',
@@ -202,44 +203,27 @@ export const JobDetail = () => {
       grossEarnings: Number(form.grossEarnings) || 0,
       unionDeductions: Number(form.unionDeductions) || 0,
       notes: form.notes,
-      documentCount: docs.length,
-      createdAt: new Date().toISOString()
+      documentCount: form.documentCount || 0
     };
 
     if (isNew) {
-      api.jobs.add(jobData);
+      await jobService.addJob(targetUserId, jobData);
     } else {
-      api.jobs.update(jobData);
+      await jobService.updateJob(targetUserId, id!, jobData);
     }
+    setSaving(false);
     navigate('/jobs');
   };
 
-  const handleFileUpload = () => {
-    if(!user?.isPremium) {
-      alert("Attachment storage is a Premium feature. Please upgrade in Settings.");
-      return;
-    }
-    const f = prompt('Simulate file upload: Enter filename');
-    if(f) setDocs([...docs, {name: f, date: new Date().toISOString()}]);
-  };
-
-  const handleSendToManager = () => {
-    if(!user?.isPremium) {
-      alert("Manager Dispatch is a Premium feature.");
-      return;
-    }
-    alert(`Sending ${docs.length} documents and job summary to your Agent/Manager... Sent!`);
-  };
-
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this job?')) {
-      if (id) api.jobs.delete(id);
+      if (id) await jobService.deleteJob(targetUserId, id);
       navigate('/jobs');
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-12">
+    <div className="max-w-3xl mx-auto space-y-12 pb-24">
       <div className="flex items-center gap-4 mb-8">
         <Button variant="ghost" onClick={() => navigate('/jobs')} className="pl-0 hover:bg-transparent">
           <ArrowLeft className="w-5 h-5 mr-2" /> Back
@@ -425,50 +409,13 @@ export const JobDetail = () => {
              </div>
           </div>
         </div>
-
-        {/* Documents */}
-        <div className="md:col-span-2 space-y-6 pt-6 border-t border-neutral-200">
-           <div className="flex justify-between items-center">
-             <Heading level={4}>Attachments</Heading>
-             <Button variant="outline" onClick={handleSendToManager} className="text-xs">
-                <Send className="w-3 h-3 mr-2" /> Send to Manager
-             </Button>
-           </div>
-           
-           <div className="border-2 border-dashed border-neutral-300 p-8 text-center hover:bg-neutral-50 transition-colors cursor-pointer" onClick={handleFileUpload}>
-              {user?.isPremium ? (
-                 <Upload className="w-8 h-8 mx-auto text-neutral-400 mb-2" strokeWidth={1} />
-              ) : (
-                 <Lock className="w-8 h-8 mx-auto text-neutral-400 mb-2" strokeWidth={1} />
-              )}
-              <Text variant="subtle">
-                 {user?.isPremium ? "Click to upload Call Sheets, Pay Stubs, or Vouchers" : "Attachments available in Premium"}
-              </Text>
-           </div>
-           
-           {docs.length > 0 && (
-             <div className="grid gap-2">
-               {docs.map((d, i) => (
-                 <div key={i} className="flex items-center justify-between p-3 bg-white border border-neutral-200">
-                    <div className="flex items-center gap-3">
-                       <FileText className="w-5 h-5 text-neutral-400" />
-                       <span className="text-sm font-medium">{d.name}</span>
-                    </div>
-                    <button onClick={() => setDocs(docs.filter((_, idx) => idx !== i))} className="text-neutral-400 hover:text-red-600">
-                       <Trash2 className="w-4 h-4" />
-                    </button>
-                 </div>
-               ))}
-             </div>
-           )}
-        </div>
       </div>
 
       <div className="pt-8 border-t border-neutral-200 flex justify-between">
-        {!isNew && <Button variant="danger" onClick={handleDelete}>Delete Entry</Button>}
+        {!isNew && <Button variant="danger" onClick={handleDelete} disabled={saving}>Delete Entry</Button>}
         <div className="flex gap-4 ml-auto">
-           <Button variant="ghost" onClick={() => navigate('/jobs')}>Cancel</Button>
-           <Button onClick={handleSave}>Save Record</Button>
+           <Button variant="ghost" onClick={() => navigate('/jobs')} disabled={saving}>Cancel</Button>
+           <Button onClick={handleSave} isLoading={saving}>Save Record</Button>
         </div>
       </div>
     </div>
