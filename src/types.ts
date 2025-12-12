@@ -158,6 +158,17 @@ export interface TaxRule {
   brackets: { threshold: number; rate: number }[];
 }
 
+export interface SubscriptionRecord {
+  id: string; // Auto-ID or Stripe subscription ID
+  status: 'active' | 'canceled' | 'past_due' | 'trialing';
+  planTier: 'PRO' | 'AGENCY';
+  startDate: string;
+  canceledAt?: string;
+  endedAt?: string;
+  provider: 'stripe';
+  created: string;
+}
+
 export enum CanadianProvince {
   ON = "Ontario",
   BC = "British Columbia",
