@@ -4,7 +4,7 @@ import { User, CanadianProvince, FILM_ROLES, UNIONS, UserUnionTracking, DEPARTME
 import { api } from '../services/storage';
 import { authService } from '../services/authService';
 import { Button, Input, Select, Heading, Text, Badge } from '../components/ui';
-import { Check, ArrowRight, FileSpreadsheet, Users } from 'lucide-react';
+import { Check, ArrowRight, FileSpreadsheet, Users, ShieldOff } from 'lucide-react';
 
 interface OnboardingProps {
   user: User;
@@ -35,6 +35,8 @@ export const Onboarding = ({ user, onComplete, onSkipForever }: OnboardingProps)
   const [manualEntryForm, setManualEntryForm] = useState({
       firstName: '', lastName: '', role: FILM_ROLES[0], unionStatus: 'NON_UNION', industry: AGENT_INDUSTRIES[0]
   });
+
+  const [confirmSkip, setConfirmSkip] = useState(false);
 
   const handleNext = () => setStep(s => s + 1);
   const handleBack = () => setStep(s => s - 1);
@@ -85,6 +87,15 @@ export const Onboarding = ({ user, onComplete, onSkipForever }: OnboardingProps)
 
     await authService.updateUser(user.id, updates);
     onComplete(updates);
+  };
+
+  const handleSkipForever = async () => {
+    if (!onSkipForever) return;
+    if (!confirmSkip) {
+      setConfirmSkip(true);
+      return;
+    }
+    await onSkipForever();
   };
 
   // --- SHARED STEPS ---
@@ -471,13 +482,31 @@ export const Onboarding = ({ user, onComplete, onSkipForever }: OnboardingProps)
     <div className="min-h-screen bg-[#F3F3F1] flex flex-col justify-center items-center p-6">
       <div className="w-full max-w-3xl flex justify-end mb-4">
         {onSkipForever && (
-          <Button
-            variant="outline"
-            className="bg-white text-neutral-800"
-            onClick={() => onSkipForever()}
-          >
-            Skip and don’t ask again
-          </Button>
+          <div className="space-y-2 text-right">
+            {!confirmSkip ? (
+              <Button
+                variant="outline"
+                className="bg-white text-neutral-800"
+                onClick={handleSkipForever}
+              >
+                Skip and don’t ask again
+              </Button>
+            ) : (
+              <div className="bg-white border border-neutral-200 p-4 shadow-sm">
+                <Text variant="small" className="text-neutral-700 mb-3">
+                  You will bypass onboarding on future sessions. Are you sure?
+                </Text>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="ghost" onClick={() => setConfirmSkip(false)} className="text-neutral-600">
+                    Keep onboarding
+                  </Button>
+                  <Button variant="outline" onClick={handleSkipForever}>
+                    Never ask again
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
       <div className="w-full max-w-3xl">

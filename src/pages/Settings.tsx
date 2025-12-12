@@ -1,16 +1,24 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/storage';
-import { User, UserUnionTracking, ResidencyDocument, RESIDENCY_DOC_TYPES, CanadianProvince } from '../types';
+import { User, UserUnionTracking, RESIDENCY_DOC_TYPES, CanadianProvince, DocumentType, DocumentMetadata } from '../types';
 import { Heading, Text, Button, Input, Select, Badge } from '../components/ui';
 import { User as UserIcon, Shield, Crown, Phone, Globe, Trash2, Upload, CheckCircle, Briefcase, Users, Plus, FileSpreadsheet, Zap } from 'lucide-react';
+import { documentService } from '../services/documentService';
+import { agencyService } from '../services/agencyService';
+import { trackingService } from '../services/trackingService';
+import { db } from '../lib/firebase';
+import { collection, doc, setDoc } from 'firebase/firestore';
 
 export const Settings = ({ user: appUser }: { user: User }) => {
   const [activeTab, setActiveTab] = useState<'ACCOUNT' | 'PREMIUM' | 'GOALS' | 'VAULT' | 'ROSTER'>('ACCOUNT');
   const [user, setUser] = useState<User | null>(appUser);
   const [trackings, setTrackings] = useState<UserUnionTracking[]>([]);
-  const [docs, setDocs] = useState<ResidencyDocument[]>([]);
+  const [docs, setDocs] = useState<DocumentMetadata[]>([]);
   const [roster, setRoster] = useState<User[]>(appUser.managedUsers || []);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const targetUserId = appUser.activeViewId || appUser.id;
 
   // CSV import helpers for agency roster
   const [csvPreview, setCsvPreview] = useState<{ headers: string[]; rows: string[][] }>({ headers: [], rows: [] });
@@ -32,20 +40,45 @@ export const Settings = ({ user: appUser }: { user: User }) => {
 
   useEffect(() => {
     refreshData();
-  }, []);
+  }, [targetUserId]);
 
-  const refreshData = () => {
+  const refreshData = async () => {
     const u = api.auth.getUser() || appUser;
     setUser(u);
     setProfileForm(u || {});
-    setTrackings(api.tracking.get());
-    setDocs(api.vault.list());
-    setRoster(u?.managedUsers || []);
+
+    // Trackers & jobs for target user so stats remain accurate when an agent is switched
+    const [remoteTrackers, remoteDocs] = await Promise.all([
+      trackingService.getTrackers(targetUserId),
+      documentService.list(targetUserId)
+    ]);
+
+    setTrackings(remoteTrackers);
+    setDocs(remoteDocs);
+
+    if (u?.accountType === 'AGENT') {
+      const remoteRoster = await agencyService.getRoster(u.id);
+      setRoster(remoteRoster.map((assignment) => ({
+        id: assignment.memberId,
+        name: assignment.memberEmail,
+        email: assignment.memberEmail,
+        role: 'Actor',
+        province: 'Ontario',
+        isOnboarded: true,
+        accountType: 'INDIVIDUAL'
+      }) as User));
+    } else {
+      setRoster(u?.managedUsers || []);
+    }
   };
 
   const handleProfileSave = () => {
     if (profileForm) {
-      api.auth.updateUser(profileForm);
+      if (db && user) {
+        setDoc(doc(db, 'users', user.id), profileForm, { merge: true });
+      } else {
+        api.auth.updateUser(profileForm);
+      }
       refreshData();
       alert('Profile updated successfully.');
     }
@@ -83,34 +116,54 @@ export const Settings = ({ user: appUser }: { user: User }) => {
   const handleGoalUpdate = (id: string, updates: Partial<UserUnionTracking>) => {
     const updated = trackings.map(t => t.id === id ? { ...t, ...updates } : t);
     setTrackings(updated);
-    api.tracking.save(user!.id, updated);
+    if (db) {
+      trackingService.saveTrackers(targetUserId, updated as UserUnionTracking[]);
+    } else {
+      api.tracking.save(user!.id, updated);
+    }
   };
 
-  const handleDocUpload = () => {
-    const name = prompt('Simulate File Selection: Enter filename (e.g. license_scan.png)');
-    if (name && user) {
-      const doc: ResidencyDocument = {
-        id: `doc_${Date.now()}`,
-        userId: user.id, // Docs uploaded to current context
-        type: newDocType as any,
-        fileName: name,
-        uploadedAt: new Date().toISOString(),
-        verified: false,
-        url: ''
-      };
-      api.vault.add(doc);
+  const handleDocUpload = async (file?: File) => {
+    if (!file && fileInputRef.current) {
+      fileInputRef.current.click();
+      return;
+    }
+
+    if (file && user) {
+      if (db) {
+        await documentService.upload(targetUserId, file, file.name, newDocType as DocumentType, file.type);
+      } else {
+        // Offline/dev fallback
+        const doc: DocumentMetadata = {
+          id: `doc_${Date.now()}`,
+          userId: targetUserId,
+          docType: newDocType as any,
+          fileName: file.name,
+          uploadedAt: new Date().toISOString(),
+          verified: false,
+          url: ''
+        };
+        api.vault.add(doc);
+      }
       refreshData();
     }
   };
 
   const handleDeleteDoc = (id: string) => {
     if (confirm('Delete this document?')) {
-      api.vault.delete(id);
-      refreshData();
+      const run = async () => {
+        if (db) {
+          await documentService.remove(targetUserId, id);
+        } else {
+          api.vault.delete(id);
+        }
+        refreshData();
+      };
+      run();
     }
   };
 
-  const handleAddClient = () => {
+  const handleAddClient = async () => {
      if (!newClientName) return;
      const newClient: User = {
          id: `client_${Date.now()}`,
@@ -118,10 +171,17 @@ export const Settings = ({ user: appUser }: { user: User }) => {
          email: `${newClientName.toLowerCase().replace(' ', '.')}@example.com`,
          role: 'Actor',
          province: 'Ontario',
+         memberStatus: 'ASPIRING',
          isOnboarded: true,
          accountType: 'INDIVIDUAL'
      };
-     api.auth.addClient(newClient);
+
+     if (db && user?.accountType === 'AGENT') {
+        await agencyService.attachClient(user, newClient);
+     } else {
+        api.auth.addClient(newClient);
+     }
+
      setRoster(prev => [...prev, newClient]);
      setNewClientName('');
      alert(`Added ${newClientName} to Roster. Use the sidebar dropdown to manage them.`);
@@ -178,7 +238,7 @@ export const Settings = ({ user: appUser }: { user: User }) => {
     reader.readAsText(file);
   };
 
-  const applyCsvImport = () => {
+  const applyCsvImport = async () => {
     if (!csvPreview.headers.length || !csvPreview.rows.length) {
       setCsvError('Upload a CSV before importing.');
       return;
@@ -219,7 +279,12 @@ export const Settings = ({ user: appUser }: { user: User }) => {
       };
     });
 
-    newClients.forEach((client) => api.auth.addClient(client));
+    if (db && user?.accountType === 'AGENT') {
+      await Promise.all(newClients.map((client) => agencyService.attachClient(user, client)));
+    } else {
+      newClients.forEach((client) => api.auth.addClient(client));
+    }
+
     setRoster((prev) => [...prev, ...newClients]);
     setCsvPreview({ headers: [], rows: [] });
     setCsvError(null);
@@ -683,6 +748,15 @@ export const Settings = ({ user: appUser }: { user: User }) => {
                    <Button onClick={handleDocUpload} className="bg-white text-black hover:bg-neutral-200 border-none">
                      <Upload className="w-4 h-4 mr-2" /> Upload
                    </Button>
+                   <input
+                     type="file"
+                     ref={fileInputRef}
+                     className="hidden"
+                     onChange={(e) => {
+                       const f = e.target.files?.[0];
+                       if (f) handleDocUpload(f);
+                     }}
+                   />
                 </div>
               </div>
 
@@ -699,7 +773,7 @@ export const Settings = ({ user: appUser }: { user: User }) => {
                           <Briefcase className="w-6 h-6 text-neutral-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-neutral-900">{RESIDENCY_DOC_TYPES[doc.type as keyof typeof RESIDENCY_DOC_TYPES]}</p>
+                          <p className="font-medium text-neutral-900">{RESIDENCY_DOC_TYPES[doc.docType as keyof typeof RESIDENCY_DOC_TYPES] || doc.docType}</p>
                           <p className="text-sm text-neutral-500">{doc.fileName} • {new Date(doc.uploadedAt).toLocaleDateString()}</p>
                         </div>
                       </div>

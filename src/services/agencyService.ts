@@ -6,6 +6,7 @@ import {
   getDocs,
   orderBy,
   query,
+  setDoc,
   updateDoc,
   where,
   Timestamp,
@@ -54,6 +55,44 @@ export const agencyService = {
   async updateStatus(assignmentId: string, status: AgencyAssignment["status"]): Promise<void> {
     if (!db) return;
     await updateDoc(doc(db, COLLECTION, assignmentId), { status });
+  },
+
+  /**
+   * Create an active assignment while ensuring the client has a user profile for downstream reads.
+   */
+  async attachClient(
+    agent: User,
+    client: Pick<User, "email" | "name" | "role" | "province" | "memberStatus"> & { id?: string }
+  ): Promise<AgencyAssignment | null> {
+    if (!db) return null;
+
+    const memberId = client.id || doc(collection(db, "users")).id;
+    const memberPayload: User = {
+      id: memberId,
+      email: client.email,
+      name: client.name,
+      role: client.role,
+      province: client.province,
+      isOnboarded: true,
+      isPremium: false,
+      memberStatus: client.memberStatus,
+      accountType: "INDIVIDUAL",
+      onboardingOptOut: true,
+    } as User;
+
+    await setDoc(doc(db, "users", memberId), memberPayload, { merge: true });
+
+    const payload: Omit<AgencyAssignment, "id"> = {
+      agentId: agent.id,
+      memberId,
+      memberEmail: client.email,
+      status: "ACTIVE",
+      createdAt: Timestamp.now().toDate().toISOString(),
+      permissions: { canEditJobs: true, canViewFinancials: true },
+    };
+
+    const ref = await addDoc(collection(db, COLLECTION), payload);
+    return { ...payload, id: ref.id };
   },
 
   /**
