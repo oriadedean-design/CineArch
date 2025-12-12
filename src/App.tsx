@@ -12,6 +12,8 @@ import { Dashboard } from './pages/Dashboard';
 import { JobsList, JobDetail } from './pages/Jobs';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
+import { Roadmap } from './pages/Roadmap';
+import { Tax } from './pages/Tax';
 import { authService } from './services/authService';
 import { User } from './types';
 import { Loader2 } from 'lucide-react';
@@ -103,8 +105,10 @@ const App = () => {
       <Layout user={user} onLogout={handleLogout} onGoHome={handleGoHome}>
         <Routes>
           <Route path="/" element={<Dashboard user={user} />} />
+          <Route path="/roadmap" element={<Roadmap user={user} />} />
           <Route path="/jobs" element={<JobsList user={user} />} />
           <Route path="/jobs/:id" element={<JobDetail user={user} />} />
+          <Route path="/tax" element={<Tax user={user} />} />
           <Route path="/reports" element={<Reports user={user} />} />
           <Route path="/settings" element={<Settings user={user} />} />
           <Route path="*" element={<Navigate to="/" replace />} />

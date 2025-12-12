@@ -138,3 +138,9 @@ export const ProgressBar = ({ progress, className, slim = false }: { progress: n
   );
 };
 
+export const Disclaimer = ({ children }: { children?: React.ReactNode }) => (
+  <div className="mt-6 p-4 bg-neutral-50 border border-neutral-200 text-sm text-neutral-600 leading-relaxed">
+    {children || 'CineArch provides educational information. Confirm details with your union or a qualified tax professional.'}
+  </div>
+);
+

@@ -24,7 +24,9 @@ export const Layout = ({ user, children, onLogout, onGoHome }: LayoutProps) => {
 
   const navItems = [
     { label: 'Overview', icon: LayoutDashboard, path: '/' },
+    { label: 'Roadmap', icon: Layers, path: '/roadmap' },
     { label: 'Career Log', icon: Layers, path: '/jobs' },
+    { label: 'Tax', icon: FileText, path: '/tax' },
     { label: 'Reports', icon: FileText, path: '/reports' },
     { label: 'Settings', icon: Settings, path: '/settings' },
   ];

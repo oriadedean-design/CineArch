@@ -32,11 +32,41 @@ export interface User {
   activeViewId?: string; // ID of the user currently being managed/viewed
   primaryIndustry?: string;
 
+  // Business profile for tax + personalization
+  businessProfile?: BusinessProfile;
+
   // Firestore Aggregates (Updated by Cloud Functions)
   stats?: UserStats;
 }
 
 export type JobStatus = 'CONFIRMED' | 'TENTATIVE';
+
+export interface WorkRecord {
+  user_id: string;
+  project_name: string;
+  project_type: 'series' | 'feature' | 'commercial' | 'short' | 'other';
+  union_id: string;
+  union_local_id?: string;
+  role: string;
+  department?: string;
+  date: string;
+  days: number;
+  paid: boolean;
+  signatory_status: 'union' | 'non_union';
+  location: { city?: string; province: string };
+  evidence_url?: string;
+}
+
+export interface BusinessProfile {
+  business_type: 'sole_proprietor' | 'corporation';
+  province_or_territory: string;
+  has_employees: boolean;
+  union_memberships: string[];
+  annual_revenue_estimate?: number;
+  is_gst_hst_registered?: boolean;
+  experience_band?: 'new' | 'early' | 'seasoned';
+  target_unions?: string[];
+}
 
 export interface UnionTier {
   name: string;
@@ -167,6 +197,19 @@ export interface SubscriptionRecord {
   endedAt?: string;
   provider: 'stripe';
   created: string;
+}
+
+export type FeatureKey =
+  | 'tax_checklist'
+  | 'cpp_gst_estimates'
+  | 'union_wizard'
+  | 'union_dues_projection'
+  | 'agency_roster';
+
+export interface FeatureConfig {
+  minPlan: 'FREE' | 'PRO' | 'AGENCY';
+  label: string;
+  description?: string;
 }
 
 export enum CanadianProvince {

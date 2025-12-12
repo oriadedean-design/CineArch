@@ -9,6 +9,7 @@ import { agencyService } from '../services/agencyService';
 import { trackingService } from '../services/trackingService';
 import { db } from '../lib/firebase';
 import { collection, doc, setDoc } from 'firebase/firestore';
+import { fixtureService } from '../services/fixtureService';
 
 export const Settings = ({ user: appUser }: { user: User }) => {
   const [activeTab, setActiveTab] = useState<'ACCOUNT' | 'PREMIUM' | 'GOALS' | 'VAULT' | 'ROSTER'>('ACCOUNT');
@@ -121,6 +122,12 @@ export const Settings = ({ user: appUser }: { user: User }) => {
     } else {
       api.tracking.save(user!.id, updated);
     }
+  };
+
+  const handleSeedFixtures = async () => {
+    await fixtureService.seedWaveOne(targetUserId);
+    await refreshData();
+    alert('Wave 1 sample data added for quick preview.');
   };
 
   const handleDocUpload = async (file?: File) => {
@@ -420,6 +427,7 @@ export const Settings = ({ user: appUser }: { user: User }) => {
                 </div>
                 <div className="pt-6 mt-4">
                   <Button onClick={handleProfileSave}>Save Changes</Button>
+                  <Button variant="secondary" className="ml-3" onClick={handleSeedFixtures}>Seed Wave 1 Preview</Button>
                 </div>
                 <DangerZone />
               </div>
