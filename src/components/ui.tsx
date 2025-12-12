@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { clsx } from 'clsx';
 import { Loader2 } from 'lucide-react';
@@ -138,3 +137,4 @@ export const ProgressBar = ({ progress, className, slim = false }: { progress: n
     </div>
   );
 };
+
