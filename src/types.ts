@@ -1,4 +1,14 @@
 
+export type MemberStatus = 'ASPIRING' | 'MEMBER';
+
+export interface UserStats {
+  totalHours: number;
+  totalEarnings: number;
+  totalDeductions: number;
+  unionStatus?: string;
+  lastUpdated?: string;
+}
+
 export interface User {
   id: string; // matches uid
   email: string;
@@ -10,12 +20,12 @@ export interface User {
   province: string;
   isOnboarded: boolean;
   isPremium?: boolean;
-  memberStatus?: 'ASPIRING' | 'MEMBER';
+  memberStatus?: MemberStatus;
 
   // Onboarding control flags
   onboardingOptOut?: boolean; // If true, we do not force the onboarding wizard
   onboardingSkippedAt?: string; // Timestamp for last skip
-  
+
   // Agency / Enterprise Fields
   accountType: 'INDIVIDUAL' | 'AGENT';
   managedUsers?: User[]; // Hydrated from agency_assignments
@@ -23,13 +33,7 @@ export interface User {
   primaryIndustry?: string;
 
   // Firestore Aggregates (Updated by Cloud Functions)
-  stats?: {
-    totalHours: number;
-    totalEarnings: number;
-    totalDeductions: number;
-    unionStatus?: string;
-    lastUpdated?: string;
-  }
+  stats?: UserStats;
 }
 
 export type JobStatus = 'CONFIRMED' | 'TENTATIVE';
@@ -91,6 +95,19 @@ export interface Job {
   createdAt: string; // ISO or Firestore Timestamp
 }
 
+export interface AgencyAssignment {
+  id: string;
+  agentId: string;
+  memberId: string;
+  memberEmail: string;
+  status: 'ACTIVE' | 'PENDING' | 'ARCHIVED';
+  createdAt: string;
+  permissions: {
+    canViewFinancials: boolean;
+    canEditJobs: boolean;
+  };
+}
+
 export interface ResidencyDocument {
   id: string;
   userId: string;
@@ -110,6 +127,36 @@ export const RESIDENCY_DOC_TYPES = {
   CERTIFICATE: "Training Certificate",
   OTHER: "Other Documentation"
 };
+
+export type DocumentType = 'LICENSE' | 'PAY_STUB' | 'CONTRACT';
+
+export interface DocumentMetadata {
+  id: string;
+  userId: string;
+  fileName: string;
+  fileType: string;
+  docType: DocumentType;
+  storagePath?: string;
+  url: string;
+  uploadedAt: string;
+  verified: boolean;
+}
+
+export interface CalculationRecord {
+  id: string;
+  userId: string;
+  type: string; // e.g., TAX_REPORT_2024
+  generatedAt: string;
+  data: Record<string, unknown>;
+}
+
+export interface TaxRule {
+  id: string; // province_year key like ON_2024
+  province: string;
+  year: number;
+  basicPersonalAmount: number;
+  brackets: { threshold: number; rate: number }[];
+}
 
 export enum CanadianProvince {
   ON = "Ontario",

@@ -71,4 +71,125 @@ Register new features in the feature/plan config with minimum plan requirements:
 - **Tax MVP:** ship checklist plus CPP and GST/HST estimates first; deeper income tax calculations wait for CPA review.
 - **Plan gating:** Free = business profile + basic obligations; Pro = estimators, full roadmaps, dues projections, work history; Agency = Pro + multi-member dashboards.
 
+## Firestore data model (launch baseline)
+The backend should be structured around explicit top-level collections with user-scoped subcollections so queries stay predictable and indexes are minimal.
+
+### Top-level collections
+- **`users/{userId}`** – Core profile linked to Firebase Auth UID and high-level aggregates updated by Functions.
+  ```ts
+  type MemberStatus = "ASPIRING" | "MEMBER";
+
+  interface UserDoc {
+    id: string;            // auth UID
+    email: string;
+    name: string;
+    role: string;          // e.g., "Actor", "Director"
+    accountType: "INDIVIDUAL" | "AGENT";
+    province: string;      // e.g., "ON", "BC"
+    isOnboarded: boolean;
+    isPremium: boolean;
+    memberStatus: MemberStatus;
+    primaryIndustry?: string; // for agents
+    activeViewId?: string;    // which client an agent is viewing
+    stats: {
+      totalHours: number;
+      totalEarnings: number;
+      totalDeductions: number;
+      lastUpdated: Timestamp;
+    };
+  }
+  ```
+
+- **`agency_assignments/{assignmentId}`** – Agent ↔ Member links with permissions for roster access.
+  ```ts
+  interface AgencyAssignmentDoc {
+    agentId: string;   // ref users/{agentId}
+    memberId: string;  // ref users/{memberId}
+    memberEmail: string;
+    status: "ACTIVE" | "PENDING" | "ARCHIVED";
+    createdAt: Timestamp;
+    permissions: {
+      canViewFinancials: boolean;
+      canEditJobs: boolean;
+    };
+  }
+  ```
+
+- **`tax_rules/{province_year}`** – Admin-managed reference rules to avoid hardcoding CRA logic.
+  ```ts
+  interface TaxRuleDoc {
+    province: string;   // e.g., "ON"
+    year: number;       // e.g., 2024
+    basicPersonalAmount: number;
+    brackets: { threshold: number; rate: number }[];
+  }
+  ```
+
+### Subcollections under `users/{userId}`
+- **`jobs/{jobId}`** – Work history entries that drive eligibility, earnings, and projections.
+  ```ts
+  interface JobDoc {
+    productionName: string;
+    companyName: string;
+    status: "CONFIRMED" | "TENTATIVE";
+    startDate: string;   // ISO date
+    endDate?: string;
+    totalHours: number;
+    isUnion: boolean;
+    unionTypeId?: string;
+    unionName?: string;
+    role: string;
+    department?: string;
+    hourlyRate: number;
+    grossEarnings: number;
+    unionDeductions: number;
+    documentCount: number;
+    notes?: string;
+    createdAt: Timestamp;
+  }
+  ```
+
+- **`trackers/{trackerId}`** – Eligibility progress toward union tiers.
+  ```ts
+  interface TrackerDoc {
+    unionTypeId: string;
+    unionName: string;
+    tierLabel: string;
+    targetType: "HOURS" | "DAYS" | "CREDITS" | "EARNINGS";
+    targetValue: number;
+    startingValue: number;
+    department?: string;
+  }
+  ```
+
+- **`documents/{docId}`** – Metadata for files stored in Firebase Storage.
+  ```ts
+  type DocumentType = "LICENSE" | "PAY_STUB" | "CONTRACT";
+
+  interface DocumentDoc {
+    fileName: string;
+    fileType: string;
+    docType: DocumentType;
+    storagePath: string;
+    url: string;           // signed URL
+    uploadedAt: Timestamp;
+    verified: boolean;
+  }
+  ```
+
+- **`calculations/{calcId}`** (optional) – Cached heavy computations like annual tax reports.
+  ```ts
+  interface CalculationDoc {
+    type: string;           // e.g., "TAX_REPORT_2024"
+    generatedAt: Timestamp;
+    data: Record<string, unknown>; // structured payload with totals/breakdowns
+  }
+  ```
+
+### Required indexes
+- **Jobs by date:** collection `jobs` with `userId` (asc) + `startDate` (desc) to power dashboards.
+- **Agency roster:** collection `agency_assignments` with `agentId` (asc) + `status` (asc) for roster filtering.
+
+The Firestore emulator or production console will prompt for composite index creation the first time these queries run; capture the generated links in infra runbooks once available.
+
 See `docs/v1-launch-plan.md` for the full task list and assignments that implement these decisions.
