@@ -30,7 +30,15 @@ Use this checklist to move CineArch from prototype to an industry-grade release.
 - **Review apps**: set up per-branch preview deployments (e.g., Vercel or Firebase Hosting channels) tied to disposable Firebase projects for safe evaluation.
 - **Release checklist**: document a go/no-go checklist covering migrations, rules deployment, smoke tests, and monitoring alerts before promoting to production.
 
-## 6) Next steps to close gaps
+## 6) Agency view readiness
+- **Dedicated agency entry points**: ensure agency/manager CTAs route to the agency-auth flow with the correct defaults so intent is preserved from landing to dashboard.
+- **Client context switching**: verify the client switcher works on desktop and mobile, surfaces the active client, and writes `activeViewId` to user state for consistent routing.
+- **Roster import QA**: exercise CSV import with the template and column-mapping UI, confirm bulk-created clients appear under `agency_assignments`, and that malformed rows fail with actionable errors.
+- **Permissions & isolation**: confirm agency users can only read/write data for assigned members (jobs, documents, trackers) and that audit logs capture assignment changes and uploads.
+- **Upload experience**: test document uploads in the agency context (vouchers/call sheets) to ensure files land in the member’s `documents` subcollection with correct metadata and visibility.
+- **Onboarding enforcement**: simulate agency logins that skipped onboarding and verify the wizard reappears unless “never ask again” is set, keeping agency profiles complete.
+
+## 7) Next steps to close gaps
 - Prioritize which unions/local rules to seed first (e.g., ACTRA Toronto, UBCP/ACTRA, DGC Ontario, IATSE 873, NABET 700, Teamsters 155, WGC) and assign data owners.
 - Implement the eligibility/tax rule evaluators against the new normalized schemas, backed by emulator tests.
 - Wire the UI wizards to the rule engine with clear upgrade prompts and disclaimers.
