@@ -105,7 +105,10 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
         <div className="relative z-10 max-w-5xl animate-in fade-in slide-in-from-bottom-12 duration-1000">
           <div className="inline-flex items-center gap-3 mb-8">
             <div className="w-12 h-[1px] bg-[#C73E1D]"></div>
-            <span className="text-white/90 text-xs uppercase tracking-[0.25em] font-medium">Professional Interface v2.0</span>
+            <div className="flex flex-col gap-1">
+              <span className="text-white/90 text-xs uppercase tracking-[0.25em] font-medium">Professional Interface v2.0</span>
+              <span className="text-white/70 text-[10px] uppercase tracking-[0.3em]">Closed beta begins 2026</span>
+            </div>
           </div>
           
           <h1 className="font-serif text-6xl md:text-8xl lg:text-9xl text-[#F3F3F1] leading-[0.9] mb-8 tracking-tight drop-shadow-2xl">
@@ -181,13 +184,17 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
               {[
                 "Automated Dues Calculation",
                 "Tentative Booking Forecasts",
-                "Instant Manager Dispatch"
+                "Upload and organize vouchers & call sheets",
+                "Automatic tax calculation by location or region"
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3 text-neutral-800">
                   <CheckCircle className="w-5 h-5 text-[#C73E1D]" />
                   <span className="font-medium tracking-wide">{item}</span>
                 </div>
               ))}
+              <p className="text-xs text-neutral-500 pl-8">
+                *CineArch provides tax estimates only and does not file taxes on your behalf.
+              </p>
             </div>
           </div>
           
