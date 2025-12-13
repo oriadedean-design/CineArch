@@ -57,29 +57,28 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
         <div className="flex gap-4 relative z-50">
           {!isLoggedIn ? (
             <>
-              <Button
+              <button
                 onClick={() => onEnter(true)}
-                className={`${scrolled ? 'bg-[#121212] text-white hover:bg-black' : 'bg-white text-[#121212] hover:bg-[#F3F3F1]'} px-5 py-3 uppercase tracking-widest text-xs shadow-md`}
+                className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity px-4 py-3 flex items-center gap-2 ${scrolled ? 'text-[#121212]' : 'text-white'}`}
               >
-                <Briefcase className="w-3 h-3 mr-2" />
+                <Briefcase className="w-3 h-3" />
                 Agency Portal
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={() => onEnter(false)}
-                className={`px-6 py-3 uppercase tracking-widest text-xs shadow-md ${scrolled ? 'bg-[#C73E1D] text-white hover:bg-[#A63216]' : 'bg-[#C73E1D] text-white hover:bg-[#A63216]'}`}
+                className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity border px-6 py-3 ${scrolled ? 'border-[#121212]' : 'border-white'}`}
               >
                 Member Sign In
-              </Button>
+              </button>
             </>
           ) : (
-            <Button
+            <button
               onClick={() => onEnter(false)}
-              variant="outline"
-              className={`${scrolled ? 'border-[#121212] text-[#121212]' : 'border-white text-white'} bg-transparent px-6 py-3 flex items-center gap-2 uppercase tracking-widest text-xs`}
+              className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity border px-6 py-3 flex items-center gap-2 ${scrolled ? 'border-[#121212] text-[#121212]' : 'border-white text-white'}`}
             >
               <LayoutDashboard className="w-3 h-3" />
               Go to Dashboard
-            </Button>
+            </button>
           )}
         </div>
       </nav>
@@ -106,7 +105,7 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
         <div className="relative z-10 max-w-5xl animate-in fade-in slide-in-from-bottom-12 duration-1000">
           <div className="inline-flex items-center gap-3 mb-8">
             <div className="w-12 h-[1px] bg-[#C73E1D]"></div>
-            <span className="text-white/90 text-xs uppercase tracking-[0.25em] font-medium">A platform dedicated to the crew</span>
+            <span className="text-white/90 text-xs uppercase tracking-[0.25em] font-medium">Professional Interface v2.0</span>
           </div>
           
           <h1 className="font-serif text-6xl md:text-8xl lg:text-9xl text-[#F3F3F1] leading-[0.9] mb-8 tracking-tight drop-shadow-2xl">
@@ -180,19 +179,15 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
 
             <div className="space-y-4 pt-4">
               {[
-                "Automated due calculation",
-                "Tentative booking forecasts",
-                "Upload and store screenshots of vouchers and call sheets",
-                "Automatic tax calculation based on job location or business region"
+                "Automated Dues Calculation",
+                "Tentative Booking Forecasts",
+                "Instant Manager Dispatch"
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3 text-neutral-800">
                   <CheckCircle className="w-5 h-5 text-[#C73E1D]" />
                   <span className="font-medium tracking-wide">{item}</span>
                 </div>
               ))}
-              <Text className="text-sm text-neutral-500">
-                *CineArch provides tax estimates only and does not file your taxes.
-              </Text>
             </div>
           </div>
           
@@ -273,15 +268,9 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
              <div className="bg-[#121212] text-white p-8 relative transform md:-translate-y-4 shadow-xl">
                 <div className="absolute top-0 right-0 bg-[#C73E1D] text-white text-[10px] uppercase font-bold px-3 py-1 tracking-widest">Recommended</div>
                 <h3 className="font-serif text-3xl mb-2">Pro Member</h3>
-                <div className="flex flex-col gap-1 mb-6">
-                   <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">$10</span>
-                      <span className="text-white/50">/ month</span>
-                   </div>
-                   <div className="flex items-baseline gap-1 text-sm text-white/70">
-                      <span className="font-semibold">$90</span>
-                      <span className="text-white/50">/ year</span>
-                   </div>
+                <div className="flex items-baseline gap-1 mb-6">
+                   <span className="text-4xl font-bold">$10</span>
+                   <span className="text-white/50">/ month</span>
                 </div>
                 <p className="text-sm text-white/60 mb-8 h-10">Advanced compliance & unlimited storage for working professionals.</p>
                 <ul className="space-y-4 mb-8 text-sm">
@@ -298,15 +287,9 @@ export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
              <div className="bg-white border border-neutral-200 p-8 hover:border-[#121212] transition-colors relative group">
                 <div className="absolute top-0 left-0 w-full h-1 bg-neutral-200 group-hover:bg-[#121212] transition-colors"></div>
                 <h3 className="font-serif text-3xl mb-2">Agency Portal</h3>
-                <div className="flex flex-col gap-1 mb-6">
-                   <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">$90</span>
-                      <span className="text-neutral-400">/ month</span>
-                   </div>
-                   <div className="flex items-baseline gap-1 text-sm text-neutral-500">
-                      <span className="font-semibold">$900</span>
-                      <span className="text-neutral-400">/ year</span>
-                   </div>
+                <div className="flex items-baseline gap-1 mb-6">
+                   <span className="text-4xl font-bold">$90</span>
+                   <span className="text-neutral-400">/ month</span>
                 </div>
                 <p className="text-sm text-neutral-500 mb-8 h-10">Roster management for up to 50 active accounts.</p>
                 <ul className="space-y-4 mb-8 text-sm">

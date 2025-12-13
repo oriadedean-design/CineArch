@@ -21,7 +21,7 @@ import { Loader2 } from 'lucide-react';
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showWelcome, setShowWelcome] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
   const [authAgentMode, setAuthAgentMode] = useState(false);
 
   useEffect(() => {
@@ -35,12 +35,14 @@ const App = () => {
             const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
             if (userDoc.exists()) {
                 setUser(userDoc.data() as User);
+                setShowWelcome(false);
             }
         } catch (e) {
             console.error("Error fetching user profile", e);
         }
       } else {
         setUser(null);
+        setShowWelcome(true);
       }
       setLoading(false);
     });
