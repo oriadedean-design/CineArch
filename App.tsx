@@ -11,23 +11,21 @@ import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { Resources } from './pages/Resources';
 import { Finance } from './pages/Finance';
-import { api } from './services/api'; // Switched from storage to api
-import { User } from './types';
+import { Agency } from './pages/Agency';
+import { api } from './services/api'; 
 import { Loader2 } from 'lucide-react';
 
 const MainApp = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [authAgentMode, setAuthAgentMode] = useState(false);
 
   useEffect(() => {
-    // Async check for session
     const checkUser = async () => {
         try {
-            const u = await api.auth.getUser();
-            if (u) {
-                setUser(u);
+            const s = await api.auth.getSession();
+            if (s) {
+                setSession(s);
             } else {
                 setShowWelcome(true);
             }
@@ -41,38 +39,27 @@ const MainApp = () => {
     checkUser();
   }, []);
 
-  const handleLogin = (u: User) => {
-    setUser(u);
+  const handleLogin = (user: any) => {
+    setSession(user); // Mock for now, usually session object
     setShowWelcome(false);
+    window.location.reload(); // Force api context refresh
   };
 
   const handleLogout = () => {
     api.auth.logout();
-    setUser(null);
-    setShowWelcome(true);
-  };
-
-  const handleWelcomeEnter = (asAgent: boolean = false) => {
-    setAuthAgentMode(asAgent);
-    setShowWelcome(false);
-  };
-  
-  const handleAuthBack = () => {
-    setShowWelcome(true);
   };
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-8 h-8 text-accent animate-spin"/></div>;
 
-  if (!user) {
+  if (!session) {
     if (showWelcome) {
-       return <Welcome onEnter={handleWelcomeEnter} />;
+       return <Welcome onEnter={() => setShowWelcome(false)} />;
     }
-    return <Auth onLogin={handleLogin} onBack={handleAuthBack} initialAgentMode={authAgentMode} />;
+    return <Auth onLogin={handleLogin} onBack={() => setShowWelcome(true)} />;
   }
 
-  if (!user.isOnboarded) {
-    return <Onboarding user={user} onComplete={() => setUser({ ...user, isOnboarded: true })} />;
-  }
+  // Simplified Onboarding Check logic would go here, 
+  // checking if user has any org memberships yet.
 
   return (
     <Layout onLogout={handleLogout}>
@@ -81,6 +68,7 @@ const MainApp = () => {
         <Route path="/jobs" element={<JobsList />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
         <Route path="/finance" element={<Finance />} />
+        <Route path="/agency" element={<Agency />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />

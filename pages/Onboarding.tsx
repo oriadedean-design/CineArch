@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { User, CanadianProvince, FILM_ROLES, UNIONS, UserUnionTracking, DEPARTMENTS, AGENT_ROLES, AGENT_INDUSTRIES, DEPARTMENT_ROLES } from '../types';
 import { api } from '../services/api';
@@ -85,7 +86,7 @@ export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
             unionName: t.unionName!,
             tierLabel: t.tierLabel!,
             department: t.department,
-            targetType: t.targetType!,
+            targetType: t.targetType as 'HOURS' | 'DAYS' | 'CREDITS' | 'EARNINGS',
             targetValue: t.targetValue!,
             startingValue: t.startingValue || 0
         }));
@@ -308,7 +309,7 @@ export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
                       <div key={dept} className="space-y-3">
                          <h4 className="font-serif text-lg text-textTertiary">{dept}</h4>
                          <div className="flex flex-wrap gap-2">
-                             {DEPARTMENT_ROLES[dept].map(role => {
+                             {(DEPARTMENT_ROLES[dept] || []).map(role => {
                                  const isSelected = formData.selectedRoles.includes(role);
                                  return (
                                     <button
@@ -359,7 +360,7 @@ export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
           unionTypeId: union.id,
           unionName: union.name,
           tierLabel: defaultTier.name,
-          targetType: defaultTier.targetType,
+          targetType: defaultTier.targetType as any,
           targetValue: defaultTier.targetValue,
           department: defaultTier.requiresDepartment ? (formData.selectedDepartments[0] || DEPARTMENTS[0]) : undefined,
           startingValue: 0
@@ -472,7 +473,7 @@ export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
                                     const newTier = union.tiers.find(t => t.name === e.target.value)!;
                                     updateTracker(idx, {
                                         tierLabel: newTier.name,
-                                        targetType: newTier.targetType,
+                                        targetType: newTier.targetType as any,
                                         targetValue: newTier.targetValue,
                                         department: newTier.requiresDepartment ? (tracker.department || DEPARTMENTS[0]) : undefined
                                     });

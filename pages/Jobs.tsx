@@ -175,6 +175,7 @@ export const JobDetail = () => {
     
     const jobData: Job = {
       id: isNew ? '' : id!, // ID handled by DB on insert
+      org_id: localStorage.getItem('cinearch_org_id') || '',
       userId: targetUserId,
       status: form.status as JobStatus,
       productionName: form.productionName!,

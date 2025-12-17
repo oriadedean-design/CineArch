@@ -15,20 +15,15 @@
         theme: {
           extend: {
             colors: {
-              background: '#172021', // Dark Base
-              surface: '#1c2628', // Slightly lighter for cards
-              surfaceHighlight: '#233032', // Even lighter for hovers
-              border: '#5C8180', // Muted Teal for subtle borders
-              
-              // New Palette Map
-              accent: '#7C96A6', // Muted Blue (Primary Action)
+              background: '#172021',
+              surface: '#1c2628',
+              surfaceHighlight: '#233032',
+              border: '#5C8180',
+              accent: '#7C96A6',
               accentGlow: '#9AB0BD',
-              
-              secondary: '#5C8180', // Muted Teal (Success/Growth)
-              tertiary: '#7B6D60', // Muted Brown (Warning/Earth)
-              light: '#C9CCC7', // Main Text
-
-              // Text Hierarchies
+              secondary: '#5C8180',
+              tertiary: '#7B6D60',
+              light: '#C9CCC7',
               textPrimary: '#C9CCC7', 
               textSecondary: '#9EA19D',
               textTertiary: '#757874',
@@ -38,7 +33,7 @@
               serif: ['Instrument Serif', 'serif'],
             },
             boxShadow: {
-              'glow': '0 0 20px -5px rgba(124, 150, 166, 0.3)', // Accent glow
+              'glow': '0 0 20px -5px rgba(124, 150, 166, 0.3)',
               'glass': '0 8px 32px 0 rgba(23, 32, 33, 0.36)',
             },
             backgroundImage: {
@@ -55,61 +50,43 @@
         color: #C9CCC7;
         -webkit-font-smoothing: antialiased;
       }
-      
-      /* Glassmorphism Utilities */
       .glass {
         background: rgba(28, 38, 40, 0.6);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(201, 204, 199, 0.1);
       }
-      
       .glass-card {
         background: linear-gradient(180deg, rgba(201, 204, 199, 0.03) 0%, rgba(201, 204, 199, 0.01) 100%);
-        border: 1px solid rgba(92, 129, 128, 0.15); /* Muted Teal Border */
+        border: 1px solid rgba(92, 129, 128, 0.15);
         backdrop-filter: blur(10px);
       }
-
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #172021;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #233032;
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #5C8180;
-      }
-      
-      .hide-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .hide-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: #172021; }
+      ::-webkit-scrollbar-thumb { background: #233032; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #5C8180; }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
   <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
-    "clsx": "https://aistudiocdn.com/clsx@^2.1.1",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
-    "papaparse": "https://aistudiocdn.com/papaparse@^5.4.1",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.88.0"
+    "react": "https://esm.sh/react@18.2.0",
+    "react/": "https://esm.sh/react@18.2.0/",
+    "react-dom": "https://esm.sh/react-dom@18.2.0?deps=react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/?deps=react@18.2.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?deps=react@18.2.0,react-dom@18.2.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.363.0?deps=react@18.2.0",
+    "clsx": "https://esm.sh/clsx@2.1.0",
+    "papaparse": "https://esm.sh/papaparse@5.4.1",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.8"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>
