@@ -1,577 +1,385 @@
 
-import React, { useState } from 'react';
-import { User, CanadianProvince, FILM_ROLES, UNIONS, UserUnionTracking, DEPARTMENTS, AGENT_ROLES, AGENT_INDUSTRIES, DEPARTMENT_ROLES } from '../types';
-import { api } from '../services/api';
-import { Button, Input, Select, Heading, Text } from '../components/ui';
-import { BulkJobUpload } from '../components/BulkJobUpload';
-import { Check, ArrowRight, Building, Phone, Mail, AlertCircle, Star, User as UserIcon, Briefcase, HelpCircle } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { User, CanadianProvince, UNIONS, UserUnionTracking } from '../types';
+import { INDUSTRY_DEPARTMENTS, IndustryRole } from '../config/industry_roles';
+import { api } from '../services/storage';
+import { Button, Input, Heading, Text, Select, Badge, PhoneInput } from '../components/ui';
+import { ArrowRight, Star, Shield, Briefcase, Zap, Check, Target, Landmark, X, Sparkles, Mail, Phone, Camera } from 'lucide-react';
+import { clsx } from 'clsx';
 
-interface OnboardingProps {
-  user: User;
-  onComplete: () => void;
-}
+const ProductionCallOverlay = ({ onComplete }: { onComplete: () => void }) => {
+  const [stage, setStage] = useState(0);
+  const sequence = [
+    "Pictures up. Last looks everyone.",
+    "HMU doing last looks...",
+    "Good on last looks. Going for picture.",
+    "Let’s roll sound.",
+    "Sound: Speed.",
+    "Scene 1 Alpha, Take 1.",
+    "Roll camera.",
+    "1st AC: Speed.",
+    "2nd AC: Mark.",
+    "Director: Action."
+  ];
 
-// Mapping for Recommendations
-const DEPT_UNION_MAP: Record<string, string[]> = {
-  "Performers (Principal)": ['u1'], // ACTRA
-  "Background Performers": ['u1'],
-  "Stunts": ['u1'], 
-  "Camera Department": ['u2', 'u5'], // IATSE, NABET
-  "Lighting (Electric)": ['u2', 'u5'],
-  "Grip (Rigging & Camera Support)": ['u2', 'u5'],
-  "Costume & Wardrobe": ['u2', 'u5'],
-  "Hair & Makeup": ['u2', 'u5'],
-  "Sound (Production)": ['u2', 'u5'],
-  "Special Effects": ['u2', 'u5'],
-  "Construction": ['u2'],
-  "Scenic (Paint)": ['u2'],
-  "Greens": ['u2'],
-  "Props": ['u2', 'u5'],
-  "Set Decoration": ['u2', 'u5'],
-  "Catering & Craft Services": ['u2'],
-  "Direction & Continuity": ['u3'], // DGC
-  "Art Department": ['u3', 'u2'], 
-  "Locations": ['u3'],
-  "Post-Production (Picture)": ['u3'],
-  "Post-Production (Sound)": ['u3'],
-  "Script & Writing": ['u4'], // WGC
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStage(prev => {
+        if (prev >= sequence.length - 1) {
+          clearInterval(timer);
+          setTimeout(onComplete, 800);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 450);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center p-12 text-center">
+      <div className="space-y-8 animate-in fade-in duration-500">
+         <div className="w-24 h-[2px] bg-accent mx-auto animate-snap origin-left"></div>
+         <p className="text-3xl md:text-5xl font-serif italic text-white tracking-tight leading-tight max-w-2xl">
+           "{sequence[stage]}"
+         </p>
+         <div className="pt-12">
+            <div className="flex gap-1 justify-center">
+               {sequence.map((_, i) => (
+                 <div key={i} className={clsx("w-8 h-1 transition-all duration-300", i <= stage ? "bg-accent" : "bg-white/10")}></div>
+               ))}
+            </div>
+         </div>
+      </div>
+    </div>
+  );
 };
 
-export const Onboarding = ({ user, onComplete }: OnboardingProps) => {
-  const isAgent = user.accountType === 'AGENT';
-  
+export const Onboarding = ({ user, onComplete }: { user: User, onComplete: () => void }) => {
   const [step, setStep] = useState(1);
+  const [isPreparing, setIsPreparing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user.name?.split(' ')[0] || '',
     lastName: user.name?.split(' ').slice(1).join(' ') || '',
+    email: user.email || '',
     phone: user.phone || '',
-    orgName: user.organizationName || '',
-    province: user.province || CanadianProvince.ON,
-    businessStructure: 'SOLE_PROPRIETORSHIP' as User['businessStructure'],
-    selectedDepartments: [] as string[],
+    province: CanadianProvince.ON,
+    department: 'Camera', 
     selectedRoles: [] as string[],
     selectedUnions: [] as string[],
-    activeTrackers: [] as Partial<UserUnionTracking>[],
-    agentRole: AGENT_ROLES[0],
-    agentIndustries: [] as string[],
-    rosterSetupMethod: 'IMPORT' as 'IMPORT' | 'MANUAL',
-    manualRoster: [] as any[] 
+    careerFocus: 'PRODUCTION',
+    goals: [] as string[]
   });
-  
+
   const handleNext = () => setStep(s => s + 1);
   const handleBack = () => setStep(s => s - 1);
 
-  const handleFinish = async () => {
+  const suggestedUnions = useMemo(() => {
+    const unions = new Set<string>();
+    formData.selectedRoles.forEach(roleName => {
+      INDUSTRY_DEPARTMENTS.forEach(dept => {
+        const roleObj = dept.roles.find(r => r.name === roleName);
+        if (roleObj) {
+          if (roleObj.primaryUnion.includes('ACTRA')) unions.add('ACTRA');
+          else if (roleObj.primaryUnion.includes('IATSE')) unions.add('IATSE');
+          else if (roleObj.primaryUnion.includes('DGC')) unions.add('DGC');
+          else if (roleObj.primaryUnion.includes('WGC')) unions.add('WGC');
+          else if (roleObj.primaryUnion !== 'Non-Union') {
+             const baseName = roleObj.primaryUnion.split(' ')[0];
+             unions.add(baseName);
+          }
+        }
+      });
+    });
+    return Array.from(unions);
+  }, [formData.selectedRoles]);
+
+  React.useEffect(() => {
+    if (step === 4 && formData.selectedUnions.length === 0) {
+      setFormData(prev => ({ ...prev, selectedUnions: suggestedUnions }));
+    }
+  }, [step, suggestedUnions]);
+
+  const handleFinish = () => {
+    setIsPreparing(true);
+  };
+
+  const executeCompletion = () => {
     const updates: Partial<User> = {
       name: `${formData.firstName} ${formData.lastName}`.trim(),
+      email: formData.email,
       phone: formData.phone,
-      organizationName: formData.orgName,
       province: formData.province,
+      department: formData.department,
+      selectedRoles: formData.selectedRoles,
+      careerFocus: formData.careerFocus,
+      goals: formData.goals,
       isOnboarded: true,
-      businessStructure: formData.businessStructure,
+      role: formData.selectedRoles[0] || 'Film Professional'
     };
+    
+    const newTrackings: UserUnionTracking[] = formData.selectedUnions.map(unionName => {
+      const unionMaster = UNIONS.find(u => u.name === unionName);
+      return {
+        id: `track_${unionName}_${Date.now()}`,
+        userId: user.id,
+        unionTypeId: unionMaster?.id || 'custom',
+        unionName: unionName,
+        tierLabel: unionMaster?.tiers[0].name || 'General Member',
+        targetType: unionMaster?.tiers[0].targetType || 'HOURS',
+        targetValue: unionMaster?.tiers[0].targetValue || 1000,
+        startingValue: 0
+      };
+    });
 
-    if (isAgent) {
-        updates.role = formData.agentRole;
-        updates.primaryIndustry = formData.agentIndustries[0]; 
-        
-        // Agency logic handled here if needed
-    } else {
-        updates.role = formData.selectedRoles[0] || 'Film Worker';
-        
-        const trackingData: UserUnionTracking[] = formData.activeTrackers.map((t, idx) => ({
-            id: `track_${Date.now()}_${idx}`,
-            userId: user.id,
-            unionTypeId: t.unionTypeId!,
-            unionName: t.unionName!,
-            tierLabel: t.tierLabel!,
-            department: t.department,
-            targetType: t.targetType as 'HOURS' | 'DAYS' | 'CREDITS' | 'EARNINGS',
-            targetValue: t.targetValue!,
-            startingValue: t.startingValue || 0
-        }));
-        await api.tracking.save(trackingData);
-    }
-
-    await api.auth.updateUser(updates);
+    api.auth.updateUser(updates);
+    api.tracking.save(newTrackings);
     onComplete();
   };
 
-  const StepWelcome = () => (
-    <div className="text-center space-y-8 py-12 animate-in fade-in zoom-in duration-500">
-      <div className="w-20 h-20 bg-surface border border-white/10 text-white flex items-center justify-center mx-auto mb-8 rounded-none shadow-glow">
-        <span className="font-serif text-4xl italic">Ca</span>
-      </div>
-      <Heading level={1}>CineArch OS</Heading>
-      <Text className="max-w-md mx-auto text-lg leading-relaxed text-textSecondary">
-        {isAgent 
-            ? "A professional interface for Talent Managers and Agencies. Manage rosters, track auditions, and streamline compliance."
-            : "A professional operating system for the Canadian film workforce. Organize your career, track eligibility, and manage compliance."
-        }
-      </Text>
-      <div className="pt-8">
-        <Button onClick={handleNext} className="w-full md:w-auto min-w-[200px]">And Action</Button>
-      </div>
-    </div>
-  );
-
-  const StepPersonalDetails = () => (
-      <div className="space-y-8 max-w-lg mx-auto py-4 animate-in slide-in-from-right duration-300">
-          <div>
-            <Text variant="caption" className="mb-2">Step 01</Text>
-            <Heading level={2}>Account Details</Heading>
-            <Text variant="subtle">Tell us who is behind the camera.</Text>
-          </div>
-
-          <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                      <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-2">First Name</label>
-                      <Input 
-                        value={formData.firstName} 
-                        onChange={e => setFormData({...formData, firstName: e.target.value})} 
-                        placeholder="Jane"
-                        className="bg-surfaceHighlight border-white/10"
-                      />
-                  </div>
-                  <div>
-                      <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-2">Last Name</label>
-                      <Input 
-                        value={formData.lastName} 
-                        onChange={e => setFormData({...formData, lastName: e.target.value})} 
-                        placeholder="Doe"
-                        className="bg-surfaceHighlight border-white/10"
-                      />
-                  </div>
-              </div>
-
-              <div>
-                  <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-2">Organization Name <span className="text-gray-600 normal-case">(Optional)</span></label>
-                  <div className="relative">
-                      <Building className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
-                      <Input 
-                        value={formData.orgName} 
-                        onChange={e => setFormData({...formData, orgName: e.target.value})} 
-                        placeholder={isAgent ? "Acme Talent Agency" : "Jane Doe Productions"}
-                        className="pl-10 bg-surfaceHighlight border-white/10"
-                      />
-                  </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                      <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-2">Phone Number</label>
-                      <div className="relative">
-                          <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
-                          <Input 
-                            value={formData.phone} 
-                            onChange={e => setFormData({...formData, phone: e.target.value})} 
-                            placeholder="(555) 000-0000"
-                            type="tel"
-                            className="pl-10 bg-surfaceHighlight border-white/10"
-                          />
-                      </div>
-                  </div>
-                  <div>
-                      <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-2">Email Address</label>
-                      <div className="relative opacity-70">
-                          <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
-                          <Input 
-                            value={user.email} 
-                            disabled
-                            className="pl-10 bg-surfaceHighlight border-white/10 cursor-not-allowed text-gray-500"
-                          />
-                      </div>
-                  </div>
-              </div>
-          </div>
-
-          <div className="flex justify-between pt-12">
-            <Button variant="ghost" onClick={handleBack}>Back</Button>
-            <Button onClick={handleNext} disabled={!formData.firstName || !formData.lastName || !formData.phone}>Next <ArrowRight className="w-4 h-4 ml-2"/></Button>
-          </div>
-      </div>
-  );
-
-  const StepMemberProfile = () => (
-    <div className="space-y-8 max-w-lg mx-auto py-4 animate-in slide-in-from-right duration-300">
-      <div>
-        <Text variant="caption" className="mb-2">Step 02</Text>
-        <Heading level={2}>Business Profile</Heading>
-        <Text variant="subtle">Establish your operating jurisdiction and structure.</Text>
-      </div>
-
-      <div className="space-y-6">
-         <div>
-          <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-2">Primary Province of Residence</label>
-          <Select 
-            value={formData.province} 
-            onChange={e => setFormData({...formData, province: e.target.value})}
-          >
-            {Object.entries(CanadianProvince).map(([k, v]) => <option key={k} value={v} className="bg-surface text-textPrimary">{v}</option>)}
-          </Select>
-        </div>
-
-        <div>
-           <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-3">Business Structure</label>
-           <div className="grid grid-cols-1 gap-3">
-              {[
-                  { id: 'SOLE_PROPRIETORSHIP', icon: UserIcon, label: 'Sole Proprietorship', sub: 'Self-employed individual (Most Common)' },
-                  { id: 'INCORPORATED', icon: Building, label: 'Incorporated (Loan-Out)', sub: 'For higher earners & tax deferral' },
-                  { id: 'EMPLOYEE', icon: Briefcase, label: 'Employee', sub: 'Studio staff or permanent hires' },
-                  { id: 'NONE', icon: HelpCircle, label: 'None / Unsure', sub: 'Just starting out' }
-              ].map((option) => (
-                  <div 
-                     key={option.id}
-                     onClick={() => setFormData({...formData, businessStructure: option.id as any})}
-                     className={`p-4 border cursor-pointer flex justify-between items-center transition-all duration-300 ${
-                         formData.businessStructure === option.id 
-                            ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.2)]' 
-                            : 'bg-surface border-white/10 text-textSecondary hover:border-white/30 hover:bg-surfaceHighlight'
-                     }`}
-                  >
-                      <div className="flex items-center gap-3">
-                          <option.icon className="w-5 h-5"/>
-                          <div>
-                              <p className="font-bold text-sm text-inherit">{option.label}</p>
-                              <p className={`text-xs ${formData.businessStructure === option.id ? 'text-gray-600' : 'text-textTertiary'}`}>{option.sub}</p>
-                          </div>
-                      </div>
-                      {formData.businessStructure === option.id && <Check className="w-4 h-4"/>}
-                  </div>
-              ))}
-           </div>
-        </div>
-      </div>
-      
-      <div className="flex justify-between pt-12">
-        <Button variant="ghost" onClick={handleBack}>Back</Button>
-        <Button onClick={handleNext}>Next <ArrowRight className="w-4 h-4 ml-2"/></Button>
-      </div>
-    </div>
-  );
-
-  const StepMemberRoles = () => {
-     const toggleDept = (dept: string) => {
-         const exists = formData.selectedDepartments.includes(dept);
-         let newDepts = exists 
-            ? formData.selectedDepartments.filter(d => d !== dept)
-            : [...formData.selectedDepartments, dept];
-         setFormData({...formData, selectedDepartments: newDepts});
-     };
-
-     const toggleRole = (role: string) => {
-         const exists = formData.selectedRoles.includes(role);
-         let newRoles = exists
-            ? formData.selectedRoles.filter(r => r !== role)
-            : [...formData.selectedRoles, role];
-         setFormData({...formData, selectedRoles: newRoles});
-     };
-
-     return (
-        <div className="space-y-8 max-w-2xl mx-auto py-4 animate-in slide-in-from-right duration-300">
-           <div>
-              <Text variant="caption" className="mb-2">Step 03</Text>
-              <Heading level={2}>Career Focus</Heading>
-              <Text variant="subtle">Select the departments you work in to unlock specific role tracking.</Text>
-           </div>
-
-           <div className="space-y-4">
-              <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary">Departments</label>
-              <div className="flex flex-wrap gap-2">
-                 {DEPARTMENTS.map(dept => {
-                    const selected = formData.selectedDepartments.includes(dept);
-                    return (
-                       <button
-                         key={dept}
-                         onClick={() => toggleDept(dept)}
-                         className={`px-4 py-2 border text-sm transition-all rounded-sm ${
-                             selected 
-                                ? 'bg-white text-black border-white shadow-glow' 
-                                : 'bg-surface text-textSecondary border-white/10 hover:border-white/30 hover:bg-surfaceHighlight'
-                         }`}
-                       >
-                          {dept}
-                       </button>
-                    )
-                 })}
-              </div>
-           </div>
-
-           {formData.selectedDepartments.length > 0 && (
-               <div className="space-y-6 pt-6 border-t border-white/10 animate-in fade-in">
-                   <div className="space-y-1">
-                      <Heading level={3}>Your Roles</Heading>
-                      <Text variant="small">Select the specific positions you want to track credits for.</Text>
-                   </div>
-                   
-                   {formData.selectedDepartments.map(dept => (
-                      <div key={dept} className="space-y-3">
-                         <h4 className="font-serif text-lg text-textTertiary">{dept}</h4>
-                         <div className="flex flex-wrap gap-2">
-                             {(DEPARTMENT_ROLES[dept] || []).map(role => {
-                                 const isSelected = formData.selectedRoles.includes(role);
-                                 return (
-                                    <button
-                                        key={role}
-                                        onClick={() => toggleRole(role)}
-                                        className={`px-3 py-1.5 border text-xs font-medium transition-all ${
-                                            isSelected 
-                                                ? 'bg-accent text-white border-accent' 
-                                                : 'bg-surfaceHighlight text-textTertiary border-white/5 hover:border-white/20'
-                                        }`}
-                                    >
-                                        {role}
-                                    </button>
-                                 )
-                             })}
-                         </div>
-                      </div>
-                   ))}
-               </div>
-           )}
-
-           <div className="flex justify-between pt-12">
-                <Button variant="ghost" onClick={handleBack}>Back</Button>
-                <Button onClick={handleNext} disabled={formData.selectedRoles.length === 0}>Next <ArrowRight className="w-4 h-4 ml-2"/></Button>
-            </div>
-        </div>
-     );
+  const toggleRole = (role: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedRoles: prev.selectedRoles.includes(role) 
+        ? prev.selectedRoles.filter(r => r !== role) 
+        : [...prev.selectedRoles, role]
+    }));
   };
 
-  const StepMemberUnions = () => {
-    const recommendedUnionIds = new Set<string>();
-    formData.selectedDepartments.forEach(dept => {
-        const unions = DEPT_UNION_MAP[dept];
-        if (unions) unions.forEach(u => recommendedUnionIds.add(u));
-    });
-
-    const toggleUnion = (id: string) => {
-      const selected = formData.selectedUnions.includes(id)
-        ? formData.selectedUnions.filter(u => u !== id)
-        : [...formData.selectedUnions, id];
-      
-      let newTrackers = [...formData.activeTrackers];
-      
-      if (!formData.selectedUnions.includes(id)) {
-        const union = UNIONS.find(u => u.id === id)!;
-        const defaultTier = union.tiers[0];
-        newTrackers.push({
-          unionTypeId: union.id,
-          unionName: union.name,
-          tierLabel: defaultTier.name,
-          targetType: defaultTier.targetType as any,
-          targetValue: defaultTier.targetValue,
-          department: defaultTier.requiresDepartment ? (formData.selectedDepartments[0] || DEPARTMENTS[0]) : undefined,
-          startingValue: 0
-        });
-      } else {
-        newTrackers = newTrackers.filter(t => t.unionTypeId !== id);
-      }
-
-      setFormData({ ...formData, selectedUnions: selected, activeTrackers: newTrackers });
-    };
-
-    return (
-      <div className="space-y-8 max-w-lg mx-auto py-4 animate-in slide-in-from-right duration-300">
-        <div>
-          <Text variant="caption" className="mb-2">Step 04</Text>
-          <Heading level={2}>Affiliations</Heading>
-          <Text variant="subtle" className="mt-2">Confirm the Unions you are currently tracking or working towards.</Text>
-        </div>
-        
-        <div className="space-y-3">
-          {UNIONS.map(union => {
-            const isSelected = formData.selectedUnions.includes(union.id);
-            const isRecommended = recommendedUnionIds.has(union.id);
-            
-            return (
-              <div 
-                key={union.id}
-                onClick={() => toggleUnion(union.id)}
-                className={`p-5 cursor-pointer transition-all duration-300 border relative overflow-hidden group 
-                   ${isSelected 
-                      ? 'bg-white border-white text-black' 
-                      : isRecommended 
-                          ? 'bg-surface border-accent shadow-[0_0_20px_rgba(199,62,29,0.3)] ring-1 ring-accent/30' 
-                          : 'bg-surface border-white/10 hover:border-white/30 text-textPrimary'
-                   }`}
-              >
-                {isRecommended && !isSelected && (
-                   <div className="absolute top-0 right-0 bg-accent text-white text-[9px] font-bold uppercase px-2 py-0.5 tracking-wider shadow-sm">
-                       Recommended
-                   </div>
-                )}
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className={`font-serif text-xl flex items-center gap-2 ${isSelected ? 'text-black' : 'text-textPrimary'}`}>
-                        {union.name} 
-                        {isRecommended && !isSelected && <Star className="w-3 h-3 text-accent fill-accent animate-pulse" />}
-                    </h3>
-                    <p className={`text-sm mt-1 ${isSelected ? 'text-gray-600' : 'text-textTertiary'}`}>{union.description}</p>
-                  </div>
-                  {isSelected && <Check className="w-5 h-5 text-black" />}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex justify-between pt-12">
-          <Button variant="ghost" onClick={handleBack}>Back</Button>
-          <Button onClick={handleNext} disabled={formData.selectedUnions.length === 0}>Next <ArrowRight className="w-4 h-4 ml-2"/></Button>
-        </div>
-      </div>
-    );
+  const toggleUnion = (union: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedUnions: prev.selectedUnions.includes(union) 
+        ? prev.selectedUnions.filter(u => u !== union) 
+        : [...prev.selectedUnions, union]
+    }));
   };
 
-  const StepMemberConfig = () => {
-    const updateTracker = (index: number, updates: Partial<UserUnionTracking>) => {
-        const newTrackers = [...formData.activeTrackers];
-        newTrackers[index] = { ...newTrackers[index], ...updates };
-        setFormData({ ...formData, activeTrackers: newTrackers });
-    };
-
-    return (
-      <div className="space-y-8 max-w-2xl mx-auto py-4 animate-in slide-in-from-right duration-300">
-        <div>
-          <Text variant="caption" className="mb-2">Step 05</Text>
-          <Heading level={2}>Configuration</Heading>
-          <Text variant="subtle">Establish your starting baselines.</Text>
-        </div>
-        
-        <BulkJobUpload userId={user.id} onComplete={() => {}} />
-
-        <div className="relative py-4">
-             <div className="absolute inset-0 flex items-center" aria-hidden="true">
-               <div className="w-full border-t border-white/10"></div>
-             </div>
-             <div className="relative flex justify-center">
-               <span className="bg-black px-2 text-xs text-textTertiary uppercase tracking-widest">Or configure manually</span>
-             </div>
-        </div>
-
-        <div className="space-y-8">
-            {formData.activeTrackers.map((tracker, idx) => {
-                const union = UNIONS.find(u => u.id === tracker.unionTypeId)!;
-                const tierDef = union.tiers.find(t => t.name === tracker.tierLabel);
-                
-                return (
-                   <div key={idx} className="bg-surface p-6 border border-white/10 shadow-sm relative group hover:border-white/30 transition-all">
-                      <div className="absolute top-4 right-4 text-textTertiary group-hover:text-accent transition-colors">
-                          <AlertCircle className="w-4 h-4" />
-                      </div>
-                      <h3 className="font-serif text-2xl mb-4 text-textPrimary">{tracker.unionName} Path</h3>
-                      
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-2">Target Tier</label>
-                            <Select 
-                                value={tracker.tierLabel} 
-                                onChange={e => {
-                                    const newTier = union.tiers.find(t => t.name === e.target.value)!;
-                                    updateTracker(idx, {
-                                        tierLabel: newTier.name,
-                                        targetType: newTier.targetType as any,
-                                        targetValue: newTier.targetValue,
-                                        department: newTier.requiresDepartment ? (tracker.department || DEPARTMENTS[0]) : undefined
-                                    });
-                                }}
-                                className="bg-surfaceHighlight border-white/10 focus:border-accent focus:ring-accent"
-                            >
-                                {union.tiers.map(t => <option key={t.name} value={t.name} className="bg-surface text-white">{t.name}</option>)}
-                            </Select>
-                        </div>
-                        {tierDef?.requiresDepartment && (
-                            <div>
-                                <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-2">Department</label>
-                                <Select 
-                                  value={tracker.department} 
-                                  onChange={e => updateTracker(idx, { department: e.target.value })}
-                                  className="bg-surfaceHighlight border-white/10 focus:border-accent focus:ring-accent"
-                                >
-                                    {formData.selectedDepartments.length > 0 
-                                        ? formData.selectedDepartments.map(d => <option key={d} value={d} className="bg-surface text-white">{d}</option>)
-                                        : DEPARTMENTS.map(d => <option key={d} value={d} className="bg-surface text-white">{d}</option>)
-                                    }
-                                </Select>
-                            </div>
-                        )}
-                        <div>
-                            <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-2">Current {tracker.targetType}</label>
-                            <Input 
-                                type="number" 
-                                value={tracker.startingValue} 
-                                onChange={e => updateTracker(idx, { startingValue: Number(e.target.value) })} 
-                                className="bg-surfaceHighlight border-white/10 focus:border-accent focus:ring-accent"
-                            />
-                        </div>
-                      </div>
-                   </div>
-                );
-            })}
-        </div>
-        <div className="flex justify-between pt-12">
-          <Button variant="ghost" onClick={handleBack}>Back</Button>
-          <Button onClick={handleFinish} variant="primary">Launch Dashboard</Button>
-        </div>
-      </div>
-    );
+  const toggleGoal = (goal: string) => {
+    setFormData(prev => ({
+      ...prev,
+      goals: prev.goals.includes(goal) 
+        ? prev.goals.filter(g => g !== goal) 
+        : [...prev.goals, goal]
+    }));
   };
 
-  const StepAgentRole = () => (
-      <div className="space-y-8 max-w-md mx-auto py-4 animate-in slide-in-from-right duration-300">
-        <div>
-          <Text variant="caption" className="mb-2">Step 02</Text>
-          <Heading level={2}>Tell us your role</Heading>
-          <Text variant="subtle">Which of these best describes your organization?</Text>
-        </div>
-        <div className="space-y-3">
-            {AGENT_ROLES.map(role => (
-                <div 
-                  key={role}
-                  onClick={() => setFormData({...formData, agentRole: role})}
-                  className={`p-4 border cursor-pointer flex justify-between items-center transition-all duration-300 ${
-                     formData.agentRole === role 
-                        ? 'bg-white text-black border-white shadow-glow' 
-                        : 'bg-surface border-white/10 text-textSecondary hover:border-white/30 hover:bg-surfaceHighlight'
-                  }`}
-                >
-                    <span className="font-bold text-sm text-inherit">{role}</span>
-                    {formData.agentRole === role && <Check className="w-4 h-4"/>}
-                </div>
-            ))}
-        </div>
+  const currentDeptData = INDUSTRY_DEPARTMENTS.find(d => d.name === formData.department);
 
-        <div className="flex justify-between pt-12">
-            <Button variant="ghost" onClick={handleBack}>Back</Button>
-            <Button onClick={handleFinish}>Complete Setup <ArrowRight className="w-4 h-4 ml-2"/></Button>
-        </div>
-      </div>
-  );
+  if (isPreparing) return <ProductionCallOverlay onComplete={executeCompletion} />;
 
   return (
-    <div className="min-h-screen bg-background text-textPrimary p-6 md:p-12 flex flex-col">
-       <div className="flex-1 flex flex-col justify-center">
-         {step === 1 && <StepWelcome />}
-         {step === 2 && <StepPersonalDetails />}
-         
-         {!isAgent && (
-           <>
-             {step === 3 && <StepMemberProfile />}
-             {step === 4 && <StepMemberRoles />}
-             {step === 5 && <StepMemberUnions />}
-             {step === 6 && <StepMemberConfig />}
-           </>
-         )}
+    <div className="min-h-screen flex flex-col justify-center items-center p-6 text-white relative overflow-hidden bg-black font-sans">
+      <div className="absolute inset-0 bg-cinematic-universal opacity-20 pointer-events-none"></div>
+      <div className="bg-vignette-universal"></div>
+      
+      <div className="w-full max-w-4xl space-y-16 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        
+        {step === 1 && (
+          <div className="text-center space-y-12">
+            <div className="w-20 h-20 border border-white/20 glass-ui flex items-center justify-center mx-auto mb-10">
+              <span className="font-serif text-4xl italic text-white">Ca</span>
+            </div>
+            <h1 className="heading-huge text-white">LOCK IT UP.</h1>
+            <Text className="max-w-xl mx-auto text-2xl text-white font-light italic leading-relaxed">
+              Pictures up. We are calibrating your professional profile to match the guilds and departments you serve.
+            </Text>
+            <div className="pt-16">
+              <Button onClick={handleNext} className="h-24 px-20 text-[11px] tracking-[0.6em] font-black">Report for Duty</Button>
+            </div>
+          </div>
+        )}
 
-         {isAgent && (
-            <>
-              {step === 3 && <StepAgentRole />}
-            </>
-         )}
-       </div>
+        {step === 2 && (
+          <div className="space-y-12 animate-in slide-in-from-right duration-500">
+             <div className="space-y-2">
+                <Text variant="caption">Scene 01 // The Dossier</Text>
+                <Heading level={2} className="text-white">Principal Coordinates.</Heading>
+             </div>
+             <div className="grid md:grid-cols-2 gap-2">
+                <div className="space-y-3">
+                   <label className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">First Name</label>
+                   <Input value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="h-24 text-2xl font-serif italic text-white" />
+                </div>
+                <div className="space-y-3">
+                   <label className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Last Name</label>
+                   <Input value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="h-24 text-2xl font-serif italic text-white" />
+                </div>
+                <div className="space-y-3">
+                   <label className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 flex items-center gap-2">
+                     <Mail size={12} className="text-accent" /> Digital Coordinate
+                   </label>
+                   <Input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="h-24 text-xl font-serif italic text-white" />
+                </div>
+                <div className="space-y-3">
+                   <label className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 flex items-center gap-2">
+                     <Phone size={12} className="text-accent" /> Set Voice Line
+                   </label>
+                   <PhoneInput value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="h-24 text-xl font-serif italic text-white" />
+                </div>
+                <div className="md:col-span-2 space-y-3 pt-6">
+                   <label className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Base of Operations</label>
+                   <Select value={formData.province} onChange={e => setFormData({...formData, province: e.target.value as any})} className="h-24 text-2xl font-serif italic text-white">
+                      {Object.values(CanadianProvince).map(v => <option key={v} value={v} className="bg-black text-white">{v}</option>)}
+                   </Select>
+                </div>
+             </div>
+             <div className="flex justify-between pt-20 border-t border-white/5">
+               <button onClick={handleBack} className="text-[10px] font-black uppercase tracking-[0.5em] text-white/30 hover:text-white transition-colors">10-100</button>
+               <Button onClick={handleNext} className="h-20 px-16 text-[10px] tracking-[0.4em] font-black" disabled={!formData.firstName || !formData.lastName || !formData.email}>Next Setup <ArrowRight size={14} className="ml-4" /></Button>
+             </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-12 animate-in slide-in-from-right duration-500">
+             <div className="flex justify-between items-end">
+                <div className="space-y-2">
+                   <Text variant="caption">Scene 02 // Call Sheet</Text>
+                   <Heading level={2} className="text-white">Active Assignment.</Heading>
+                </div>
+                <div className="glass-ui px-6 py-3 border-accent/20 border flex items-center gap-4">
+                   <span className="text-[10px] font-black uppercase tracking-widest text-accent">Selected Marks</span>
+                   <Badge color="accent">{formData.selectedRoles.length}</Badge>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+                {INDUSTRY_DEPARTMENTS.map(d => {
+                  const rolesInDept = d.roles.filter(r => formData.selectedRoles.includes(r.name)).length;
+                  return (
+                    <button 
+                      key={d.name} 
+                      onClick={() => setFormData({...formData, department: d.name})}
+                      className={clsx(
+                        "p-8 border text-[10px] font-black uppercase tracking-widest transition-all duration-700 text-center relative h-32 flex items-center justify-center", 
+                        formData.department === d.name ? "bg-accent text-black border-accent" : "glass-ui text-white hover:border-white/20"
+                      )}
+                    >
+                      {d.name}
+                      {rolesInDept > 0 && <span className="absolute top-4 right-4 w-2 h-2 bg-current rounded-full"></span>}
+                    </button>
+                  );
+                })}
+             </div>
+
+             {formData.department && currentDeptData && (
+                <div className="space-y-10 pt-16 border-t border-white/10 animate-in fade-in duration-700">
+                   <div className="flex items-center gap-4 text-accent">
+                      <Star size={14} fill="currentColor" />
+                      <span className="text-[11px] font-black uppercase tracking-[0.5em] text-white">Department Focus: {formData.department}</span>
+                   </div>
+                   <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
+                      {currentDeptData.roles.map((r: IndustryRole) => (
+                        <button 
+                          key={r.name} 
+                          onClick={() => toggleRole(r.name)}
+                          className={clsx(
+                            "p-8 border text-[10px] font-black uppercase tracking-widest transition-all duration-700 flex flex-col items-start gap-4 text-left min-h-[120px]", 
+                            formData.selectedRoles.includes(r.name) ? "bg-white text-black border-white" : "glass-ui text-white hover:border-white/30"
+                          )}
+                        >
+                          <span className="font-serif italic text-lg leading-tight">{r.name}</span>
+                          <span className={clsx("text-[8px] font-black tracking-[0.2em] uppercase", formData.selectedRoles.includes(r.name) ? "text-black/60" : "text-accent")}>
+                            {r.primaryUnion}
+                          </span>
+                        </button>
+                      ))}
+                   </div>
+                </div>
+             )}
+
+             <div className="flex justify-between pt-20 border-t border-white/5">
+               <button onClick={handleBack} className="text-[10px] font-black uppercase tracking-[0.5em] text-white/30 hover:text-white transition-colors">Back to Ones</button>
+               <Button onClick={handleNext} className="h-20 px-16 text-[10px] tracking-[0.4em] font-black" disabled={formData.selectedRoles.length === 0}>Identify Guilds <ArrowRight size={14} className="ml-4" /></Button>
+             </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-12 animate-in slide-in-from-right duration-500">
+             <div className="space-y-2">
+                <Text variant="caption">Scene 03 // Affiliation</Text>
+                <Heading level={2} className="text-white">Guild Continuity.</Heading>
+             </div>
+             
+             <div className="p-10 bg-accent/5 border border-accent/20 glass-ui mb-8 flex items-start gap-8">
+                <Sparkles className="text-accent shrink-0" size={28} />
+                <div className="space-y-3">
+                   <p className="text-[11px] font-black uppercase tracking-[0.5em] text-accent">OS Intelligence Note</p>
+                   <p className="text-lg text-white font-light italic leading-relaxed">
+                     Based on your marks (<b>{formData.selectedRoles.join(', ')}</b>), the OS is preparing trajectories for the following guilds.
+                   </p>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {UNIONS.map(u => {
+                  const isSuggested = suggestedUnions.includes(u.name);
+                  const isSelected = formData.selectedUnions.includes(u.name);
+                  return (
+                    <button 
+                      key={u.id}
+                      onClick={() => toggleUnion(u.name)}
+                      className={clsx(
+                        "p-12 border transition-all duration-700 flex flex-col gap-6 text-left group min-h-[220px]", 
+                        isSelected ? "bg-accent text-black border-accent" : isSuggested ? "border-accent/30 bg-accent/5 text-white hover:bg-accent/10" : "glass-ui text-white hover:border-white/20"
+                      )}
+                    >
+                      <div className="flex justify-between items-center">
+                         <Landmark size={24} strokeWidth={1} />
+                         {isSuggested && <Badge color={isSelected ? "neutral" : "accent"}>Production Recommended</Badge>}
+                      </div>
+                      <span className="text-3xl font-serif italic leading-none">{u.name}</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 leading-relaxed">{u.description}</span>
+                    </button>
+                  );
+                })}
+             </div>
+
+             <div className="flex justify-between pt-20 border-t border-white/5">
+               <button onClick={handleBack} className="text-[10px] font-black uppercase tracking-[0.5em] text-white/30 hover:text-white transition-colors">Back to Ones</button>
+               <Button onClick={handleNext} className="h-20 px-16 text-[10px] tracking-[0.4em] font-black" disabled={formData.selectedUnions.length === 0}>Establish Objectives <ArrowRight size={14} className="ml-4" /></Button>
+             </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="space-y-12 animate-in slide-in-from-right duration-500">
+             <div className="space-y-2">
+                <Text variant="caption">Scene 04 // Objectives</Text>
+                <Heading level={2} className="text-white">The Long Shot.</Heading>
+             </div>
+             
+             <div className="grid md:grid-cols-2 gap-2">
+                {[
+                  { id: 'UNION_JOIN', label: 'Guild Admission', icon: Shield },
+                  { id: 'TIER_UP', label: 'Member Upgrade', icon: Zap },
+                  { id: 'AUDIT_PROOF', label: 'Continuity Audit', icon: Briefcase },
+                  { id: 'GST_LIMIT', label: 'Tax Compliance', icon: Target }
+                ].map((goal) => (
+                  <button 
+                    key={goal.id}
+                    onClick={() => toggleGoal(goal.id)}
+                    className={clsx(
+                      "p-16 transition-all duration-700 border flex flex-col items-center text-center gap-10", 
+                      formData.goals.includes(goal.id) ? "bg-accent text-black border-accent" : "glass-ui text-white hover:border-white/20"
+                    )}
+                  >
+                    <goal.icon size={32} strokeWidth={1} />
+                    <span className="text-[11px] font-black uppercase tracking-[0.5em]">{goal.label}</span>
+                  </button>
+                ))}
+             </div>
+
+             <div className="flex justify-between pt-20 border-t border-white/5">
+               <button onClick={handleBack} className="text-[10px] font-black uppercase tracking-[0.5em] text-white/30 hover:text-white transition-colors">Back to Ones</button>
+               <Button onClick={handleFinish} className="h-24 px-20 bg-white text-black font-black uppercase tracking-[0.6em] text-[11px]">Print It // Action</Button>
+             </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 };

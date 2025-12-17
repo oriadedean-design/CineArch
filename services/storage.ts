@@ -3,7 +3,7 @@ import { User, Job, UserUnionTracking, UNIONS, ResidencyDocument } from '../type
 
 // Keys
 const USER_KEY = 'cinearch_user';
-const DATA_PREFIX = 'cinearch_data_'; // Prefix for user-specific data
+const DATA_PREFIX = 'cinearch_data_';
 
 // Helpers
 const getStorage = <T>(key: string, defaultVal: T): T => {
@@ -20,15 +20,13 @@ const setStorage = (key: string, val: any) => {
   localStorage.setItem(key, JSON.stringify(val));
 };
 
-// Helper to get current active context ID (either the user themselves or the client they are managing)
 const getActiveContextId = (): string => {
   const user = getStorage<User | null>(USER_KEY, null);
   if (!user) return 'anon';
-  // If agent has selected a view, use that ID. Otherwise use their own ID.
+  // Context is either the agent themselves, or the client they have selected to 'view'
   return user.activeViewId || user.id;
 };
 
-// Keys Generator
 const getKeys = () => {
   const contextId = getActiveContextId();
   return {
@@ -38,22 +36,20 @@ const getKeys = () => {
   };
 };
 
-// API
 export const api = {
   auth: {
     getUser: (): User | null => getStorage<User | null>(USER_KEY, null),
     login: (email: string, asAgent: boolean = false): User => {
       let user = getStorage<User | null>(USER_KEY, null);
-      // Basic mock login logic - usually would check password etc.
       if (!user || user.email !== email) {
         user = {
-          id: asAgent ? 'agent_1' : 'user_1',
+          id: asAgent ? `agent_${Date.now()}` : `user_${Date.now()}`,
           name: asAgent ? 'Talent Manager' : 'Film Worker',
           email,
           role: asAgent ? 'Agent' : '',
           province: '',
           isOnboarded: false,
-          isPremium: asAgent, // Agents usually premium
+          isPremium: asAgent,
           memberStatus: 'ASPIRING',
           country: 'Canada',
           language: 'English',
@@ -75,20 +71,14 @@ export const api = {
       return null;
     },
     logout: () => {
-      // Keep data but clear session state in real app
+      // Session cleanup if needed
     },
-    
-    // Agency Methods
     addClient: (client: User) => {
       const agent = getStorage<User | null>(USER_KEY, null);
       if (agent && agent.accountType === 'AGENT') {
         const managed = agent.managedUsers || [];
         const updatedAgent = { ...agent, managedUsers: [...managed, client] };
         setStorage(USER_KEY, updatedAgent);
-        
-        // Also initialize client data if needed
-        // For MVP, we don't strictly separate the "User Object Store" from the "Session Store"
-        // But the data keys rely on client.id, so just having the client in the list is enough
       }
     },
     switchClient: (clientId: string | undefined) => {
@@ -96,6 +86,8 @@ export const api = {
       if (agent && agent.accountType === 'AGENT') {
         const updatedAgent = { ...agent, activeViewId: clientId };
         setStorage(USER_KEY, updatedAgent);
+        // Refresh to apply new context
+        window.location.reload();
       }
     }
   },
@@ -106,14 +98,6 @@ export const api = {
       localStorage.removeItem(keys.JOBS);
       localStorage.removeItem(keys.TRACKING);
       localStorage.removeItem(keys.VAULT);
-    },
-    deleteAccount: () => {
-       const keys = getKeys();
-       localStorage.removeItem(keys.JOBS);
-       localStorage.removeItem(keys.TRACKING);
-       localStorage.removeItem(keys.VAULT);
-       localStorage.removeItem(USER_KEY);
-       window.location.reload();
     }
   },
 
@@ -152,68 +136,41 @@ export const api = {
       setStorage(keys.TRACKING, trackings);
     },
     calculateProgress: (trackingId: string, jobs: Job[]) => {
-      const keys = getKeys();
-      const tracks = getStorage<UserUnionTracking[]>(keys.TRACKING, []);
+      const tracks = getStorage<UserUnionTracking[]>(getKeys().TRACKING, []);
       const track = tracks.find(t => t.id === trackingId);
       if (!track) return { current: 0, potential: 0, target: 0, percent: 0, potentialPercent: 0 };
 
-      // Base Filter: Union matches
       let baseJobs = jobs.filter(j => j.isUnion && j.unionName === track.unionName);
+      if (track.department) baseJobs = baseJobs.filter(j => j.department === track.department);
       
-      // Department Filter
-      if (track.department) {
-        baseJobs = baseJobs.filter(j => j.department === track.department);
-      }
-      
-      // Helpers to count based on type
       const countValue = (jList: Job[]) => {
-        if (track.targetType === 'HOURS') {
-          return jList.reduce((sum, j) => sum + j.totalHours, 0);
-        } else if (track.targetType === 'DAYS') {
-          return jList.length; 
-        } else if (track.targetType === 'CREDITS') {
-          return jList.filter(j => 
-            j.creditType && ['PRINCIPAL', 'ACTOR', 'STUNT', 'CREW'].includes(j.creditType)
-          ).length;
-        } else if (track.targetType === 'EARNINGS') {
-          return jList.reduce((sum, j) => sum + (j.grossEarnings || 0), 0);
-        }
+        if (track.targetType === 'HOURS') return jList.reduce((sum, j) => sum + (j.totalHours || 0), 0);
+        if (track.targetType === 'DAYS') return jList.length; 
+        if (track.targetType === 'CREDITS') return jList.length;
+        if (track.targetType === 'EARNINGS') return jList.reduce((sum, j) => sum + (j.grossEarnings || 0), 0);
         return 0;
       };
 
-      // Split into Confirmed vs Tentative
-      const confirmedJobs = baseJobs.filter(j => j.status === 'CONFIRMED');
-      const tentativeJobs = baseJobs.filter(j => j.status === 'TENTATIVE');
-
-      const confirmedVal = countValue(confirmedJobs);
-      const tentativeVal = countValue(tentativeJobs);
-
+      const confirmedVal = countValue(baseJobs.filter(j => j.status === 'CONFIRMED'));
       const totalConfirmed = track.startingValue + confirmedVal;
-      const totalPotential = totalConfirmed + tentativeVal;
-
       const percent = Math.min((totalConfirmed / track.targetValue) * 100, 100);
-      const potentialPercent = Math.min((totalPotential / track.targetValue) * 100, 100);
       
       return { 
         current: totalConfirmed, 
-        potential: totalPotential, 
+        potential: totalConfirmed, 
         target: track.targetValue, 
         percent,
-        potentialPercent
+        potentialPercent: percent
       };
     }
   },
 
   vault: {
-    list: (): ResidencyDocument[] => {
-      const keys = getKeys();
-      return getStorage<ResidencyDocument[]>(keys.VAULT, []);
-    },
+    list: (): ResidencyDocument[] => getStorage<ResidencyDocument[]>(getKeys().VAULT, []),
     add: (doc: ResidencyDocument) => {
       const keys = getKeys();
       const docs = getStorage<ResidencyDocument[]>(keys.VAULT, []);
-      const newDocs = [doc, ...docs];
-      setStorage(keys.VAULT, newDocs);
+      setStorage(keys.VAULT, [doc, ...docs]);
       return doc;
     },
     delete: (id: string) => {

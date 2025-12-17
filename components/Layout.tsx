@@ -1,9 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Layers, WalletCards, Users, Settings, Plus, ChevronDown, Check, Building2, User } from 'lucide-react';
-import { api } from '../services/api';
-import { Profile, OrgMembership } from '../types';
+import { LayoutDashboard, Layers, FileText, Settings, Plus, WalletCards, Bell, X, Shield, Contact } from 'lucide-react';
+import { api } from '../services/storage';
+import { User, CineNotification } from '../types';
+import { clsx } from 'clsx';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -13,150 +14,128 @@ interface LayoutProps {
 export const Layout = ({ children, onLogout }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [memberships, setMemberships] = useState<OrgMembership[]>([]);
-  const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
-  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [isClapperAnimating, setIsClapperAnimating] = useState(false);
+  const [notifications, setNotifications] = useState<CineNotification[]>([]);
 
   useEffect(() => {
-    const init = async () => {
-        const p = await api.auth.getProfile();
-        setProfile(p);
-        const mems = await api.auth.getMyMemberships();
-        setMemberships(mems);
-        
-        // Context Logic
-        const stored = localStorage.getItem('cinearch_org_id');
-        if (stored) {
-            setActiveOrgId(stored);
-        } else if (mems.length > 0) {
-            // Default to first org found (usually personal if created on signup)
-            setActiveOrgId(mems[0].org_id);
-            localStorage.setItem('cinearch_org_id', mems[0].org_id);
-        }
-    };
-    init();
+    setUser(api.auth.getUser());
+    setNotifications([
+      { id: '1', type: 'GST_THRESHOLD', title: 'Threshold Sync', message: 'Small Supplier limit reached 82%. Prepare registration.', timestamp: '2h ago', isRead: false, priority: 'high' },
+      { id: '2', type: 'PRODUCTION_START', title: 'Session Verified', message: 'Project "Midnight" call sheet sync complete.', timestamp: '4h ago', isRead: false, priority: 'medium' }
+    ]);
   }, [location]);
 
-  const handleSwitch = (orgId: string) => {
-      api.orgs.switchOrg(orgId);
+  const handleNotificationToggle = () => {
+    setIsClapperAnimating(true);
+    setShowNotifications(!showNotifications);
+    setTimeout(() => setIsClapperAnimating(false), 500);
   };
 
-  const currentOrg = memberships.find(m => m.org_id === activeOrgId)?.organization;
-  const isAgency = currentOrg?.org_type === 'agency';
-
   const navItems = [
-    { label: 'Overview', icon: LayoutDashboard, path: '/' },
-    { label: 'Projects', icon: Layers, path: '/jobs' },
-    { label: 'Finance', icon: WalletCards, path: '/finance' },
-    ...(isAgency ? [{ label: 'Agency Portal', icon: Users, path: '/agency' }] : []),
-    { label: 'Settings', icon: Settings, path: '/settings' },
+    { label: 'The Wrap', icon: LayoutDashboard, path: '/' },
+    { label: 'The Slate', icon: Layers, path: '/jobs' },
+    { label: 'The Ledger', icon: WalletCards, path: '/finance' },
+    { label: 'Continuity', icon: FileText, path: '/reports' },
+    { label: 'Base Camp', icon: Settings, path: '/settings' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-background text-textPrimary font-sans selection:bg-accent selection:text-white">
-      {/* Top Bar - Cinematic Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-20 px-6 md:px-12 flex items-center justify-between bg-gradient-to-b from-background/95 to-transparent pointer-events-none border-b border-white/5">
-        <div className="pointer-events-auto flex items-center gap-6">
-            <div 
-              className="cursor-pointer group flex items-center gap-3"
-              onClick={() => navigate('/')}
-            >
-              <div className="w-10 h-10 rounded-full border border-light/20 flex items-center justify-center bg-light/5 backdrop-blur-md group-hover:bg-light/10 transition-colors">
-                <span className="font-serif italic text-xl text-light">Ca</span>
-              </div>
-            </div>
-
-            {/* Org Switcher */}
-            <div className="relative">
-                <button 
-                    onClick={() => setIsSwitcherOpen(!isSwitcherOpen)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
-                >
-                    <div className="flex flex-col items-start">
-                        <span className="text-[10px] uppercase tracking-widest text-textTertiary">Workspace</span>
-                        <span className="text-sm font-bold text-light flex items-center gap-2">
-                            {currentOrg?.name || 'Loading...'} 
-                            <ChevronDown className="w-3 h-3 text-textTertiary"/>
-                        </span>
-                    </div>
-                </button>
-
-                {isSwitcherOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-surface border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-2 space-y-1">
-                            {memberships.map(mem => (
-                                <button
-                                    key={mem.org_id}
-                                    onClick={() => handleSwitch(mem.org_id)}
-                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left group ${activeOrgId === mem.org_id ? 'bg-accent/20' : 'hover:bg-white/5'}`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-1.5 rounded-md ${mem.organization?.org_type === 'agency' ? 'bg-purple-500/20 text-purple-400' : 'bg-white/10 text-white'}`}>
-                                            {mem.organization?.org_type === 'agency' ? <Building2 className="w-4 h-4"/> : <User className="w-4 h-4"/>}
-                                        </div>
-                                        <div>
-                                            <p className={`text-sm font-medium ${activeOrgId === mem.org_id ? 'text-accent' : 'text-textPrimary'}`}>{mem.organization?.name}</p>
-                                            <p className="text-[10px] text-textTertiary uppercase">{mem.member_role}</p>
-                                        </div>
-                                    </div>
-                                    {activeOrgId === mem.org_id && <Check className="w-4 h-4 text-accent"/>}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="p-2 border-t border-white/10 bg-white/5">
-                            <button className="w-full text-xs font-bold text-center py-2 text-textTertiary hover:text-white transition-colors">
-                                + Create Organization
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
+    <div className="min-h-screen font-sans bg-transparent">
+      {/* Editorial HUD Header */}
+      <header className="fixed top-0 left-0 right-0 z-[100] h-20 px-6 md:px-12 flex items-center justify-between pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-4">
+          <div className="cursor-pointer group flex items-center gap-3" onClick={() => navigate('/')}>
+            <span className="font-serif italic text-2xl text-white">Ca</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-white/40">v 0.5</span>
+          </div>
         </div>
 
         <div className="pointer-events-auto flex items-center gap-6">
-           <div className="w-10 h-10 rounded-full overflow-hidden border border-light/20 hover:border-light transition-colors cursor-pointer" onClick={onLogout}>
-              <div className="w-full h-full bg-gradient-to-tr from-surfaceHighlight to-surface flex items-center justify-center">
-                 <span className="font-serif italic text-textSecondary">{profile?.name?.charAt(0)}</span>
-              </div>
-           </div>
+          <div className="relative">
+             <button 
+                onClick={handleNotificationToggle}
+                className={clsx(
+                  "w-10 h-10 flex flex-col items-center justify-center transition-all group",
+                  showNotifications ? "text-accent" : "text-white/40 hover:text-white"
+                )}
+             >
+                <div className={clsx(
+                  "w-6 h-[2px] bg-current rounded-full mb-[2px] transition-transform duration-300 origin-left",
+                  showNotifications ? "rotate-0" : "-rotate-[25deg]",
+                  isClapperAnimating && "animate-snap"
+                )}></div>
+                <div className="w-6 h-4 border-2 border-current rounded-sm flex items-center justify-center relative">
+                   {notifications.some(n => !n.isRead) && (
+                     <span className="absolute -top-1.5 -right-1.5 w-2 h-2 bg-accent rounded-full animate-pulse"></span>
+                   )}
+                   <Bell size={10} />
+                </div>
+             </button>
+
+             {showNotifications && (
+               <div className="absolute top-14 right-0 w-80 glass-ui p-6 animate-in fade-in slide-in-from-top-2">
+                 <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-2">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-accent italic tracking-[0.2em]">Production Alerts</span>
+                    <button onClick={() => setShowNotifications(false)}><X size={14} className="text-white" /></button>
+                 </div>
+                 <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+                    {notifications.map(n => (
+                       <div key={n.id} className="p-4 bg-white/5 border-l-2 border-accent hover:bg-white/10 transition-colors cursor-pointer text-white">
+                          <p className="text-[10px] font-bold text-white mb-1 uppercase tracking-widest">{n.title}</p>
+                          <p className="text-[10px] text-white/80 leading-relaxed">{n.message}</p>
+                          <span className="text-[8px] text-white/40 mt-2 block font-black">{n.timestamp}</span>
+                       </div>
+                    ))}
+                 </div>
+               </div>
+             )}
+          </div>
+
+          <div 
+             className="w-10 h-10 bg-white text-black font-black flex items-center justify-center text-[10px] cursor-pointer hover:bg-accent transition-colors" 
+             onClick={onLogout}
+          >
+              {user?.name?.charAt(0)}
+          </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="pt-24 pb-32 px-4 md:px-12 max-w-7xl mx-auto min-h-screen animate-in fade-in duration-700">
-        {children}
-      </main>
-
-      {/* Floating Dock */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-         <nav className="flex items-center gap-2 px-2 py-2 rounded-2xl glass border border-light/10 shadow-2xl shadow-black/80 ring-1 ring-light/5 backdrop-blur-2xl">
+      {/* Persistent Floating Dock */}
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4">
+         <nav className="flex items-center gap-1 p-2 glass-ui shadow-2xl justify-center">
             {navItems.map((item) => (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`relative flex flex-col items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-xl transition-all duration-300 ease-out group ${
+                className={clsx(
+                  "relative flex items-center justify-center w-12 h-12 transition-all duration-300",
                   isActive(item.path) 
-                    ? 'bg-light text-background shadow-[0_0_20px_rgba(201,204,199,0.3)] scale-110 -translate-y-2' 
-                    : 'text-textTertiary hover:text-light hover:bg-light/10'
-                }`}
+                    ? 'bg-white text-black' 
+                    : 'text-white/40 hover:text-white hover:bg-white/5'
+                )}
+                title={item.label}
               >
-                <item.icon className="w-5 h-5 md:w-6 md:h-6" strokeWidth={isActive(item.path) ? 2.5 : 2} />
+                <item.icon size={18} strokeWidth={isActive(item.path) ? 3 : 2} />
               </button>
             ))}
-            
-            <div className="w-[1px] h-8 bg-light/10 mx-2"></div>
-            
+            <div className="w-[1px] h-6 bg-white/10 mx-2"></div>
             <button
                onClick={() => navigate('/jobs/new')}
-               className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-xl bg-accent text-background hover:bg-accentGlow transition-all shadow-glow hover:scale-105 active:scale-95"
+               className="flex items-center justify-center w-12 h-12 bg-accent text-black hover:scale-105 transition-all"
+               title="Log Production"
             >
-               <Plus className="w-6 h-6" />
+               <Plus size={20} strokeWidth={3} />
             </button>
          </nav>
       </div>
+
+      <main className="mobile-wrapper pt-24 pb-40 min-h-screen">
+        {children}
+      </main>
     </div>
   );
 };

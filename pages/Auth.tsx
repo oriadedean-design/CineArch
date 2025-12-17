@@ -1,107 +1,111 @@
-
 import React, { useState } from 'react';
 import { Button, Input, Heading, Text, Badge } from '../components/ui';
-import { api } from '../services/api'; // Switched to API
+import { api } from '../services/storage';
 import { User } from '../types';
-import { Briefcase, ArrowLeft } from 'lucide-react';
+import { Briefcase, ArrowLeft, Camera, Shield } from 'lucide-react';
+// Import clsx for conditional class names
+import { clsx } from 'clsx';
 
 export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (u: User) => void, onBack: () => void, initialAgentMode?: boolean }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAgent, setIsAgent] = useState(initialAgentMode);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    try {
-        await api.auth.login(email);
-        alert("Check your email for the login link!");
-        setLoading(false);
-        // In a real app, we'd wait for session state change in App.tsx to trigger onLogin
-    } catch (e: any) {
-        alert("Error logging in: " + e.message);
-        setLoading(false);
-    }
+    // Simulate set prep
+    setTimeout(() => {
+      const user = api.auth.login(email, isAgent);
+      onLogin(user);
+      setLoading(false);
+    }, 1200);
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-6 relative transition-colors duration-500 ${isAgent ? 'bg-background' : 'bg-surfaceHighlight'}`}>
-      {/* Back to Landing Page Button */}
+    <div className="min-h-screen flex items-center justify-center p-6 relative bg-black overflow-hidden font-sans">
+      {/* Background Cinematic Texture */}
+      <div className="absolute inset-0 bg-cinematic-universal opacity-20 pointer-events-none"></div>
+      <div className="bg-vignette-universal"></div>
+
+      {/* Back to First Positions */}
       <div 
-        className="absolute top-6 left-6 cursor-pointer z-10 flex items-center gap-2 group" 
+        className="absolute top-12 left-12 cursor-pointer z-50 flex items-center gap-4 group" 
         onClick={onBack}
       >
-         <ArrowLeft className={`w-5 h-5 transition-colors text-textTertiary group-hover:text-light`} />
-         <span className={`text-sm font-medium uppercase tracking-widest transition-colors text-textTertiary group-hover:text-light`}>Back</span>
+         <ArrowLeft className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
+         <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 group-hover:text-white transition-colors">Back to Ones</span>
       </div>
 
-      <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="mb-12 mt-12 md:mt-0">
-          {isAgent ? (
-             <div className="flex items-center gap-2 mb-2">
-                 <div className="p-1 bg-accent rounded text-background"><Briefcase className="w-4 h-4"/></div>
-                 <span className="text-light text-xs uppercase tracking-[0.2em] font-medium">Enterprise Access</span>
+      <div className="w-full max-w-xl relative z-10">
+        <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          <div className="flex justify-center mb-8">
+             <div className="w-16 h-16 border border-white/20 glass-ui flex items-center justify-center">
+                <span className="font-serif italic text-3xl text-white">Ca</span>
              </div>
-          ) : (
-             <Heading level={1} className="mb-2 text-light">CineArch</Heading>
-          )}
-          {isAgent ? (
-             <Heading level={1} className="text-light">Agency Portal</Heading>
-          ) : (
-             <Text variant="subtle">Built for the passionate crew.</Text>
-          )}
+          </div>
+          <h1 className="heading-huge text-white mb-4">CINEARCH.</h1>
+          <p className="text-[10px] font-black uppercase tracking-[0.8em] text-accent">Professional Registry</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8 bg-surface p-6 md:p-12 border border-light/10 shadow-2xl relative overflow-hidden rounded-2xl md:rounded-none">
-          {isAgent && <div className="absolute top-0 left-0 w-full h-1 bg-accent" />}
-          
-          <div className="space-y-1">
-             <div className="flex justify-between items-baseline">
-                <Heading level={3} className="text-light">
-                    {isLogin ? 'Sign In' : 'Register'}
-                </Heading>
-                {!isLogin && isAgent && <Badge color="accent">Agent License</Badge>}
-             </div>
-             <Text variant="small">{isAgent ? 'Manage your roster and billing.' : 'Enter your email to receive a secure login link.'}</Text>
-          </div>
-
-          <div className="space-y-6 pt-4">
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-widest text-textTertiary mb-2">{isAgent ? 'Work Email' : 'Email'}</label>
+        <form onSubmit={handleSubmit} className="space-y-12 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-200">
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 flex items-center gap-2">
+                <Shield size={10} className="text-accent" /> Personnel Coordinate
+              </label>
               <Input 
                 type="email" 
                 required 
-                placeholder={isAgent ? "agent@agency.com" : "you@example.com"}
+                placeholder="Production Email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="bg-surfaceHighlight border-light/10 text-light focus:border-accent focus:ring-0"
+                className="h-20 text-xl font-serif italic"
+              />
+            </div>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Access Key</label>
+              <Input 
+                type="password" 
+                required 
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="h-20 text-xl font-serif italic"
               />
             </div>
           </div>
           
-          <div className="pt-4">
-            <Button className="w-full bg-light text-background hover:bg-white" isLoading={loading}>
-              {isLogin ? 'Send Magic Link' : 'Create Account'}
+          <div className="pt-8">
+            <Button 
+              className="w-full h-24 text-[11px] font-black uppercase tracking-[0.6em] transition-all hover:scale-[1.02]" 
+              isLoading={loading}
+            >
+              {loading ? "Checking the Gate..." : isLogin ? "Report to Set" : "Sign for the Block"}
             </Button>
           </div>
 
-          <div className="text-center pt-4 space-y-4">
+          <div className="text-center space-y-8 pt-8">
             <button 
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="block w-full text-xs font-medium uppercase tracking-widest text-textTertiary hover:text-light transition-colors"
+              className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 hover:text-white transition-colors"
             >
-              {isLogin ? "Need an account? Register" : "Have an account? Sign in"}
+              {isLogin ? "New Personnel? Register" : "Existing Member? Authenticate"}
             </button>
-            <div className="border-t border-light/5 pt-4">
+            <div className="pt-8 border-t border-white/5">
               <button 
                 type="button"
                 onClick={() => setIsAgent(!isAgent)}
-                className="text-xs font-bold uppercase tracking-widest text-accent hover:underline"
+                className={clsx(
+                  "text-[9px] font-black uppercase tracking-[0.4em] transition-all px-8 py-3 border",
+                  isAgent ? "border-accent text-accent bg-accent/5" : "border-white/10 text-white/40 hover:text-white hover:border-white/30"
+                )}
               >
-                {isAgent ? "Switch to Individual Login" : "SWITCH TO AGENCY PORTAL"}
+                {isAgent ? "Switch to Individual Access" : "Switch to Agency Command"}
               </button>
             </div>
           </div>

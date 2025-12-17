@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
@@ -11,55 +10,54 @@ import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { Resources } from './pages/Resources';
 import { Finance } from './pages/Finance';
-import { Agency } from './pages/Agency';
-import { api } from './services/api'; 
-import { Loader2 } from 'lucide-react';
+import { Privacy } from './pages/Privacy';
+import { api } from './services/storage';
+import { User } from './types';
 
 const MainApp = () => {
-  const [session, setSession] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [authAgentMode, setAuthAgentMode] = useState(false);
 
   useEffect(() => {
-    const checkUser = async () => {
-        try {
-            const s = await api.auth.getSession();
-            if (s) {
-                setSession(s);
-            } else {
-                setShowWelcome(true);
-            }
-        } catch (e) {
-            console.error(e);
-            setShowWelcome(true);
-        } finally {
-            setLoading(false);
-        }
-    };
-    checkUser();
+    const u = api.auth.getUser();
+    if (u) {
+      setUser(u);
+    } else {
+      setShowWelcome(true);
+    }
+    setLoading(false);
   }, []);
 
-  const handleLogin = (user: any) => {
-    setSession(user); // Mock for now, usually session object
+  const handleLogin = (u: User) => {
+    setUser(u);
     setShowWelcome(false);
-    window.location.reload(); // Force api context refresh
   };
 
   const handleLogout = () => {
     api.auth.logout();
+    setUser(null);
+    setShowWelcome(true);
   };
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-8 h-8 text-accent animate-spin"/></div>;
+  const handleWelcomeEnter = (asAgent: boolean = false) => {
+    setAuthAgentMode(asAgent);
+    setShowWelcome(false);
+  };
+  
+  const handleAuthBack = () => setShowWelcome(true);
 
-  if (!session) {
-    if (showWelcome) {
-       return <Welcome onEnter={() => setShowWelcome(false)} />;
-    }
-    return <Auth onLogin={handleLogin} onBack={() => setShowWelcome(true)} />;
+  if (loading) return null;
+
+  if (!user) {
+    if (showWelcome) return <Welcome onEnter={handleWelcomeEnter} />;
+    return <Auth onLogin={handleLogin} onBack={handleAuthBack} initialAgentMode={authAgentMode} />;
   }
 
-  // Simplified Onboarding Check logic would go here, 
-  // checking if user has any org memberships yet.
+  if (!user.isOnboarded) {
+    return <Onboarding user={user} onComplete={() => setUser({ ...user, isOnboarded: true })} />;
+  }
 
   return (
     <Layout onLogout={handleLogout}>
@@ -68,9 +66,11 @@ const MainApp = () => {
         <Route path="/jobs" element={<JobsList />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
         <Route path="/finance" element={<Finance />} />
-        <Route path="/agency" element={<Agency />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/resources" element={<Resources />} />
+        <Route path="/resources/:slug" element={<Resources />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
@@ -80,11 +80,7 @@ const MainApp = () => {
 const App = () => {
   return (
     <HashRouter>
-      <Routes>
-        <Route path="/resources" element={<Resources />} />
-        <Route path="/resources/:slug" element={<Resources />} />
-        <Route path="/*" element={<MainApp />} />
-      </Routes>
+      <MainApp />
     </HashRouter>
   );
 };

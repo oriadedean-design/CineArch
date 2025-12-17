@@ -3,13 +3,12 @@ import React from 'react';
 import { clsx } from 'clsx';
 import { Loader2 } from 'lucide-react';
 
-// --- Typography ---
 export const Heading = ({ children, level = 1, className }: { children?: React.ReactNode, level?: 1 | 2 | 3 | 4, className?: string }) => {
   const styles = {
-    1: "text-4xl md:text-6xl font-serif text-light leading-none tracking-tight drop-shadow-xl",
-    2: "text-3xl md:text-4xl font-sans font-bold text-light tracking-tight",
-    3: "text-xl md:text-2xl font-sans font-semibold text-light/90",
-    4: "text-lg font-sans font-medium text-light/80"
+    1: "heading-huge text-white mb-6",
+    2: "font-serif italic text-3xl md:text-5xl text-white tracking-tighter mb-4 leading-none",
+    3: "font-serif italic text-lg md:text-xl text-white tracking-tight leading-relaxed",
+    4: "font-sans font-black uppercase tracking-[0.4em] text-[8px] text-accent"
   };
   const Tag = `h${level}` as React.ElementType;
   return <Tag className={clsx(styles[level], className)}>{children}</Tag>;
@@ -17,50 +16,41 @@ export const Heading = ({ children, level = 1, className }: { children?: React.R
 
 export const Text = ({ children, className, variant = "body", uppercase = false }: { children?: React.ReactNode, className?: string, variant?: "body" | "subtle" | "small" | "caption", uppercase?: boolean }) => {
   const styles = {
-    body: "text-base text-textPrimary font-light leading-relaxed", 
-    subtle: "text-textSecondary font-light", 
-    small: "text-sm text-textTertiary", 
-    caption: "text-xs font-bold tracking-[0.2em] text-accent"
+    body: "text-sm md:text-base text-white/90 font-light leading-relaxed", 
+    subtle: "text-white/70 font-light leading-relaxed", 
+    small: "text-[12px] text-white/60 leading-snug", 
+    caption: "text-[9px] font-black tracking-[0.4em] text-accent uppercase"
   };
   return <p className={clsx(styles[variant], uppercase && "uppercase", className)}>{children}</p>;
 };
 
-// --- Interactive ---
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'glass';
   isLoading?: boolean;
-  className?: string;
-  disabled?: boolean;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 export const Button = ({ children, variant = 'primary', className, isLoading, disabled, ...props }: ButtonProps) => {
   const variants = {
-    // Primary: Light Grey Text on Muted Blue (Accent) Background for pop, OR Light Background Dark Text?
-    // Let's go with the Palette's "Light" for bg and "Dark" for text for high contrast primary.
-    primary: "bg-light text-background hover:bg-white border border-transparent shadow-[0_0_15px_rgba(201,204,199,0.3)]",
-    
-    // Secondary: Muted Teal background
-    secondary: "bg-secondary/20 text-secondary border border-secondary/30 hover:bg-secondary/30",
-    
-    outline: "bg-transparent border border-light/20 text-light hover:border-light hover:bg-light/5",
-    ghost: "bg-transparent text-textTertiary hover:text-light",
-    danger: "bg-tertiary/20 text-tertiary border border-tertiary/30 hover:bg-tertiary/30",
-    glass: "glass text-light hover:bg-light/10"
+    primary: "bg-white text-black hover:bg-accent transition-colors",
+    secondary: "bg-white/10 text-white hover:bg-white hover:text-black border border-white/10",
+    outline: "bg-transparent border border-white/20 text-white hover:border-accent hover:text-accent",
+    ghost: "bg-transparent text-white/60 hover:text-white",
+    danger: "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white",
+    glass: "glass-ui text-white hover:bg-white/10"
   };
 
   return (
     <button 
       className={clsx(
-        "inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-bold tracking-wide transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center px-8 py-4 text-[9px] font-black uppercase tracking-[0.4em] transition-all duration-300 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed rounded-none",
         variants[variant],
         className
       )}
       disabled={isLoading || disabled}
       {...props}
     >
-      {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+      {isLoading && <Loader2 className="w-3 h-3 mr-3 animate-spin" />}
       {children}
     </button>
   );
@@ -71,7 +61,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     <input
       ref={ref}
       className={clsx(
-        "w-full px-4 py-3 bg-surfaceHighlight/50 border border-light/10 rounded-xl text-textPrimary text-base focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-textTertiary",
+        "w-full px-6 py-4 bg-black/40 border border-white/10 text-white text-sm focus:outline-none focus:border-accent transition-all placeholder:text-white/30 backdrop-blur-md rounded-none font-light",
         className
       )}
       {...props}
@@ -79,41 +69,47 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
   );
 });
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  className?: string;
-  children?: React.ReactNode;
-}
+export const PhoneInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(({ onChange, ...props }, ref) => {
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/\D/g, '');
+    const formatted = rawValue ? `+1${rawValue}` : '';
+    const event = { ...e, target: { ...e.target, value: formatted } };
+    onChange?.(event as any);
+  };
 
-export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(({ className, children, ...props }, ref) => {
+  return <Input ref={ref} type="tel" placeholder="(555) 123-4567" onChange={handlePhoneChange} {...props} />;
+});
+
+export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(({ className, children, ...props }, ref) => {
   return (
-    <div className="relative">
+    <div className="relative group">
       <select
         ref={ref}
         className={clsx(
-          "w-full px-4 py-3 bg-surfaceHighlight/50 border border-light/10 rounded-xl text-textPrimary text-base focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all appearance-none pr-10",
+          "w-full px-6 py-4 bg-black/40 border border-white/10 text-white text-sm focus:outline-none focus:border-accent transition-all backdrop-blur-md rounded-none font-light appearance-none cursor-pointer",
           className
         )}
         {...props}
       >
         {children}
       </select>
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-textTertiary">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 group-hover:text-white transition-colors">
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
       </div>
     </div>
   );
 });
 
-// --- Containers ---
-export const Card = ({ children, className, onClick, style }: { children?: React.ReactNode, className?: string, onClick?: () => void, style?: React.CSSProperties }) => {
+export const Card = ({ children, className, onClick }: { children?: React.ReactNode, className?: string, onClick?: () => void }) => {
   return (
     <div 
       onClick={onClick} 
-      style={style}
       className={clsx(
-        "glass-card p-6 md:p-8 rounded-2xl relative overflow-hidden group transition-all duration-300 shadow-lg shadow-black/20", 
+        "glass-ui p-10 relative overflow-hidden group transition-all duration-500", 
         className, 
-        onClick && "cursor-pointer hover:border-light/30 hover:bg-light/5"
+        onClick && "cursor-pointer hover:border-accent/30"
       )}
     >
       {children}
@@ -121,25 +117,25 @@ export const Card = ({ children, className, onClick, style }: { children?: React
   );
 };
 
-export const Badge = ({ children, color = "neutral" }: { children?: React.ReactNode, color?: "neutral" | "success" | "blue" | "accent" }) => {
+export const Badge = ({ children, color = "neutral", className }: { children?: React.ReactNode, color?: "neutral" | "success" | "blue" | "accent", className?: string }) => {
   const colors = {
-    neutral: "bg-light/10 text-textSecondary border-light/10",
-    success: "bg-secondary/20 text-secondary border-secondary/30", // Using Muted Teal for success
-    blue: "bg-accent/20 text-accent border-accent/30", // Using Muted Blue for general active state
-    accent: "bg-accent/20 text-accent border-accent/30"
+    neutral: "bg-white/5 text-white/80 border-white/10",
+    success: "bg-green-500/10 text-green-400 border-green-500/20",
+    blue: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    accent: "bg-accent/10 text-accent border-accent/20"
   };
   return (
-    <span className={clsx("inline-flex items-center px-2 py-1 rounded-md border text-[10px] font-bold uppercase tracking-widest", colors[color])}>
+    <span className={clsx("inline-flex items-center px-4 py-1 border text-[8px] font-black uppercase tracking-[0.3em]", colors[color], className)}>
       {children}
     </span>
   );
 };
 
-export const ProgressBar = ({ progress, className, slim = false }: { progress: number, className?: string, slim?: boolean }) => {
+export const ProgressBar = ({ progress, className }: { progress: number, className?: string }) => {
   return (
-    <div className={clsx("w-full bg-surfaceHighlight overflow-hidden rounded-full", slim ? "h-1" : "h-1.5", className)}>
+    <div className={clsx("w-full bg-white/5 overflow-hidden h-1", className)}>
       <div 
-        className="h-full bg-gradient-to-r from-accent to-secondary transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(124,150,166,0.5)]" 
+        className="h-full bg-accent transition-all duration-[1500ms] ease-out" 
         style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
       />
     </div>

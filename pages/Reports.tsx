@@ -1,26 +1,12 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Heading, Text, Card, Button } from '../components/ui';
-import { Download, Lock, FileSpreadsheet, Loader2 } from 'lucide-react';
-import { api } from '../services/api';
-import { Job, User } from '../types';
+import { Download, Lock, FileSpreadsheet } from 'lucide-react';
+import { api } from '../services/storage';
 
 export const Reports = () => {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const loadData = async () => {
-      const u = await api.auth.getUser();
-      setUser(u);
-      const j = await api.jobs.list(u?.id);
-      setJobs(j);
-      setLoading(false);
-    };
-    loadData();
-  }, []);
-
+  const jobs = api.jobs.list();
+  const user = api.auth.getUser();
   const totalHours = jobs.reduce((acc, curr) => acc + curr.totalHours, 0);
   const totalEarnings = jobs.reduce((acc, curr) => acc + (curr.grossEarnings || 0), 0);
   const totalDeductions = jobs.reduce((acc, curr) => acc + (curr.unionDeductions || 0), 0);
@@ -34,8 +20,6 @@ export const Reports = () => {
     // Unlocked feature
     alert("Mock CSV Import Triggered.");
   };
-
-  if (loading) return <div className="h-96 flex items-center justify-center"><Loader2 className="animate-spin text-accent" /></div>;
 
   return (
     <div className="space-y-8">
