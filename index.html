@@ -1,5 +1,6 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -7,45 +8,88 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-    <style>
-      :root {
-        --color-bg: #F3F3F1;
-        --color-card: #FFFFFF;
-        --color-ink: #121212;
-        --color-subtle: #666666;
-        --color-border: #E5E5E5;
-        --color-accent: #C73E1D; /* Vermilion */
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              background: '#172021', // Dark Base
+              surface: '#1c2628', // Slightly lighter for cards
+              surfaceHighlight: '#233032', // Even lighter for hovers
+              border: '#5C8180', // Muted Teal for subtle borders
+              
+              // New Palette Map
+              accent: '#7C96A6', // Muted Blue (Primary Action)
+              accentGlow: '#9AB0BD',
+              
+              secondary: '#5C8180', // Muted Teal (Success/Growth)
+              tertiary: '#7B6D60', // Muted Brown (Warning/Earth)
+              light: '#C9CCC7', // Main Text
+
+              // Text Hierarchies
+              textPrimary: '#C9CCC7', 
+              textSecondary: '#9EA19D',
+              textTertiary: '#757874',
+            },
+            fontFamily: {
+              sans: ['Spline Sans', 'sans-serif'],
+              serif: ['Instrument Serif', 'serif'],
+            },
+            boxShadow: {
+              'glow': '0 0 20px -5px rgba(124, 150, 166, 0.3)', // Accent glow
+              'glass': '0 8px 32px 0 rgba(23, 32, 33, 0.36)',
+            },
+            backgroundImage: {
+              'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+              'cinematic-fade': 'linear-gradient(to top, #172021 0%, transparent 100%)',
+            }
+          }
+        }
       }
+    </script>
+    <style>
       body {
-        background-color: var(--color-bg);
-        color: var(--color-ink);
-        font-family: 'DM Sans', sans-serif;
+        background-color: #172021;
+        color: #C9CCC7;
         -webkit-font-smoothing: antialiased;
       }
-      h1, h2, h3, h4, h5, h6, .font-serif {
-        font-family: 'Instrument Serif', serif;
-        font-weight: 400; /* Serif looks better lighter */
+      
+      /* Glassmorphism Utilities */
+      .glass {
+        background: rgba(28, 38, 40, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(201, 204, 199, 0.1);
       }
       
-      /* Editorial Utilities */
-      .editorial-border {
-        border: 1px solid var(--color-border);
+      .glass-card {
+        background: linear-gradient(180deg, rgba(201, 204, 199, 0.03) 0%, rgba(201, 204, 199, 0.01) 100%);
+        border: 1px solid rgba(92, 129, 128, 0.15); /* Muted Teal Border */
+        backdrop-filter: blur(10px);
       }
-      .editorial-shadow {
-        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #172021;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #233032;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #5C8180;
       }
       
-      /* Form Resets */
-      input, select, textarea {
-        background: transparent;
-      }
-      
-      /* Hide scrollbar for clean UI */
-      .no-scrollbar::-webkit-scrollbar {
+      .hide-scrollbar::-webkit-scrollbar {
         display: none;
       }
-      .no-scrollbar {
+      .hide-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
@@ -59,7 +103,8 @@
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
     "clsx": "https://aistudiocdn.com/clsx@^2.1.1",
     "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
-    "firebase/": "https://esm.sh/firebase@^12.6.0/"
+    "papaparse": "https://aistudiocdn.com/papaparse@^5.4.1",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.88.0"
   }
 }
 </script>

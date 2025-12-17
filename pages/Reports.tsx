@@ -1,32 +1,41 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Heading, Text, Card, Button } from '../components/ui';
-import { Download, Lock, FileSpreadsheet } from 'lucide-react';
-import { api } from '../services/storage';
-import { User } from '../types';
+import { Download, Lock, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
+import { Job, User } from '../types';
 
-export const Reports = ({ user }: { user: User }) => {
-  const jobs = api.jobs.list();
-  // const user = api.auth.getUser(); // Use prop instead of local fetch
+export const Reports = () => {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const u = await api.auth.getUser();
+      setUser(u);
+      const j = await api.jobs.list(u?.id);
+      setJobs(j);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
   const totalHours = jobs.reduce((acc, curr) => acc + curr.totalHours, 0);
   const totalEarnings = jobs.reduce((acc, curr) => acc + (curr.grossEarnings || 0), 0);
   const totalDeductions = jobs.reduce((acc, curr) => acc + (curr.unionDeductions || 0), 0);
 
   const handleDownload = () => {
-    if (!user?.isPremium) {
-      alert("Reporting is a Premium feature.");
-      return;
-    }
+    // Unlocked feature
     alert("In a real app, this would generate a PDF via a library like @react-pdf/renderer or a backend service.");
   };
 
   const handleBulkUpload = () => {
-    if (!user?.isPremium) {
-      alert("Bulk Import is a Premium feature.");
-      return;
-    }
+    // Unlocked feature
     alert("Mock CSV Import Triggered.");
   };
+
+  if (loading) return <div className="h-96 flex items-center justify-center"><Loader2 className="animate-spin text-accent" /></div>;
 
   return (
     <div className="space-y-8">
@@ -38,12 +47,6 @@ export const Reports = ({ user }: { user: User }) => {
           <Text className="mt-2 mb-6">Generate a comprehensive summary of jobs, eligibility progress, and financial deductions.</Text>
           
           <div className="bg-neutral-50 p-6 rounded-lg mb-6 font-mono text-xs text-neutral-600 relative">
-             {!user?.isPremium && (
-                <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px] flex flex-col items-center justify-center z-10">
-                   <Lock className="w-8 h-8 text-neutral-400 mb-2"/>
-                   <span className="font-bold text-neutral-900">PREMIUM FEATURE</span>
-                </div>
-             )}
             <p className="font-bold border-b border-neutral-200 pb-2 mb-2">REPORT PREVIEW</p>
             <div className="flex justify-between mb-1"><span>Total Jobs Recorded:</span> <span>{jobs.length}</span></div>
             <div className="flex justify-between mb-1"><span>Total Hours:</span> <span>{totalHours}</span></div>
@@ -53,22 +56,22 @@ export const Reports = ({ user }: { user: User }) => {
           </div>
 
           <div className="flex gap-4">
-            <Button onClick={handleDownload} disabled={!user?.isPremium}>
+            <Button onClick={handleDownload}>
               <Download className="w-4 h-4 mr-2" /> Download PDF
             </Button>
-            <Button variant="secondary" onClick={handleDownload} disabled={!user?.isPremium}>Download CSV</Button>
+            <Button variant="secondary" onClick={handleDownload}>Download CSV</Button>
           </div>
         </Card>
         
         <div className="space-y-6">
-           <Card className="p-6 bg-blue-50 border-blue-100">
-             <h3 className="font-bold text-blue-900">Pro Tip</h3>
-             <p className="text-sm text-blue-800 mt-2">Ensure all your attachments are legible before exporting. The report will include links to your uploaded proofs. IATSE members should double check deduction totals against pay stubs.</p>
+           <Card className="p-6 bg-blue-900/20 border-blue-800">
+             <h3 className="font-bold text-blue-300">Pro Tip</h3>
+             <p className="text-sm text-blue-200 mt-2">Ensure all your attachments are legible before exporting. The report will include links to your uploaded proofs. IATSE members should double check deduction totals against pay stubs.</p>
            </Card>
 
-           <Card className="p-6 bg-[#121212] text-white">
+           <Card className="p-6 bg-surfaceHighlight border border-white/10 text-white">
              <h3 className="font-bold text-white mb-2 flex items-center gap-2"><FileSpreadsheet className="w-4 h-4"/> Bulk Import</h3>
-             <p className="text-sm text-neutral-400 mt-2 mb-4">Have an existing spreadsheet? Import your history in seconds.</p>
+             <p className="text-sm text-textTertiary mt-2 mb-4">Have an existing spreadsheet? Import your history in seconds.</p>
              <Button variant="outline" className="w-full text-xs text-white border-white hover:bg-white hover:text-black" onClick={handleBulkUpload}>
                Upload CSV
              </Button>

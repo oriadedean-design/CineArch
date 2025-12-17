@@ -6,10 +6,10 @@ import { Loader2 } from 'lucide-react';
 // --- Typography ---
 export const Heading = ({ children, level = 1, className }: { children?: React.ReactNode, level?: 1 | 2 | 3 | 4, className?: string }) => {
   const styles = {
-    1: "text-4xl md:text-5xl font-serif text-neutral-900 leading-[1.1] tracking-tight",
-    2: "text-3xl md:text-4xl font-serif text-neutral-900 leading-[1.2]",
-    3: "text-2xl font-serif text-neutral-900",
-    4: "text-lg font-serif text-neutral-900"
+    1: "text-4xl md:text-6xl font-serif text-light leading-none tracking-tight drop-shadow-xl",
+    2: "text-3xl md:text-4xl font-sans font-bold text-light tracking-tight",
+    3: "text-xl md:text-2xl font-sans font-semibold text-light/90",
+    4: "text-lg font-sans font-medium text-light/80"
   };
   const Tag = `h${level}` as React.ElementType;
   return <Tag className={clsx(styles[level], className)}>{children}</Tag>;
@@ -17,10 +17,10 @@ export const Heading = ({ children, level = 1, className }: { children?: React.R
 
 export const Text = ({ children, className, variant = "body", uppercase = false }: { children?: React.ReactNode, className?: string, variant?: "body" | "subtle" | "small" | "caption", uppercase?: boolean }) => {
   const styles = {
-    body: "text-base text-neutral-800 font-normal leading-relaxed",
-    subtle: "text-neutral-500 font-normal",
-    small: "text-sm text-neutral-500",
-    caption: "text-xs font-medium tracking-widest text-neutral-400"
+    body: "text-base text-textPrimary font-light leading-relaxed", 
+    subtle: "text-textSecondary font-light", 
+    small: "text-sm text-textTertiary", 
+    caption: "text-xs font-bold tracking-[0.2em] text-accent"
   };
   return <p className={clsx(styles[variant], uppercase && "uppercase", className)}>{children}</p>;
 };
@@ -28,7 +28,7 @@ export const Text = ({ children, className, variant = "body", uppercase = false 
 // --- Interactive ---
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'glass';
   isLoading?: boolean;
   className?: string;
   disabled?: boolean;
@@ -37,17 +37,23 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export const Button = ({ children, variant = 'primary', className, isLoading, disabled, ...props }: ButtonProps) => {
   const variants = {
-    primary: "bg-[#121212] text-white hover:bg-neutral-800 border border-transparent",
-    secondary: "bg-[#F3F3F1] text-neutral-900 hover:bg-[#E5E5E0]",
-    outline: "bg-transparent border border-neutral-300 text-neutral-900 hover:border-neutral-900",
-    ghost: "bg-transparent text-neutral-600 hover:text-neutral-900",
-    danger: "bg-red-50 text-red-700 hover:bg-red-100"
+    // Primary: Light Grey Text on Muted Blue (Accent) Background for pop, OR Light Background Dark Text?
+    // Let's go with the Palette's "Light" for bg and "Dark" for text for high contrast primary.
+    primary: "bg-light text-background hover:bg-white border border-transparent shadow-[0_0_15px_rgba(201,204,199,0.3)]",
+    
+    // Secondary: Muted Teal background
+    secondary: "bg-secondary/20 text-secondary border border-secondary/30 hover:bg-secondary/30",
+    
+    outline: "bg-transparent border border-light/20 text-light hover:border-light hover:bg-light/5",
+    ghost: "bg-transparent text-textTertiary hover:text-light",
+    danger: "bg-tertiary/20 text-tertiary border border-tertiary/30 hover:bg-tertiary/30",
+    glass: "glass text-light hover:bg-light/10"
   };
 
   return (
     <button 
       className={clsx(
-        "inline-flex items-center justify-center px-6 py-3 rounded-none text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-bold tracking-wide transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed",
         variants[variant],
         className
       )}
@@ -65,7 +71,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     <input
       ref={ref}
       className={clsx(
-        "w-full px-0 py-3 bg-transparent border-b border-neutral-300 text-neutral-900 text-base focus:outline-none focus:border-neutral-900 transition-colors placeholder:text-neutral-400",
+        "w-full px-4 py-3 bg-surfaceHighlight/50 border border-light/10 rounded-xl text-textPrimary text-base focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-textTertiary",
         className
       )}
       {...props}
@@ -84,14 +90,14 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(({ classN
       <select
         ref={ref}
         className={clsx(
-          "w-full px-0 py-3 bg-transparent border-b border-neutral-300 text-neutral-900 text-base focus:outline-none focus:border-neutral-900 transition-colors appearance-none rounded-none pr-8",
+          "w-full px-4 py-3 bg-surfaceHighlight/50 border border-light/10 rounded-xl text-textPrimary text-base focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all appearance-none pr-10",
           className
         )}
         {...props}
       >
         {children}
       </select>
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-textTertiary">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
       </div>
     </div>
@@ -99,14 +105,15 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(({ classN
 });
 
 // --- Containers ---
-export const Card = ({ children, className, onClick }: { children?: React.ReactNode, className?: string, onClick?: () => void }) => {
+export const Card = ({ children, className, onClick, style }: { children?: React.ReactNode, className?: string, onClick?: () => void, style?: React.CSSProperties }) => {
   return (
     <div 
       onClick={onClick} 
+      style={style}
       className={clsx(
-        "bg-white p-6 md:p-8 border border-neutral-200/50 shadow-sm", // Clean, minimal box
+        "glass-card p-6 md:p-8 rounded-2xl relative overflow-hidden group transition-all duration-300 shadow-lg shadow-black/20", 
         className, 
-        onClick && "cursor-pointer hover:border-neutral-300 transition-colors"
+        onClick && "cursor-pointer hover:border-light/30 hover:bg-light/5"
       )}
     >
       {children}
@@ -116,13 +123,13 @@ export const Card = ({ children, className, onClick }: { children?: React.ReactN
 
 export const Badge = ({ children, color = "neutral" }: { children?: React.ReactNode, color?: "neutral" | "success" | "blue" | "accent" }) => {
   const colors = {
-    neutral: "bg-neutral-100 text-neutral-600",
-    success: "bg-[#E6F4EA] text-[#1E8E3E]",
-    blue: "bg-[#E8F0FE] text-[#1967D2]",
-    accent: "bg-[#FCE8E6] text-[#C73E1D]"
+    neutral: "bg-light/10 text-textSecondary border-light/10",
+    success: "bg-secondary/20 text-secondary border-secondary/30", // Using Muted Teal for success
+    blue: "bg-accent/20 text-accent border-accent/30", // Using Muted Blue for general active state
+    accent: "bg-accent/20 text-accent border-accent/30"
   };
   return (
-    <span className={clsx("inline-flex items-center px-2 py-1 text-xs font-medium uppercase tracking-wider", colors[color])}>
+    <span className={clsx("inline-flex items-center px-2 py-1 rounded-md border text-[10px] font-bold uppercase tracking-widest", colors[color])}>
       {children}
     </span>
   );
@@ -130,9 +137,9 @@ export const Badge = ({ children, color = "neutral" }: { children?: React.ReactN
 
 export const ProgressBar = ({ progress, className, slim = false }: { progress: number, className?: string, slim?: boolean }) => {
   return (
-    <div className={clsx("w-full bg-neutral-100 overflow-hidden", slim ? "h-1" : "h-2", className)}>
+    <div className={clsx("w-full bg-surfaceHighlight overflow-hidden rounded-full", slim ? "h-1" : "h-1.5", className)}>
       <div 
-        className="h-full bg-[#121212] transition-all duration-700 ease-out" 
+        className="h-full bg-gradient-to-r from-accent to-secondary transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(124,150,166,0.5)]" 
         style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
       />
     </div>

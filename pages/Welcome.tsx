@@ -1,353 +1,372 @@
 
 import React, { useState, useEffect } from 'react';
-import { Heading, Text, Button, Card, Badge } from '../components/ui';
-import { ArrowRight, Shield, Layers, Feather, CheckCircle, Briefcase, Star, Users, Zap, Plus, LayoutDashboard } from 'lucide-react';
+import { Heading, Text, Button, Badge } from '../components/ui';
+import { ArrowRight, CheckCircle, Shield, Award, Clapperboard, Users, Heart, Zap, Globe, BarChart, FileText, Calculator, Calendar } from 'lucide-react';
+import { UNIONS } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 interface WelcomeProps {
   onEnter: (asAgent?: boolean) => void;
   isLoggedIn?: boolean;
 }
 
-// Cinematic Asset Collection
 const HERO_IMAGES = [
-  "https://i.pinimg.com/1200x/ae/44/57/ae44577cea516ae481d7babcb3747cb8.jpg", // Dark moody set
-  "https://i.pinimg.com/1200x/7a/a2/2a/7aa22a1073d2365b5a78f9de60682e1e.jpg", // Cinematic lighting
-  "https://i.pinimg.com/736x/09/a1/70/09a17076e25094febd49bdef18019c75.jpg", // Vintage noir
-  "https://i.pinimg.com/1200x/47/26/5b/47265b869ab688c4220f4800fb442dbf.jpg", // Dramatic silhouette
+  "https://www.herenow.film/wp-content/uploads/2024/12/image-124.jpeg",
+  "https://i.pinimg.com/1200x/5e/42/57/5e4257679a36daca5536198bb55a92dc.jpg",
+  "https://i.pinimg.com/736x/2f/e4/e2/2fe4e287633eaed874b09bb0ea45d695.jpg",
+  "https://i.pinimg.com/1200x/a7/cd/7b/a7cd7b40aaa13946f78ccaaeaccfb608.jpg",
+  "https://i.pinimg.com/1200x/93/12/3d/93123dd53e97af01df8790876de7a553.jpg",
+  "https://s.studiobinder.com/wp-content/uploads/2021/11/Production-Assistant-Job-Description-StudioBinder.jpg"
 ];
 
-const LOGOS = [
-  { name: "ACTRA", src: "https://actratoronto.com/wp-content/uploads/2024/10/ACTRA-TORONTO-LOGO_OUTLINED_WHITE-ON-BLACK_3840X2160_100224.png", invert: true },
-  { name: "DGC", src: "https://www.reelasian.com/wp-content/uploads/2021/10/DGC-National-logo.png", invert: false },
-  { name: "IATSE 873", src: "https://prideatwork.ca/wp-content/uploads/2024/10/IATSE-logo-450x207.png", invert: false },
-  { name: "WGC", src: "https://www.wgc.ca/sites/default/files/styles/news_hero/public/article/WGC%20logo_stacked_col_1.png?itok=MKWXceDc", invert: false },
-  { name: "CMPA", src: "https://cmpa.ca/wp-content/uploads/2023/11/CMPA-logo-colour-for-light-background.png", invert: false },
-];
+const PricingCard = ({ title, price, period, features, recommended = false, onClick }: any) => (
+  <div className={`p-8 rounded-3xl border flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-2 ${recommended ? 'bg-light text-background border-light' : 'bg-surface border-light/10 text-light hover:border-light/30'}`}>
+      {recommended && <div className="absolute top-4 right-4 bg-accent text-white text-[10px] font-bold uppercase px-2 py-1 rounded">Best Value</div>}
+      <h3 className="font-serif text-3xl mb-2">{title}</h3>
+      <div className="flex items-baseline gap-1 mb-6">
+         <span className="text-4xl font-bold">{price}</span>
+         <span className={`text-sm ${recommended ? 'text-surfaceHighlight' : 'text-textTertiary'}`}>{period}</span>
+      </div>
+      <ul className="space-y-3 mb-8 flex-1">
+         {features.map((f: string, i: number) => (
+            <li key={i} className="flex items-center gap-3 text-sm font-medium">
+               <CheckCircle className={`w-4 h-4 ${recommended ? 'text-accent' : 'text-secondary'}`} />
+               {f}
+            </li>
+         ))}
+      </ul>
+      <Button 
+         onClick={onClick} 
+         variant={recommended ? 'primary' : 'outline'} 
+         className={`w-full ${recommended ? 'bg-background text-light hover:bg-surface border-none' : ''}`}
+      >
+         Get Started
+      </Button>
+  </div>
+);
 
-export const Welcome = ({ onEnter, isLoggedIn = false }: WelcomeProps) => {
+export const Welcome = ({ onEnter }: WelcomeProps) => {
+  const navigate = useNavigate();
+  const [isAnnual, setIsAnnual] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [scrolled, setScrolled] = useState(false);
 
-  // Background Slider Logic
   useEffect(() => {
+    // Image Carousel Timer
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 6000); // Change image every 6 seconds
-    return () => clearInterval(interval);
-  }, []);
+    }, 6000); 
 
-  // Scroll Listener for Navbar
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    // Scroll Listener for Liquid Glass Effect
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F3F3F1] overflow-x-hidden selection:bg-[#C73E1D] selection:text-white">
-      
-      {/* --- Navigation --- */}
-      <nav className={`fixed top-0 left-0 right-0 p-6 md:p-8 flex justify-between items-center z-50 transition-all duration-500 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-4 text-[#121212]' : 'bg-transparent text-white'}`}>
-        <span 
-          className="font-serif text-2xl tracking-tight relative z-50 cursor-pointer"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        >
-          CineArch
-        </span>
-        <div className="flex gap-4 relative z-50">
-          {!isLoggedIn ? (
-            <>
-              <button 
-                onClick={() => onEnter(true)} // Enter as Agent
-                className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity px-4 py-3 flex items-center gap-2 ${scrolled ? 'text-[#121212]' : 'text-white'}`}
-              >
-                <Briefcase className="w-3 h-3" />
-                Agency Portal
-              </button>
-              <button 
-                onClick={() => onEnter(false)} // Enter as Individual
-                className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity border px-6 py-3 ${scrolled ? 'border-[#121212]' : 'border-white'}`}
-              >
-                Member Sign In
-              </button>
-            </>
-          ) : (
-            <button 
-              onClick={() => onEnter(false)}
-              className={`text-xs uppercase tracking-widest font-medium hover:opacity-70 transition-opacity border px-6 py-3 flex items-center gap-2 ${scrolled ? 'border-[#121212] text-[#121212]' : 'border-white text-white'}`}
-            >
-              <LayoutDashboard className="w-3 h-3" />
-              Go to Dashboard
-            </button>
-          )}
-        </div>
+    <div className="relative min-h-screen bg-background overflow-x-hidden font-sans text-light">
+      {/* Liquid Glass Navigation */}
+      <nav 
+        className={`fixed top-0 left-0 right-0 z-50 flex justify-between items-center transition-all duration-500 ease-in-out border-b ${
+          scrolled 
+            ? 'py-4 px-6 md:px-12 bg-background/60 backdrop-blur-xl border-light/10 shadow-2xl pointer-events-auto' 
+            : 'py-6 md:py-10 px-6 md:px-12 bg-gradient-to-b from-background/90 to-transparent border-transparent pointer-events-none'
+        }`}
+      >
+         <span 
+            className={`font-serif text-2xl tracking-tight pointer-events-auto transition-transform duration-300 cursor-pointer ${scrolled ? 'scale-90 origin-left text-light' : 'text-light'}`}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+         >
+            CineArch
+         </span>
+         <div className="flex items-center gap-6 pointer-events-auto">
+             <button onClick={() => navigate('/resources')} className="text-xs font-bold uppercase tracking-widest hover:text-accent transition-colors hidden md:block">Resources</button>
+             <button onClick={() => document.getElementById('pricing')?.scrollIntoView({behavior: 'smooth'})} className="text-xs font-bold uppercase tracking-widest hover:text-accent transition-colors hidden md:block">Pricing</button>
+             <Button onClick={() => onEnter(false)} variant="glass" className="h-10 text-xs px-6 uppercase tracking-widest hover:bg-light hover:text-background transition-all">Sign In</Button>
+         </div>
       </nav>
 
-      {/* --- Hero Section --- */}
-      <section className="relative h-screen min-h-[800px] flex flex-col justify-end pb-32 px-6 md:px-12 overflow-hidden">
-        {/* Background Slider */}
-        {HERO_IMAGES.map((img, index) => (
-          <div 
-            key={img}
-            className={`absolute inset-0 z-0 transition-opacity duration-[2000ms] ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}
-          >
-            <img 
-              src={img} 
-              alt="Cinematic atmosphere" 
-              className="w-full h-full object-cover transform scale-105 animate-[subtle-zoom_20s_infinite_alternate]"
-            />
-            {/* Gradient Overlay for Text Legibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/40 to-transparent" />
-            <div className="absolute inset-0 bg-black/20" /> 
-          </div>
-        ))}
-
-        <div className="relative z-10 max-w-5xl animate-in fade-in slide-in-from-bottom-12 duration-1000">
-          <div className="inline-flex items-center gap-3 mb-8">
-            <div className="w-12 h-[1px] bg-[#C73E1D]"></div>
-            <span className="text-white/90 text-xs uppercase tracking-[0.25em] font-medium">A platform dedicated to the crew</span>
-          </div>
-          
-          <h1 className="font-serif text-6xl md:text-8xl lg:text-9xl text-[#F3F3F1] leading-[0.9] mb-8 tracking-tight drop-shadow-2xl">
-            The Industry<br />
-            <span className="italic text-white/60">Interface.</span>
-          </h1>
-          
-          <div className="max-w-xl mb-12">
-            <p className="text-lg md:text-xl text-white/80 font-light leading-relaxed drop-shadow-md">
-              The unified operating system designed for the film workforce. Manage your union eligibility, forecast your dues, and secure your financial future.
-            </p>
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-6">
-            <Button 
-              onClick={() => onEnter(false)} 
-              className="bg-white text-[#121212] hover:bg-[#F3F3F1] hover:scale-105 transform transition-all duration-300 border-none px-10 py-5 text-sm tracking-widest uppercase h-auto shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
-            >
-              {isLoggedIn ? 'Resume Session' : 'And Action'} <ArrowRight className="w-4 h-4 ml-3" />
-            </Button>
-            {!isLoggedIn && (
-              <Button 
-                onClick={() => onEnter(true)}
-                className="bg-[#121212] text-white hover:bg-neutral-900 border border-white/20 px-10 py-5 text-sm tracking-widest uppercase h-auto"
-              >
-                Manager Login
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 animate-bounce">
-          <span className="text-[10px] uppercase tracking-widest text-white">Scroll</span>
-          <div className="w-[1px] h-12 bg-white"></div>
-        </div>
-      </section>
-
-      {/* --- Trust / Union Section --- */}
-      <section className="bg-white py-20 border-b border-neutral-100 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-           <Text variant="caption" className="text-center mb-12 block opacity-50">Authorized Compliance Architecture For</Text>
-           
-           <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
-             {LOGOS.map(logo => (
-               <img 
-                key={logo.name} 
-                src={logo.src} 
-                alt={logo.name} 
-                className={`h-12 md:h-16 object-contain transition-all duration-500 ${logo.invert ? 'invert' : ''}`} 
-               />
-             ))}
-             <span className="font-serif text-2xl text-neutral-400 italic px-4">...and more</span>
-           </div>
-        </div>
-      </section>
-
-      {/* --- Narrative / Empathy Section --- */}
-      <section className="py-32 px-6 md:px-12 max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-20 items-center">
-          <div className="space-y-10 order-2 md:order-1">
-            <Heading level={2} className="text-4xl md:text-6xl leading-[1.1]">
-              Human error is a wrap.
-            </Heading>
-            <div className="w-24 h-1 bg-[#C73E1D]"></div>
-            <Text className="text-xl leading-relaxed text-neutral-600 font-light">
-              You didn't join this industry to manage spreadsheets or calculate fringe rates. You are here to tell stories.
-              <br /><br />
-              CineArch replaces the anxiety of "Did I qualify?" with the clarity of "I am ready." We account for all roles, all departments, and all possibilities.
-            </Text>
-
-            <div className="space-y-4 pt-4">
-              {[
-                "Automated due calculation",
-                "Tentative booking forecasts",
-                "Upload and store screenshots of vouchers and call sheets",
-                "Automatic tax calculation based on job location or business region"
-              ].map((item) => (
-                <div key={item} className="flex items-center gap-3 text-neutral-800">
-                  <CheckCircle className="w-5 h-5 text-[#C73E1D]" />
-                  <span className="font-medium tracking-wide">{item}</span>
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex items-end pb-32 px-6 md:px-20 max-w-8xl mx-auto overflow-hidden">
+        <div className="absolute inset-0 z-0">
+            {HERO_IMAGES.map((src, index) => (
+                <div 
+                    key={src}
+                    className={`absolute inset-0 transition-all duration-[2000ms] ease-in-out ${
+                        index === currentImageIndex ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
+                    }`}
+                >
+                    <img 
+                        src={src} 
+                        className="w-full h-full object-cover opacity-40 grayscale"
+                        alt={`Cinematic Background ${index + 1}`}
+                    />
                 </div>
-              ))}
-              <Text className="text-sm text-neutral-500">
-                *CineArch provides tax estimates only and does not file your taxes.
-              </Text>
-            </div>
-          </div>
-          
-          <div className="relative order-1 md:order-2 group">
-            <div className="aspect-[4/5] overflow-hidden rounded-sm editorial-shadow relative">
-              <img 
-                src="https://i.pinimg.com/1200x/58/b6/c5/58b6c5d54db46b51cdb52e6ba6c224bf.jpg" 
-                alt="Editorial portrait" 
-                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-neutral-900/10 group-hover:bg-transparent transition-colors duration-700"></div>
+            ))}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        </div>
+
+        <div className="relative z-10 w-full animate-in fade-in slide-in-from-bottom-12 duration-1000">
+            <div className="flex items-center gap-3 mb-6">
+               <div className="w-12 h-[2px] bg-accent shadow-[0_0_10px_rgba(124,150,166,0.5)]"></div>
+               <span className="text-accent text-xs font-bold uppercase tracking-[0.3em]">For Canadian Film Workers</span>
             </div>
             
-            {/* Floating Card Element */}
-            <div className="absolute -bottom-12 -left-8 bg-[#F3F3F1] p-8 max-w-xs editorial-shadow border border-neutral-200 hidden md:block animate-in slide-in-from-bottom-4 duration-1000 delay-300">
-              <span className="text-xs uppercase tracking-widest text-[#C73E1D] mb-3 block font-bold">Eligibility Status</span>
-              <div className="font-serif text-3xl mb-1 text-[#121212]">ACTRA Apprentice</div>
-              <div className="w-full bg-neutral-200 h-1 mt-4 mb-2">
-                <div className="w-[75%] bg-[#121212] h-full"></div>
+            <h1 className="font-serif text-6xl md:text-8xl lg:text-9xl leading-[0.9] tracking-tighter mb-8 drop-shadow-2xl text-light">
+               Track <br />
+               <span className="italic text-textSecondary">Your Journey.</span>
+            </h1>
+            
+            <p className="max-w-xl text-lg md:text-xl text-textSecondary font-light leading-relaxed mb-12">
+               The operating system for the industry. Organize your career eligibility, manage production logs, and forecast your union status with military-grade precision.
+            </p>
+
+            <div className="flex flex-col md:flex-row gap-6">
+               <Button onClick={() => onEnter(false)} className="bg-light text-background h-14 px-10 text-sm tracking-widest uppercase hover:scale-105 transition-transform">
+                  Enter System <ArrowRight className="w-4 h-4 ml-3" />
+               </Button>
+               <Button onClick={() => onEnter(true)} variant="outline" className="h-14 px-10 text-sm tracking-widest uppercase border-light/20 hover:bg-light/10">
+                  Agency Portal
+               </Button>
+            </div>
+        </div>
+      </section>
+
+      {/* Featured Unions Section */}
+      <section className="py-24 border-y border-light/5 bg-background">
+          <div className="max-w-7xl mx-auto px-6 md:px-12 text-center">
+              <Text variant="caption" className="mb-16 block text-textTertiary">Featured Unions</Text>
+              
+              <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-80">
+                  {/* ACTRA - White on Black Logo */}
+                  <div className="h-16 w-32 md:w-48 flex items-center justify-center opacity-60 hover:opacity-100 transition-all duration-500 group">
+                      <img 
+                        src="https://actratoronto.com/wp-content/uploads/2024/10/ACTRA-TORONTO-LOGO_OUTLINED_WHITE-ON-BLACK_3840X2160_100224.png" 
+                        alt="ACTRA" 
+                        className="max-h-full max-w-full object-contain brightness-0 invert sepia-[.2] hue-rotate-180 saturate-[.2] group-hover:brightness-100 group-hover:invert-0 group-hover:sepia-0 transition-all duration-500" 
+                      />
+                  </div>
+
+                  {/* DGC */}
+                  <div className="h-16 w-32 md:w-48 flex items-center justify-center opacity-60 hover:opacity-100 transition-all duration-500 group">
+                      <img 
+                        src="https://www.reelasian.com/wp-content/uploads/2021/10/DGC-National-logo.png" 
+                        alt="DGC" 
+                        className="max-h-full max-w-full object-contain brightness-0 invert sepia-[.2] hue-rotate-180 saturate-[.2] group-hover:brightness-100 group-hover:invert-0 group-hover:sepia-0 transition-all duration-500" 
+                      />
+                  </div>
+
+                  {/* IATSE */}
+                  <div className="h-20 w-32 md:w-40 flex items-center justify-center opacity-60 hover:opacity-100 transition-all duration-500 group">
+                      <img 
+                        src="https://prideatwork.ca/wp-content/uploads/2024/10/IATSE-logo-450x207.png" 
+                        alt="IATSE" 
+                        className="max-h-full max-w-full object-contain brightness-0 invert sepia-[.2] hue-rotate-180 saturate-[.2] group-hover:brightness-100 group-hover:invert-0 group-hover:sepia-0 transition-all duration-500" 
+                      />
+                  </div>
+
+                  {/* WGC */}
+                  <div className="h-16 w-32 md:w-48 flex items-center justify-center opacity-60 hover:opacity-100 transition-all duration-500 group">
+                      <img 
+                        src="https://www.wgc.ca/sites/default/files/styles/news_hero/public/article/WGC%20logo_stacked_col_1.png?itok=MKWXceDc" 
+                        alt="WGC" 
+                        className="max-h-full max-w-full object-contain brightness-0 invert sepia-[.2] hue-rotate-180 saturate-[.2] group-hover:brightness-100 group-hover:invert-0 group-hover:sepia-0 transition-all duration-500" 
+                      />
+                  </div>
               </div>
-              <div className="text-[10px] text-neutral-400 text-right uppercase tracking-wider">1200 / 1600 HRS Logged</div>
-            </div>
           </div>
-        </div>
       </section>
 
-      {/* --- Visual Break / Parallax --- */}
-      <section className="relative h-[60vh] flex items-center justify-center overflow-hidden my-20">
-         <div className="absolute inset-0 z-0">
-           <img 
-             src="https://i.pinimg.com/736x/ec/ce/3d/ecce3db3321f4ee53f84df17c78bdb93.jpg" 
-             className="w-full h-full object-cover opacity-90 fixed-background" 
-             alt="Set life"
-           />
-           <div className="absolute inset-0 bg-neutral-900/60" />
-         </div>
-         <div className="relative z-10 text-center text-white max-w-3xl px-6">
-            <span className="block text-[#C73E1D] text-sm uppercase tracking-[0.3em] mb-6">The New Standard</span>
-            <h2 className="font-serif text-5xl md:text-7xl leading-tight mb-8">
-              "Finally, software that respects the hustle."
-            </h2>
-            <div className="w-16 h-16 rounded-full border border-white/30 flex items-center justify-center mx-auto backdrop-blur-sm">
-               <Feather className="w-6 h-6" />
-            </div>
-         </div>
+      {/* About / Mission */}
+      <section className="py-32 px-6 md:px-12 max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-16 items-start">
+              <div className="sticky top-24">
+                  <Heading level={2} className="mb-6 leading-tight">Human error is a wrap.</Heading>
+                  <Text className="text-xl text-textSecondary leading-relaxed mb-6">
+                      You didn't join this industry to manage spreadsheets or calculate fringe rates. You are here to tell stories.
+                  </Text>
+                  <Text className="text-xl text-textSecondary leading-relaxed">
+                      CineArch replaces the anxiety of "Did I qualify?" with the clarity of "I am ready." We account for all roles, all departments, and all possibilities.
+                  </Text>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="p-6 bg-surface border border-light/10 rounded-2xl hover:bg-light/5 transition-colors">
+                      <BarChart className="w-8 h-8 text-secondary mb-4" />
+                      <h3 className="font-bold text-lg mb-2">Automated Dues Calculation</h3>
+                      <p className="text-sm text-textTertiary">Math that works while you sleep. We track every hour and every dollar.</p>
+                  </div>
+                  <div className="p-6 bg-surface border border-light/10 rounded-2xl hover:bg-light/5 transition-colors translate-y-8">
+                      <Calendar className="w-8 h-8 text-accent mb-4" />
+                      <h3 className="font-bold text-lg mb-2">Tentative Booking Forecasts</h3>
+                      <p className="text-sm text-textTertiary">See how potential jobs will impact your eligibility timeline before you even book them.</p>
+                  </div>
+                  <div className="p-6 bg-surface border border-light/10 rounded-2xl hover:bg-light/5 transition-colors">
+                      <FileText className="w-8 h-8 text-accent mb-4" />
+                      <h3 className="font-bold text-lg mb-2">Document Vault</h3>
+                      <p className="text-sm text-textTertiary">Upload and organize vouchers, pay stubs, and call sheets securely.</p>
+                  </div>
+                  <div className="p-6 bg-surface border border-light/10 rounded-2xl hover:bg-light/5 transition-colors translate-y-8">
+                      <Calculator className="w-8 h-8 text-secondary mb-4" />
+                      <h3 className="font-bold text-lg mb-2">Automatic Tax Calculation</h3>
+                      <p className="text-sm text-textTertiary">Estimates based on location and region.</p>
+                      <p className="text-[10px] text-textTertiary mt-2 italic">*CineArch provides tax estimates only and does not file taxes on your behalf.</p>
+                  </div>
+              </div>
+          </div>
       </section>
 
-      {/* --- Pricing / Access Tiers --- */}
-      <section className="py-24 px-6 md:px-12 bg-[#F9F9F8]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-             <Text variant="caption" className="mb-4 text-[#C73E1D] font-bold">Access Levels</Text>
-             <Heading level={2}>Choose Your Role</Heading>
-             <Text className="mt-4 text-neutral-500">Professional tools for every stage of your career.</Text>
+      {/* The New Standard / Visual Section */}
+      <section className="py-20 px-6 border-y border-light/5 bg-surfaceHighlight/30">
+          <div className="max-w-6xl mx-auto grid md:grid-cols-12 gap-12 items-center">
+              <div className="md:col-span-7 relative group">
+                   <div className="aspect-[4/5] md:aspect-[16/9] rounded-sm overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-700 ease-in-out">
+                        <img src="https://i.pinimg.com/1200x/a7/cd/7b/a7cd7b40aaa13946f78ccaaeaccfb608.jpg" alt="Editorial Portrait" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60"></div>
+                        
+                        {/* UI Overlay Mockup */}
+                        <div className="absolute bottom-8 left-8 right-8">
+                            <div className="bg-background/80 backdrop-blur-md border border-light/10 p-6 rounded-xl shadow-lg">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <p className="text-[10px] uppercase tracking-widest text-accent font-bold mb-1">Eligibility Status</p>
+                                        <h3 className="font-serif text-2xl text-light">ACTRA Apprentice</h3>
+                                    </div>
+                                    <Badge color="success">Active</Badge>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-xs font-mono text-textSecondary">
+                                        <span>PROGRESS</span>
+                                        <span>75%</span>
+                                    </div>
+                                    <div className="h-1 w-full bg-light/10 rounded-full overflow-hidden">
+                                        <div className="h-full bg-gradient-to-r from-accent to-secondary w-3/4"></div>
+                                    </div>
+                                    <p className="text-xs text-light pt-1">1200 / 1600 HRS LOGGED</p>
+                                </div>
+                            </div>
+                        </div>
+                   </div>
+              </div>
+              <div className="md:col-span-5 space-y-6">
+                   <div className="flex items-center gap-3">
+                       <div className="h-[1px] w-8 bg-accent"></div>
+                       <span className="text-accent text-xs font-bold uppercase tracking-widest">Set Life</span>
+                   </div>
+                   <h2 className="text-5xl md:text-6xl font-serif leading-none text-light">THE NEW <br/> STANDARD</h2>
+                   <blockquote className="text-2xl font-light text-textSecondary italic border-l-2 border-light/10 pl-6 py-2">
+                       "Finally, software that respects the hustle."
+                   </blockquote>
+              </div>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-8 items-start">
-             
-             {/* Free Tier */}
-             <div className="bg-white border border-neutral-200 p-8 hover:border-[#121212] transition-colors relative group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-neutral-200 group-hover:bg-[#121212] transition-colors"></div>
-                <h3 className="font-serif text-3xl mb-2">Member</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                   <span className="text-4xl font-bold">Free</span>
-                   <span className="text-neutral-400">/ forever</span>
-                </div>
-                <p className="text-sm text-neutral-500 mb-8 h-10">Essential tracking for aspiring talent and crew.</p>
-                <ul className="space-y-4 mb-8 text-sm">
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#121212]"/> <span>Basic Eligibility Tracking</span></li>
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#121212]"/> <span>Limited Job Logging</span></li>
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#121212]"/> <span>Standard PDF Exports</span></li>
-                   <li className="flex items-center gap-3 text-neutral-400"><Shield className="w-4 h-4"/> <span>200MB Document Limit</span></li>
-                </ul>
-                <Button variant="outline" className="w-full" onClick={() => onEnter(false)}>{isLoggedIn ? 'Access' : 'Get Started'}</Button>
-             </div>
-
-             {/* Premium Tier */}
-             <div className="bg-[#121212] text-white p-8 relative transform md:-translate-y-4 shadow-xl">
-                <div className="absolute top-0 right-0 bg-[#C73E1D] text-white text-[10px] uppercase font-bold px-3 py-1 tracking-widest">Recommended</div>
-                <h3 className="font-serif text-3xl mb-2">Pro Member</h3>
-                <div className="flex flex-col gap-1 mb-6">
-                   <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">$10</span>
-                      <span className="text-white/50">/ month</span>
-                   </div>
-                   <div className="flex items-baseline gap-1 text-sm text-white/70">
-                      <span className="font-semibold">$90</span>
-                      <span className="text-white/50">/ year</span>
-                   </div>
-                </div>
-                <p className="text-sm text-white/60 mb-8 h-10">Advanced compliance & unlimited storage for working professionals.</p>
-                <ul className="space-y-4 mb-8 text-sm">
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#C73E1D]"/> <span>Unlimited Uploads & Storage</span></li>
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#C73E1D]"/> <span>Advanced Union Educational Resources</span></li>
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#C73E1D]"/> <span>Agent & Manager Dispatch</span></li>
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#C73E1D]"/> <span>Bulk CSV Import</span></li>
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#C73E1D]"/> <span>Secure Residency Vault</span></li>
-                </ul>
-                <Button className="w-full bg-white text-[#121212] hover:bg-neutral-200 border-none" onClick={() => onEnter(false)}>{isLoggedIn ? 'Access' : 'Go Pro'}</Button>
-             </div>
-
-             {/* Agency Tier */}
-             <div className="bg-white border border-neutral-200 p-8 hover:border-[#121212] transition-colors relative group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-neutral-200 group-hover:bg-[#121212] transition-colors"></div>
-                <h3 className="font-serif text-3xl mb-2">Agency Portal</h3>
-                <div className="flex flex-col gap-1 mb-6">
-                   <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">$90</span>
-                      <span className="text-neutral-400">/ month</span>
-                   </div>
-                   <div className="flex items-baseline gap-1 text-sm text-neutral-500">
-                      <span className="font-semibold">$900</span>
-                      <span className="text-neutral-400">/ year</span>
-                   </div>
-                </div>
-                <p className="text-sm text-neutral-500 mb-8 h-10">Roster management for up to 50 active accounts.</p>
-                <ul className="space-y-4 mb-8 text-sm">
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#121212]"/> <span>Manage 50 Talent Profiles</span></li>
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#121212]"/> <span>Global Roster Switcher</span></li>
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#121212]"/> <span>Instant "Log Opportunity"</span></li>
-                   <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 text-[#121212]"/> <span>Bulk Team Import</span></li>
-                   <li className="flex items-center gap-3 pt-4 border-t border-neutral-100 text-xs text-neutral-500">
-                      <Plus className="w-3 h-3"/> <span>Add-ons: +$35/mo (50 users)</span>
-                   </li>
-                </ul>
-                <Button variant="outline" className="w-full" onClick={() => onEnter(true)}>{isLoggedIn ? 'Access' : 'Agency Login'}</Button>
-             </div>
-
-          </div>
-        </div>
       </section>
 
-      {/* --- Footer CTA --- */}
-      <section className="py-32 px-6 md:px-12 text-center bg-[#121212] text-[#F3F3F1]">
-        <div className="max-w-3xl mx-auto space-y-10">
-          <Heading level={2} className="text-white text-5xl md:text-7xl">Your legacy deserves a better system.</Heading>
-          <Text className="text-white/60 text-xl">Join the thousands of Canadian film workers upgrading to CineArch.</Text>
-          <div className="pt-8">
-            <Button 
-              onClick={() => onEnter(false)}
-              className="bg-[#C73E1D] text-white hover:bg-[#A63216] hover:scale-105 transition-transform duration-300 border-none px-12 py-6 h-auto text-sm tracking-widest uppercase shadow-2xl"
-            >
-              {isLoggedIn ? 'Resume' : 'And Action'}
-            </Button>
+      {/* Agency & Enterprise Segment */}
+      <section className="py-32 bg-surfaceHighlight/10 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-accent/5 skew-x-12 pointer-events-none" />
+          <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+              <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-8">
+                  <div className="max-w-2xl">
+                      <div className="flex items-center gap-2 mb-4">
+                          <Users className="w-5 h-5 text-accent" />
+                          <span className="text-accent text-xs font-bold uppercase tracking-widest">Enterprise Solutions</span>
+                      </div>
+                      <Heading level={2}>For Agents & Organizations</Heading>
+                      <Text className="mt-4 text-xl text-textSecondary">
+                          Powerful roster management for Talent Agents, Managers, and Non-Profit Arts Organizations.
+                      </Text>
+                  </div>
+                  <Button onClick={() => onEnter(true)} variant="outline" className="border-light/20">Access Agency Portal</Button>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8">
+                  <div className="p-8 bg-surface/50 border border-light/10 rounded-3xl backdrop-blur-sm">
+                      <Users className="w-10 h-10 text-light mb-6" />
+                      <h3 className="font-serif text-2xl mb-3 text-light">Roster Management</h3>
+                      <p className="text-textTertiary text-sm leading-relaxed">
+                          Manage unlimited clients. Switch views instantly to log jobs or check eligibility on their behalf. Perfect for highly active rosters.
+                      </p>
+                  </div>
+                  <div className="p-8 bg-surface/50 border border-light/10 rounded-3xl backdrop-blur-sm">
+                      <Zap className="w-10 h-10 text-light mb-6" />
+                      <h3 className="font-serif text-2xl mb-3 text-light">Eligibility Forecasting</h3>
+                      <p className="text-textTertiary text-sm leading-relaxed">
+                          Know exactly when your talent will qualify for full union membership. Strategize their bookings to hit targets faster.
+                      </p>
+                  </div>
+                  <div className="p-8 bg-surface/50 border border-light/10 rounded-3xl backdrop-blur-sm">
+                      <Heart className="w-10 h-10 text-light mb-6" />
+                      <h3 className="font-serif text-2xl mb-3 text-light">Arts Organizations</h3>
+                      <p className="text-textTertiary text-sm leading-relaxed">
+                          For non-profit art organizations: save program coordination time and money. Automate tracking to focus on finding opportunities for those you serve.
+                      </p>
+                  </div>
+              </div>
           </div>
-        </div>
-        
-        <div className="mt-32 pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-xs text-white/30 uppercase tracking-widest">
-           <span>© 2024 CineArch OS. Made in Toronto.</span>
-           <div className="flex gap-6 mt-4 md:mt-0">
-             <span>Privacy</span>
-             <span>Terms</span>
-             <span>Support</span>
-           </div>
-        </div>
       </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-32 px-6 md:px-12 max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+              <Heading level={2} className="mb-6">Simple Pricing</Heading>
+              <div className="inline-flex items-center bg-surface border border-light/10 rounded-full p-1 gap-1">
+                  <button 
+                    onClick={() => setIsAnnual(false)}
+                    className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${!isAnnual ? 'bg-light text-background' : 'text-textTertiary hover:text-light'}`}
+                  >
+                      Monthly
+                  </button>
+                  <button 
+                    onClick={() => setIsAnnual(true)}
+                    className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${isAnnual ? 'bg-light text-background' : 'text-textTertiary hover:text-light'}`}
+                  >
+                      Annually <span className="text-accent ml-1">-30%</span>
+                  </button>
+              </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              <PricingCard 
+                  title="Free" 
+                  price="$0" 
+                  period="Forever" 
+                  features={["3 Active Projects", "Basic Union Tracking", "Manual Entry"]}
+                  onClick={() => onEnter(false)}
+              />
+              <PricingCard 
+                  title="Pro" 
+                  price={isAnnual ? "$10.50/mo" : "$15/mo"}
+                  period={isAnnual ? "Billed $126 yearly" : "Billed monthly"} 
+                  recommended={true}
+                  features={["Unlimited Projects", "Bulk CSV Import", "PDF Reports", "Document Vault", "All Union Tiers"]}
+                  onClick={() => onEnter(false)}
+              />
+              <PricingCard 
+                  title="Agency Portal" 
+                  price={isAnnual ? "$63/mo" : "$90/mo"}
+                  period={isAnnual ? "Billed $756 yearly" : "Billed monthly"} 
+                  features={[
+                      "Includes 35 Pro Accounts", 
+                      "Just $2.57/seat (vs $15)",
+                      "Save over $400/month",
+                      "Global Roster Switcher", 
+                      "Centralized Compliance"
+                  ]}
+                  onClick={() => onEnter(true)}
+              />
+          </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-light/5 bg-background py-12 px-6 text-center">
+          <span className="font-serif text-2xl tracking-tight block mb-4 text-light">CineArch</span>
+          <p className="text-xs text-textTertiary uppercase tracking-widest">© 2024 CineArch Systems. All Rights Reserved.</p>
+      </footer>
     </div>
   );
 };

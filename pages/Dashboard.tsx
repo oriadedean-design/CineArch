@@ -1,216 +1,247 @@
 
 import React, { useEffect, useState } from 'react';
-import { trackingService } from '../services/trackingService';
-import { jobService } from '../services/jobService';
+import { api } from '../services/api';
 import { UserUnionTracking, Job, User } from '../types';
-import { Heading, Text, Badge, Button } from '../components/ui';
-import { ArrowUpRight, Lock } from 'lucide-react';
+import { Heading, Text, Card, Badge, Button, ProgressBar } from '../components/ui';
+import { Plus, ArrowUpRight, DollarSign, Lock, Activity, TrendingUp, Users, Calendar, Briefcase, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 
-// Specialized Progress Bar for Potential Tracking
-const DualProgressBar = ({ current, potential, max }: { current: number, potential: number, max: number }) => {
-  const currentPct = Math.min((current / max) * 100, 100);
-  const potentialPct = Math.min((potential / max) * 100, 100);
+// Cinematic Progress Component
+const CinematicTracker = ({ track, jobs, allTrackings }: { track: UserUnionTracking, jobs: Job[], allTrackings: UserUnionTracking[] }) => {
+  // Use the helper on the client side for now to calculate progress
+  const { current, target, percent } = api.tracking.calculateProgress(track.id, jobs, allTrackings);
   
   return (
-     <div className="w-full bg-neutral-100 h-2 overflow-hidden relative">
-        {/* Ghost / Potential Bar */}
-        <div 
-           className="absolute top-0 left-0 h-full bg-[#121212] opacity-30 transition-all duration-700 ease-out" 
-           style={{ width: `${potentialPct}%`, backgroundImage: 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)', backgroundSize: '1rem 1rem' }}
-        />
-        {/* Solid / Current Bar */}
-        <div 
-           className="absolute top-0 left-0 h-full bg-[#121212] transition-all duration-700 ease-out" 
-           style={{ width: `${currentPct}%` }}
-        />
-     </div>
-  );
-};
-
-const ProgressSection: React.FC<{ track: UserUnionTracking, jobs: Job[] }> = ({ track, jobs }) => {
-  const { current, potential, target, percent } = trackingService.calculateProgress(track, jobs);
-  const isHours = track.targetType === 'HOURS';
-  
-  return (
-    <div className="border-t border-neutral-200 py-6 first:border-t-0">
-      <div className="flex justify-between items-baseline mb-4">
-        <div className="flex items-center gap-2">
-            <h3 className="text-xl font-serif">{track.unionName}</h3>
-            {track.department && (
-                <span className="text-xs bg-[#F3F3F1] px-2 py-1 uppercase tracking-wider text-neutral-600 font-medium">
-                    {track.department}
-                </span>
-            )}
+    <div className="group relative">
+      <div className="flex justify-between items-end mb-3">
+        <div>
+           <div className="flex items-center gap-2">
+              <span className="text-accent text-[10px] font-bold uppercase tracking-widest border border-accent/30 px-1.5 rounded">{track.tierLabel}</span>
+              {track.department && <span className="text-textTertiary text-[10px] font-bold uppercase tracking-widest">{track.department}</span>}
+           </div>
+           <h3 className="text-2xl font-serif text-light mt-1 group-hover:text-accent transition-colors">{track.unionName}</h3>
         </div>
-        <div className="flex flex-col items-end">
-             <span className="text-sm font-medium text-neutral-400">{track.tierLabel}</span>
+        <div className="text-right">
+           <span className="text-3xl font-bold text-light tabular-nums">{Math.round(percent)}%</span>
         </div>
       </div>
       
-      <div className="grid grid-cols-12 gap-8 items-end">
-         <div className="col-span-8 md:col-span-10">
-            <DualProgressBar current={current} potential={potential} max={target} />
-            <div className="flex justify-between text-xs font-medium tracking-wide uppercase text-neutral-500 mt-3">
-              <span className="flex items-center gap-2">
-                 {current} / {target} {track.targetType === 'EARNINGS' ? '$' : isHours ? 'hrs' : track.targetType.toLowerCase()}
-                 {potential > current && <span className="text-neutral-300">({potential} projected)</span>}
-              </span>
-            </div>
-         </div>
-         <div className="col-span-4 md:col-span-2 text-right">
-            <span className={clsx("text-3xl font-serif", percent >= 100 ? "text-[#121212]" : "text-neutral-600")}>
-               {Math.round(percent)}%
-            </span>
-         </div>
+      <div className="relative h-2 bg-surfaceHighlight rounded-full overflow-hidden">
+         <div 
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-accent to-secondary shadow-[0_0_15px_rgba(124,150,166,0.3)] transition-all duration-1000" 
+            style={{ width: `${percent}%` }}
+         />
+      </div>
+      
+      <div className="flex justify-between mt-2 text-xs text-textTertiary font-medium tracking-wide">
+         <span>{current} / {target} {track.targetType.toLowerCase()}</span>
+         <span className="uppercase">Eligibility Status</span>
       </div>
     </div>
   );
 };
 
-export const Dashboard = ({ user }: { user: User }) => {
+const StatCard = ({ label, value, subtext, highlight = false }: { label: string, value: string, subtext?: string, highlight?: boolean }) => (
+    <div className={clsx("p-6 rounded-2xl border backdrop-blur-md transition-all duration-300 group", highlight ? "bg-accent/10 border-accent/30 hover:bg-accent/20" : "bg-surface border-light/10 hover:bg-white/5")}>
+       <Text variant="caption" className={highlight ? "text-accent" : "text-textTertiary"}>{label}</Text>
+       <div className={clsx("text-4xl md:text-5xl font-serif mt-2 mb-1 tracking-tight", highlight ? "text-accent drop-shadow-lg" : "text-light")}>{value}</div>
+       {subtext && <div className="text-xs text-textTertiary group-hover:text-light transition-colors">{subtext}</div>}
+    </div>
+);
+
+// --- AGENT DASHBOARD: GANTT VIEW ---
+const AgentGanttChart = ({ user }: { user: User }) => {
+    const navigate = useNavigate();
+    const [rosterData, setRosterData] = useState<{client: User, jobs: Job[]}[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            // Mock: In real supabase we'd query jobs where user_id IN (managed_ids)
+            setLoading(false);
+        };
+        fetchRoster();
+    }, [user]);
+
+    if (loading) return <Loader2 className="animate-spin text-accent"/>;
+
+    // Simple time range: Today to +30 days
+    const today = new Date();
+    const daysToShow = 30;
+    const timelineDates = Array.from({length: daysToShow}, (_, i) => {
+        const d = new Date();
+        d.setDate(today.getDate() + i);
+        return d;
+    });
+
+    return (
+        <div className="space-y-8">
+            <div className="flex justify-between items-end">
+                <div className="space-y-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent">
+                        <Users className="w-3 h-3" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Agency View</span>
+                    </div>
+                    <Heading level={2}>Roster Schedule</Heading>
+                    <Text className="text-textSecondary">Gantt visualization of active bookings.</Text>
+                </div>
+                <Button onClick={() => navigate('/jobs/new')}>
+                    <Plus className="w-4 h-4 mr-2" /> Log Booking
+                </Button>
+            </div>
+
+            <div className="overflow-x-auto pb-4">
+               <div className="p-8 text-center text-textTertiary border border-light/10 rounded-xl">
+                   Agent Dashboard connectivity coming in v2.
+               </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --- STANDARD INDIVIDUAL DASHBOARD ---
+export const Dashboard = () => {
   const navigate = useNavigate();
   const [tracking, setTracking] = useState<UserUnionTracking[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [stats, setStats] = useState({ totalHours: 0, totalJobs: 0, totalDocs: 0, totalEarnings: 0, totalDeductions: 0 });
+  const [stats, setStats] = useState({ totalHours: 0, totalEarnings: 0, totalDeductions: 0 });
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Determine whose data to show
-  const targetUserId = user.activeViewId || user.id;
-
   useEffect(() => {
-    const fetchData = async () => {
-        setLoading(true);
-        try {
+    const loadData = async () => {
+        const u = await api.auth.getUser();
+        setUser(u);
+        if (u) {
             const [t, j] = await Promise.all([
-                trackingService.getTrackers(targetUserId),
-                jobService.getJobs(targetUserId)
+                api.tracking.get(),
+                api.jobs.list()
             ]);
-            
             setTracking(t);
             setJobs(j);
-
-            // Calculate Aggregates (In production, these come from user.stats via Cloud Functions)
+            
             const totalHours = j.reduce((sum, job) => sum + (job.status === 'CONFIRMED' ? job.totalHours : 0), 0);
-            const totalDocs = j.reduce((sum, job) => sum + (job.documentCount || 0), 0);
             const totalEarnings = j.reduce((sum, job) => sum + (job.grossEarnings || 0), 0);
             const totalDeductions = j.reduce((sum, job) => sum + (job.unionDeductions || 0), 0);
-            setStats({ totalHours, totalJobs: j.length, totalDocs, totalEarnings, totalDeductions });
-        } catch(e) {
-            console.error("Dashboard Load Error", e);
-        } finally {
-            setLoading(false);
+            setStats({ totalHours, totalEarnings, totalDeductions });
         }
+        setLoading(false);
     };
-    
-    if (targetUserId) fetchData();
-  }, [targetUserId]);
+    loadData();
+  }, []);
 
-  if (loading) return <div className="p-12 text-center text-neutral-400">Loading Dashboard...</div>;
+  if (loading) return <div className="min-h-screen flex justify-center items-center"><Loader2 className="animate-spin text-accent"/></div>;
+
+  if (user?.accountType === 'AGENT') {
+      return <AgentGanttChart user={user} />;
+  }
 
   return (
     <div className="space-y-16">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <Text variant="caption">Industry Interface</Text>
-          <Heading level={1}>Dashboard</Heading>
-        </div>
-        <div className="flex gap-4">
-          <Button variant="outline" onClick={() => navigate('/jobs/new')} className="hidden md:flex">
-            Log Job
-          </Button>
-          <Button variant="primary" onClick={() => navigate('/reports')}>
-            Export Report
-          </Button>
-        </div>
-      </header>
-
-      {/* Stats Row */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-px bg-neutral-200 border border-neutral-200">
-         <div className="bg-white p-6 md:p-8">
-            <Text variant="caption" className="mb-2">Total Hours</Text>
-            <div className="text-3xl md:text-4xl font-serif">{stats.totalHours}</div>
-         </div>
-         <div className="bg-white p-6 md:p-8 relative overflow-hidden">
-            {!user?.isPremium && (
-               <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
-                  <Lock className="w-6 h-6 text-neutral-400" />
+      {/* Hero Section */}
+      <section className="relative overflow-hidden rounded-3xl bg-surface border border-light/10 p-8 md:p-12">
+         {/* Abstract BG */}
+         <div className="absolute inset-0 bg-[url('https://i.pinimg.com/1200x/5e/42/57/5e4257679a36daca5536198bb55a92dc.jpg')] bg-cover bg-center opacity-10 mix-blend-screen" />
+         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
+         
+         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
+            <div className="space-y-2">
+               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 border border-secondary/20 backdrop-blur-md">
+                  <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">System Online</span>
                </div>
-            )}
-            <Text variant="caption" className="mb-2">Est. Income</Text>
-            <div className="text-3xl md:text-4xl font-serif flex items-baseline">
-                <span className="text-lg mr-1 text-neutral-400">$</span>
-                {(stats.totalEarnings / 1000).toFixed(1)}k
+               <Heading level={1}>Career Overview</Heading>
+               <Text className="max-w-md text-textSecondary">Welcome back, {user?.name.split(' ')[0]}. Your automated compliance tracking is active.</Text>
             </div>
-         </div>
-         <div className="bg-white p-6 md:p-8 relative">
-            <Text variant="caption" className="mb-2">Dues Pool</Text>
-            <div className="text-3xl md:text-4xl font-serif text-[#C73E1D] flex items-baseline">
-               <span className="text-lg mr-1 text-red-200">$</span>
-               {stats.totalDeductions}
+            <div className="flex gap-4">
+               <Button onClick={() => navigate('/jobs/new')} variant="glass" className="h-12 border-light/20">
+                  <Plus className="w-4 h-4 mr-2" /> Log Project
+               </Button>
+               <Button onClick={() => navigate('/reports')} variant="primary" className="h-12">
+                  View Reports
+               </Button>
             </div>
-            <Text variant="small" className="mt-1 text-neutral-400">Projected Savings</Text>
-         </div>
-         <div className="bg-white p-6 md:p-8 flex items-end justify-between cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => navigate('/jobs/new')}>
-             <div className="text-sm font-medium underline">Log new entry</div>
-             <ArrowUpRight className="w-5 h-5" />
          </div>
       </section>
 
-      <div className="grid md:grid-cols-2 gap-12">
-        {/* Union Progress */}
+      {/* Stats Grid */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+         <StatCard label="Total Hours" value={stats.totalHours.toString()} subtext="Confirmed On-Set" />
+         <StatCard label="Est. Earnings" value={`$${(stats.totalEarnings / 1000).toFixed(1)}k`} subtext="Gross Income" />
+         <StatCard label="Dues Pool" value={`$${stats.totalDeductions}`} subtext="Tax Deductible" highlight />
+         <div onClick={() => navigate('/jobs')} className="p-6 rounded-2xl border border-light/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer flex flex-col justify-center items-center group">
+            <div className="w-12 h-12 rounded-full border border-light/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform bg-white/5">
+                <ArrowUpRight className="w-6 h-6 text-light" />
+            </div>
+            <span className="text-xs font-bold uppercase tracking-widest text-light">View All Logs</span>
+         </div>
+      </section>
+
+      <div className="grid lg:grid-cols-2 gap-12">
+        {/* Progress Section */}
         <section>
-          <div className="flex items-center justify-between mb-8 border-b border-[#121212] pb-2">
-             <Heading level={3}>{user?.memberStatus === 'MEMBER' ? 'Membership Maintenance' : 'Eligibility Tracker'}</Heading>
-             <button onClick={() => navigate('/settings')} className="text-xs uppercase tracking-widest font-medium text-neutral-400 hover:text-neutral-900">Configure</button>
-          </div>
-          
-          {tracking.length === 0 ? (
-            <div className="py-12 text-center border border-dashed border-neutral-300">
-              <Text className="mb-4">No tracking set up.</Text>
-              <Button variant="secondary" onClick={() => navigate('/settings')}>Start Tracking</Button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {tracking.map(t => <ProgressSection key={t.id} track={t} jobs={jobs} />)}
-            </div>
-          )}
+           <div className="flex items-center justify-between mb-8">
+              <Heading level={3}>Eligibility Trackers</Heading>
+              <Button variant="ghost" onClick={() => navigate('/settings')} className="text-xs">Configure</Button>
+           </div>
+           
+           <div className="space-y-6">
+              {tracking.length === 0 ? (
+                 <div className="p-8 border border-dashed border-light/20 rounded-2xl text-center">
+                    <Text>No active trackers initialized.</Text>
+                    <Button variant="outline" className="mt-4" onClick={() => navigate('/settings')}>Setup Targets</Button>
+                 </div>
+              ) : (
+                 tracking.map(t => <CinematicTracker key={t.id} track={t} jobs={jobs} allTrackings={tracking} />)
+              )}
+           </div>
         </section>
 
-        {/* Recent Activity */}
+        {/* Recent Projects (Jobs) */}
         <section>
-          <div className="flex items-center justify-between mb-8 border-b border-[#121212] pb-2">
-             <Heading level={3}>Activity Log</Heading>
-             <button onClick={() => navigate('/jobs')} className="text-xs uppercase tracking-widest font-medium text-neutral-400 hover:text-neutral-900">View All</button>
-          </div>
-
-          <div className="space-y-0">
-            {jobs.length === 0 ? (
-               <Text variant="subtle">No jobs logged yet.</Text>
-            ) : (
-              jobs.slice(0, 4).map(job => (
-                <div 
-                  key={job.id} 
-                  onClick={() => navigate(`/jobs/${job.id}`)}
-                  className="group py-4 border-b border-neutral-100 flex justify-between items-center cursor-pointer hover:pl-2 transition-all"
-                >
-                  <div>
-                    <h4 className="font-serif text-lg group-hover:text-[#C73E1D] transition-colors flex items-center gap-2">
-                        {job.productionName}
-                        {job.status === 'TENTATIVE' && <span className="text-[10px] bg-neutral-100 text-neutral-500 px-1 uppercase font-bold border border-neutral-200">Hold</span>}
-                    </h4>
-                    <Text variant="small">{job.role} — {new Date(job.startDate).toLocaleDateString()}</Text>
-                  </div>
-                  {job.isUnion ? (
-                    <Badge color="neutral">{job.unionName}</Badge>
-                  ) : (
-                    <span className="text-xs text-neutral-300">NON-UNION</span>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
+           <div className="flex items-center justify-between mb-8">
+              <Heading level={3}>Recent Projects</Heading>
+              <Button variant="ghost" onClick={() => navigate('/jobs')} className="text-xs">View All</Button>
+           </div>
+           
+           <div className="space-y-4">
+              {jobs.slice(0, 3).map(job => (
+                 <div 
+                    key={job.id} 
+                    onClick={() => navigate(`/jobs/${job.id}`)}
+                    className="flex items-center gap-4 p-4 rounded-2xl bg-surfaceHighlight/30 border border-light/5 hover:bg-white/5 hover:border-light/20 transition-all cursor-pointer group"
+                 >
+                    {/* Placeholder Project Image / Avatar */}
+                    <div className="w-16 h-20 rounded-lg bg-background overflow-hidden relative border border-light/10 shrink-0">
+                       <img 
+                          src={job.imageUrl || `https://i.pinimg.com/736x/2f/e4/e2/2fe4e287633eaed874b09bb0ea45d695.jpg`} 
+                          alt="Project" 
+                          className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                       />
+                       {!job.isUnion && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><span className="text-[8px] font-bold uppercase text-white/50">Indie</span></div>}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                       <div className="flex items-center gap-2 mb-1">
+                          {job.status === 'TENTATIVE' && <span className="w-2 h-2 rounded-full bg-tertiary" />}
+                          <h4 className="text-lg font-serif text-light truncate group-hover:text-accent transition-colors">{job.productionName}</h4>
+                       </div>
+                       <p className="text-xs text-textTertiary uppercase tracking-wider">{job.role} • {new Date(job.startDate).toLocaleDateString()}</p>
+                    </div>
+                    
+                    <div className="text-right">
+                       {job.isUnion ? (
+                          <Badge color="neutral">{job.unionName}</Badge>
+                       ) : (
+                          <span className="text-[10px] text-textTertiary font-bold uppercase">Non-Union</span>
+                       )}
+                    </div>
+                 </div>
+              ))}
+              {jobs.length === 0 && <Text variant="subtle">No projects logged.</Text>}
+           </div>
         </section>
       </div>
     </div>
