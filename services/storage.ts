@@ -5,9 +5,6 @@ import { financeApi } from './finance';
 // Keys
 const USER_KEY = 'cinearch_user';
 const DATA_PREFIX = 'cinearch_data_';
-const PENDING_JOB_KEY = 'cinearch_pending_job';
-const RESUME_PATH_KEY = 'cinearch_resume_path';
-const BULK_UPLOAD_COUNT_KEY = 'cinearch_bulk_count_';
 
 // Helpers
 const getStorage = <T>(key: string, defaultVal: T): T => {
@@ -27,16 +24,15 @@ const setStorage = (key: string, val: any) => {
 const getActiveContextId = (): string => {
   const user = getStorage<User | null>(USER_KEY, null);
   if (!user) return 'anon';
-  // If agent is possessing a client, use client's ID for data context
   return user.activeViewId || user.id;
 };
 
-const getKeys = (contextId?: string) => {
-  const cid = contextId || getActiveContextId();
+const getKeys = () => {
+  const contextId = getActiveContextId();
   return {
-    JOBS: `${DATA_PREFIX}jobs_${cid}`,
-    TRACKING: `${DATA_PREFIX}tracking_${cid}`,
-    VAULT: `${DATA_PREFIX}vault_${cid}`
+    JOBS: `${DATA_PREFIX}jobs_${contextId}`,
+    TRACKING: `${DATA_PREFIX}tracking_${contextId}`,
+    VAULT: `${DATA_PREFIX}vault_${contextId}`
   };
 };
 
@@ -45,23 +41,42 @@ const syncJobToLedger = (job: Job) => {
   const user = api.auth.getUser();
   if (!user) return;
 
+  // 1. Clear existing linked transactions for this job
   const txs = financeApi.list();
   const linked = txs.filter(t => t.jobId === job.id);
   linked.forEach(t => financeApi.delete(t.id));
 
+  // 2. Add Income Transaction
   if (job.grossEarnings && job.grossEarnings > 0) {
     financeApi.add({
-      userId: getActiveContextId(),
+      userId: user.id,
       jobId: job.id,
       type: 'INCOME',
       category: 'SERVICE_FEES',
       description: `Production Earnings: ${job.productionName}`,
       amountBeforeTax: job.grossEarnings,
-      taxAmount: 0,
+      taxAmount: 0, // Simplified: Users log taxes separately in Finance if needed
       totalAmount: job.grossEarnings,
       dateIncurred: job.startDate,
       businessUsePercent: 100
     });
+
+    // 3. Add Agent Commission if applicable
+    if (user.hasAgentFee && user.agentFeePercentage && user.agentFeePercentage > 0) {
+      const commissionAmount = job.grossEarnings * (user.agentFeePercentage / 100);
+      financeApi.add({
+        userId: user.id,
+        jobId: job.id,
+        type: 'EXPENSE',
+        category: 'AGENT_COMMISSIONS',
+        description: `Agent Commission: ${job.productionName}`,
+        amountBeforeTax: commissionAmount,
+        taxAmount: 0,
+        totalAmount: commissionAmount,
+        dateIncurred: job.startDate,
+        businessUsePercent: 100
+      });
+    }
   }
 };
 
@@ -70,41 +85,12 @@ export const api = {
     getUser: (): User | null => getStorage<User | null>(USER_KEY, null),
     login: (email: string, asAgent: boolean = false): User => {
       let user = getStorage<User | null>(USER_KEY, null);
-      
       if (!user || user.email !== email) {
-        // Initialize sample roster for demonstration
-        const managedUsers: User[] = asAgent ? [
-          {
-            id: 'client_123',
-            name: 'Sarah Jenkins',
-            email: 'sarah@example.com',
-            role: '1st AC',
-            province: 'Ontario',
-            isOnboarded: true,
-            accountType: 'INDIVIDUAL',
-            selectedRoles: ['1st AC'],
-            allowAgentFinance: true,
-            cohort: 'Commercial'
-          },
-          {
-            id: 'client_456',
-            name: 'Marcus Thorne',
-            email: 'marcus@example.com',
-            role: 'Grip',
-            province: 'BC',
-            isOnboarded: true,
-            accountType: 'INDIVIDUAL',
-            selectedRoles: ['Key Grip'],
-            allowAgentFinance: false,
-            cohort: 'Narrative'
-          }
-        ] : [];
-
         user = {
           id: asAgent ? `agent_${Date.now()}` : `user_${Date.now()}`,
           name: asAgent ? 'Talent Manager' : 'Film Worker',
           email,
-          role: asAgent ? 'Showrunner' : '',
+          role: asAgent ? 'Agent' : '',
           province: '',
           isOnboarded: false,
           isPremium: asAgent,
@@ -112,13 +98,10 @@ export const api = {
           country: 'Canada',
           language: 'English',
           accountType: asAgent ? 'AGENT' : 'INDIVIDUAL',
-          managedUsers,
+          managedUsers: asAgent ? [] : undefined,
           activeViewId: undefined,
           hasAgentFee: false,
-          agentFeePercentage: 10,
-          premiumSeatsTotal: asAgent ? 35 : 0,
-          premiumSeatsUsed: asAgent ? 2 : 0,
-          allowAgentFinance: true
+          agentFeePercentage: 10
         };
         setStorage(USER_KEY, user);
       }
@@ -133,85 +116,119 @@ export const api = {
       }
       return null;
     },
-    switchClient: (id: string | undefined) => {
-      const user = getStorage<User | null>(USER_KEY, null);
-      if (user && user.accountType === 'AGENT') {
-        const updated = { ...user, activeViewId: id };
-        setStorage(USER_KEY, updated);
-        // Persistence of possession state requires a reload to reset all data hooks
-        window.location.reload();
-        return updated;
-      }
-      return user;
-    },
     logout: () => {
       localStorage.removeItem(USER_KEY);
-      localStorage.removeItem(RESUME_PATH_KEY);
-      // Explicitly redirect to the root Welcome page
-      window.location.href = '/#/'; 
+      window.location.reload();
     },
-    getResumePath: () => localStorage.getItem(RESUME_PATH_KEY),
-    setResumePath: (path: string) => localStorage.setItem(RESUME_PATH_KEY, path)
+    addClient: (client: User) => {
+      const agent = getStorage<User | null>(USER_KEY, null);
+      if (agent && agent.accountType === 'AGENT') {
+        const managed = agent.managedUsers || [];
+        const updatedAgent = { ...agent, managedUsers: [...managed, client] };
+        setStorage(USER_KEY, updatedAgent);
+      }
+    },
+    switchClient: (clientId: string | undefined) => {
+      const agent = getStorage<User | null>(USER_KEY, null);
+      if (agent && agent.accountType === 'AGENT') {
+        const updatedAgent = { ...agent, activeViewId: clientId };
+        setStorage(USER_KEY, updatedAgent);
+        window.location.reload();
+      }
+    }
+  },
+
+  system: {
+    resetData: () => {
+      const keys = getKeys();
+      localStorage.removeItem(keys.JOBS);
+      localStorage.removeItem(keys.TRACKING);
+      localStorage.removeItem(keys.VAULT);
+    }
   },
 
   jobs: {
-    setPending: (job: Partial<Job>) => setStorage(PENDING_JOB_KEY, job),
-    list: (contextId?: string): Job[] => {
-      const keys = getKeys(contextId);
+    list: (): Job[] => {
+      const keys = getKeys();
       return getStorage<Job[]>(keys.JOBS, []).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
     },
     add: (job: Job) => {
       const keys = getKeys();
       const jobs = getStorage<Job[]>(keys.JOBS, []);
-      setStorage(keys.JOBS, [job, ...jobs]);
+      const newJobs = [job, ...jobs];
+      setStorage(keys.JOBS, newJobs);
       syncJobToLedger(job);
       return job;
     },
     update: (updatedJob: Job) => {
       const keys = getKeys();
       const jobs = getStorage<Job[]>(keys.JOBS, []);
-      setStorage(keys.JOBS, jobs.map(j => j.id === updatedJob.id ? updatedJob : j));
+      const newJobs = jobs.map(j => j.id === updatedJob.id ? updatedJob : j);
+      setStorage(keys.JOBS, newJobs);
       syncJobToLedger(updatedJob);
     },
-    getBulkUploadCount: (contextId?: string): number => {
-      const cid = contextId || getActiveContextId();
-      return getStorage<number>(`${BULK_UPLOAD_COUNT_KEY}${cid}`, 0);
-    },
-    incrementBulkUploadCount: (contextId?: string) => {
-      const cid = contextId || getActiveContextId();
-      const count = getStorage<number>(`${BULK_UPLOAD_COUNT_KEY}${cid}`, 0);
-      setStorage(`${BULK_UPLOAD_COUNT_KEY}${cid}`, count + 1);
+    delete: (id: string) => {
+      const keys = getKeys();
+      const jobs = getStorage<Job[]>(keys.JOBS, []);
+      setStorage(keys.JOBS, jobs.filter(j => j.id !== id));
+      
+      // Clean up ledger
+      const txs = financeApi.list().filter(t => t.jobId === id);
+      txs.forEach(t => financeApi.delete(t.id));
     }
   },
 
   tracking: {
-    get: (contextId?: string): UserUnionTracking[] => {
-      const keys = getKeys(contextId);
+    get: (): UserUnionTracking[] => {
+      const keys = getKeys();
       return getStorage<UserUnionTracking[]>(keys.TRACKING, []);
     },
     save: (trackings: UserUnionTracking[]) => {
       const keys = getKeys();
       setStorage(keys.TRACKING, trackings);
     },
-    calculateProgress: (trackingId: string, jobs: Job[], contextId?: string) => {
-      const tracks = getStorage<UserUnionTracking[]>(getKeys(contextId).TRACKING, []);
+    calculateProgress: (trackingId: string, jobs: Job[]) => {
+      const tracks = getStorage<UserUnionTracking[]>(getKeys().TRACKING, []);
       const track = tracks.find(t => t.id === trackingId);
-      if (!track) return { current: 0, target: 100, percent: 0 };
-      const filtered = jobs.filter(j => j.isUnion && (j.unionName === track.unionName || j.unionTypeId === track.unionTypeId));
-      let current = track.startingValue || 0;
-      if (track.targetType === 'HOURS') current += filtered.reduce((s, j) => s + (j.totalHours || 0), 0);
-      else if (track.targetType === 'DAYS') current += filtered.length;
-      return { current, target: track.targetValue, percent: Math.min(100, (current / track.targetValue) * 100) };
+      if (!track) return { current: 0, potential: 0, target: 0, percent: 0, potentialPercent: 0 };
+
+      let baseJobs = jobs.filter(j => j.isUnion && j.unionName === track.unionName);
+      if (track.department) baseJobs = baseJobs.filter(j => j.department === track.department);
+      
+      const countValue = (jList: Job[]) => {
+        if (track.targetType === 'HOURS') return jList.reduce((sum, j) => sum + (j.totalHours || 0), 0);
+        if (track.targetType === 'DAYS') return jList.length; 
+        if (track.targetType === 'CREDITS') return jList.length;
+        if (track.targetType === 'EARNINGS') return jList.reduce((sum, j) => sum + (j.grossEarnings || 0), 0);
+        return 0;
+      };
+
+      const confirmedVal = countValue(baseJobs.filter(j => j.status === 'CONFIRMED'));
+      const totalConfirmed = track.startingValue + confirmedVal;
+      const percent = Math.min((totalConfirmed / track.targetValue) * 100, 100);
+      
+      return { 
+        current: totalConfirmed, 
+        potential: totalConfirmed, 
+        target: track.targetValue, 
+        percent,
+        potentialPercent: percent
+      };
     }
   },
 
   vault: {
-    list: (contextId?: string): ResidencyDocument[] => getStorage<ResidencyDocument[]>(getKeys(contextId).VAULT, []),
+    list: (): ResidencyDocument[] => getStorage<ResidencyDocument[]>(getKeys().VAULT, []),
     add: (doc: ResidencyDocument) => {
       const keys = getKeys();
       const docs = getStorage<ResidencyDocument[]>(keys.VAULT, []);
       setStorage(keys.VAULT, [doc, ...docs]);
       return doc;
+    },
+    delete: (id: string) => {
+      const keys = getKeys();
+      const docs = getStorage<ResidencyDocument[]>(keys.VAULT, []);
+      setStorage(keys.VAULT, docs.filter(d => d.id !== id));
     }
   }
 };

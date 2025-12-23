@@ -3,6 +3,7 @@ import { Button, Input, Heading, Text, Badge } from '../components/ui';
 import { api } from '../services/storage';
 import { User } from '../types';
 import { Briefcase, ArrowLeft, Camera, Shield } from 'lucide-react';
+// Import clsx for conditional class names
 import { clsx } from 'clsx';
 
 export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (u: User) => void, onBack: () => void, initialAgentMode?: boolean }) => {
@@ -14,11 +15,9 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
-    
     setLoading(true);
     
-    // Simulate set prep and security clearance
+    // Simulate set prep
     setTimeout(() => {
       const user = api.auth.login(email, isAgent);
       onLogin(user);
@@ -82,7 +81,6 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
           
           <div className="pt-8">
             <Button 
-              type="submit"
               className="w-full h-24 text-[11px] font-black uppercase tracking-[0.6em] transition-all hover:scale-[1.02]" 
               isLoading={loading}
             >
