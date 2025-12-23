@@ -125,7 +125,8 @@ const ARTICLES: Article[] = [
 
 // --- Components ---
 
-const ArticleCard = ({ article, onClick }: { article: Article, onClick: () => void }) => (
+// Explicitly add key to ArticleCard props to fix type mismatch error on line 265
+const ArticleCard = ({ article, onClick }: { article: Article, onClick: () => void, key?: React.Key }) => (
   <div 
     onClick={onClick}
     className="group cursor-pointer flex flex-col gap-4 border-b border-white/10 pb-12 hover:border-white/30 transition-colors"

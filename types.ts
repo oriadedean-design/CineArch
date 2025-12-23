@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 export interface User {
   id: string;
   email: string;
@@ -16,22 +18,27 @@ export interface User {
   department?: string;
   selectedRoles?: string[];
   goals?: string[];
+  cohort?: string; // For filtering roster groups
 
-  businessStructure?: 'INCORPORATED' | 'SOLE_PROPRIETORSHIP' | 'EMPLOYEE' | 'NONE';
+  // Fee Configuration
+  feeModel?: 'COMMISSION' | 'FLAT_FEE' | 'NONE';
+  agentFeePercentage?: number;
+  flatFeeAmount?: number;
+  // Added missing property used in storage service for showrunner initialization
+  hasAgentFee?: boolean;
 
+  businessStructure?: 'INCORPORATED' | 'SOLE_PROPRIETORSHIP' | 'EMPLOYEE' | 'ORGANIZATION';
   accountType: 'INDIVIDUAL' | 'AGENT';
+  
   managedUsers?: User[]; 
   activeViewId?: string; 
+  agentId?: string;
+  premiumSeatsTotal?: number;
+  premiumSeatsUsed?: number;
+  allowAgentFinance?: boolean;
+  
   primaryIndustry?: string;
   organizationName?: string;
-
-  stats?: {
-    totalHours: number;
-    totalEarnings: number;
-    totalDeductions: number;
-    unionStatus?: string;
-    lastUpdated?: string;
-  }
 }
 
 export type NotificationType = 'GST_THRESHOLD' | 'PRODUCTION_START' | 'PRODUCTION_END' | 'UNION_DUE' | 'SYSTEM';
@@ -56,7 +63,6 @@ export interface UnionTier {
   requiresDepartment?: boolean; 
   initiationFee?: number;
   annualDues?: number;
-  requiredCertificates?: string[];
 }
 
 export interface UnionType {
@@ -85,73 +91,48 @@ export interface Job {
   status: JobStatus;
   productionName: string;
   companyName: string;
-  role: string;
+  role: string; // Must map to canonical list
   department?: string;
   isUnion: boolean;
   unionTypeId?: string;
   unionName?: string;
-  creditType?: 'PRINCIPAL' | 'ACTOR' | 'STUNT' | 'BACKGROUND' | 'CREW' | 'OTHER';
-  isUpgrade?: boolean; 
-  productionTier?: string; 
   startDate: string; 
   endDate?: string;
   totalHours: number;
-  hourlyRate?: number;
   grossEarnings?: number; 
-  unionDeductions?: number; 
-  notes?: string;
+  createdAt: string;
   documentCount: number;
-  documentIds?: string[];
-  createdAt: string; 
-  imageUrl?: string;
-  genre?: string;
+  // Added missing property for reports and analytics calculations
+  unionDeductions?: number;
 }
 
-export interface Document {
-  id: string;
-  jobId: string;
-  fileName: string;
-  fileType: string;
-  url: string;
-  uploadedAt: string;
-}
-
+// Added missing interface for the Document Vault system
 export interface ResidencyDocument {
   id: string;
-  userId: string;
-  type: keyof typeof RESIDENCY_DOC_TYPES;
-  fileName: string;
-  uploadedAt: string;
-  verified: boolean;
+  name: string;
+  type: string;
+  uri: string;
+  timestamp: string;
 }
 
-export const RESIDENCY_DOC_TYPES = {
-  LICENSE: "Driver's License / Photo ID",
-  UTILITY_BILL: "Utility Bill (Proof of Address)",
-  TAX_RETURN: "T4 / Notice of Assessment",
-  PAY_STUB: "Pay Stub",
-  CERTIFICATE: "Training Certificate",
-  OTHER: "Other Documentation"
-};
-
-export type TransactionType = 'INCOME' | 'EXPENSE' | 'ASSET_PURCHASE' | 'DRAW' | 'LOAN' | 'TAX_PAYMENT' | 'REIMBURSEMENT';
+// Added missing types for the Wrap Wallet financial system
+export type TransactionType = 'INCOME' | 'EXPENSE';
 
 export interface FinanceTransaction {
   id: string;
   userId: string;
-  jobId?: string; 
+  jobId?: string;
   type: TransactionType;
-  dateIncurred: string;
-  datePaid?: string;
+  category: string;
   description: string;
-  category: string; 
   amountBeforeTax: number;
-  taxAmount: number; 
+  taxAmount: number;
   totalAmount: number;
-  businessUsePercent: number; 
+  dateIncurred: string;
+  businessUsePercent: number;
   deductibleAmount?: number;
   addBackAmount?: number;
-  ruleTags?: string[]; 
+  ruleTags?: string[];
 }
 
 export interface FinanceStats {
@@ -165,11 +146,12 @@ export interface FinanceStats {
   taxableIncomeProjected: number;
 }
 
+// Added missing interface for the Editorial Resources system
 export interface Article {
   slug: string;
   title: string;
   subtitle: string;
-  category: 'GUIDE' | 'COMPLIANCE' | 'NEWS' | 'UNION';
+  category: string;
   date: string;
   readTime: string;
   author: string;
@@ -177,57 +159,33 @@ export interface Article {
   content: React.ReactNode;
 }
 
-export enum CanadianProvince {
-  ON = "Ontario",
-  BC = "British Columbia",
-  QC = "Quebec",
-  AB = "Alberta",
-  MB = "Manitoba",
-  SK = "Saskatchewan",
-  NS = "Nova Scotia",
-  NB = "New Brunswick",
-  NL = "Newfoundland and Labrador",
-  PE = "Prince Edward Island",
-  YT = "Yukon",
-  NT = "Northwest Territories",
-  NU = "Nunavut"
-}
+export const CanadianProvince = {
+  ON: "Ontario",
+  BC: "British Columbia",
+  QC: "Quebec",
+  AB: "Alberta",
+  MB: "Manitoba",
+  SK: "Saskatchewan",
+  NS: "Nova Scotia",
+  NB: "New Brunswick",
+  NL: "Newfoundland and Labrador",
+  PE: "Prince Edward Island",
+  YT: "Yukon",
+  NT: "Northwest Territories",
+  NU: "Nunavut"
+};
+
+// Added missing helper type for province key mapping
+export type ProvinceCode = keyof typeof CanadianProvince;
 
 export const UNIONS: UnionType[] = [
-  { id: 'u1', name: 'ACTRA', description: 'Alliance of Canadian Cinema, Television and Radio Artists', defaultDuesRate: 0.0225, tiers: [{ name: 'Apprentice', targetType: 'HOURS', targetValue: 1600, description: 'Accumulate 1600 hours to join.' }, { name: 'Full Member', targetType: 'CREDITS', targetValue: 3, description: 'Requires 3 qualifying credits.' }] },
-  { id: 'u2', name: 'IATSE', description: 'International Alliance of Theatrical Stage Employees', defaultDuesRate: 0.045, tiers: [{ name: 'Permit Status', targetType: 'DAYS', targetValue: 120, description: '120 days worked in a specific department.', requiresDepartment: true }] },
-  { id: 'u3', name: 'DGC', description: 'Directors Guild of Canada', defaultDuesRate: 0.02, tiers: [{ name: 'Associate', targetType: 'DAYS', targetValue: 150, description: 'Guild Apprentice Program (150 days).', requiresDepartment: true }] },
-  { id: 'u4', name: 'WGC', description: 'Writers Guild of Canada', defaultDuesRate: 0.02, tiers: [{ name: 'Member', targetType: 'CREDITS', targetValue: 1, description: 'Requires one produced script credit.' }, { name: 'Apprentice', targetType: 'HOURS', targetValue: 500, description: 'Requires 500 development hours.' }] },
+  { id: 'u1', name: 'ACTRA', description: 'Alliance of Canadian Cinema, Television and Radio Artists', defaultDuesRate: 0.0225, tiers: [{ name: 'Apprentice', targetType: 'HOURS', targetValue: 1600, description: 'Accumulate 1600 hours to join.' }] },
+  { id: 'u2', name: 'IATSE', description: 'International Alliance of Theatrical Stage Employees', defaultDuesRate: 0.045, tiers: [{ name: 'Permit Status', targetType: 'DAYS', targetValue: 120, description: '120 days worked in a specific department.' }] },
+  { id: 'u3', name: 'DGC', description: 'Directors Guild of Canada', defaultDuesRate: 0.02, tiers: [{ name: 'Associate', targetType: 'DAYS', targetValue: 150, description: 'Guild Apprentice Program (150 days).' }] },
 ];
 
-export interface Plan {
-  id: string;
-  label: string;
-  price: string;
-  desc: string;
-  benefits: string[];
-}
-
-export const PLANS: Record<string, Plan> = {
-  indie: {
-    id: 'indie',
-    label: 'Indie Log',
-    price: 'Free',
-    desc: 'For independent creators and students.',
-    benefits: ['Up to 3 Production Logs', 'Basic Union Tracking', 'Encrypted Document Vault']
-  },
-  pro: {
-    id: 'pro',
-    label: 'A-List',
-    price: '$15',
-    desc: 'The industry standard for active crew.',
-    benefits: ['Unlimited Production Logs', 'Bulk Log Import', 'Audit Packs', 'GST Threshold Monitoring']
-  },
-  agency: {
-    id: 'agency',
-    label: 'Showrunner',
-    price: '$90',
-    desc: 'Complete roster management for agents.',
-    benefits: ['Manage up to 35 Clients', 'Aggregated Guild Analytics', 'Roster-wide Compliance Checks', 'Priority Support']
-  }
+export const PLANS: Record<string, { id: string, label: string, price: string, desc: string, benefits: string[] }> = {
+  indie: { id: 'indie', label: 'Indie Log', price: 'Free', desc: 'Personal use.', benefits: ['Basic Tracking'] },
+  pro: { id: 'pro', label: 'A-List', price: '$15', desc: 'Professional crew.', benefits: ['Unlimited Logs', 'Audit Packs'] },
+  agency: { id: 'agency', label: 'Showrunner', price: '$90', desc: 'Roster management.', benefits: ['35 Clients', 'Compliance Audit'] }
 };

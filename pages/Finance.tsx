@@ -1,327 +1,278 @@
 
 import React, { useState, useEffect } from 'react';
-import { Heading, Text, Card, Button, Input, Select, Badge, ProgressBar } from '../components/ui';
-import { Lock, Crown, Plus, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Calculator, PieChart, FileText } from 'lucide-react';
+import { FinanceTransaction, FinanceStats, TransactionType, ProvinceCode, CanadianProvince } from '../types';
+import { Heading, Text, Card, Badge, Button, Input, Select, ProgressBar } from '../components/ui';
+import { WalletCards, Landmark, ArrowUpRight, Plus, Receipt, TrendingUp, ShieldAlert, History, Trash2, PiggyBank, Calculator, Eye, EyeOff, Lock } from 'lucide-react';
 import { api } from '../services/storage';
-import { financeApi } from '../services/finance';
-// Fixed: Removed non-existent ExpenseCategory and IncomeCategory imports
-import { User, FinanceTransaction, FinanceStats } from '../types';
+import { clsx } from 'clsx';
+import { useNavigate } from 'react-router-dom';
+
+const TRANSACTIONS_KEY = 'cinearch_finance_transactions';
+
+// --- Factual Canadian Tax Data (Updated for 2024/2025) ---
+const PARAMS = {
+    CA_FED: {
+        GST_RATE: 0.05,
+        SMALL_SUPPLIER_THRESHOLD: 30000,
+        MEALS_DEDUCTION_RATE: 0.50,
+        CPP_RATE: 0.119, 
+        CPP_MAX_EARNINGS: 68500,
+        CPP_BASIC_EXEMPTION: 3500
+    },
+    PROVINCES: {
+        ON: { type: 'HST', rate: 0.13, gst: 0.05, pst: 0.08 },
+        BC: { type: 'GST_PST', rate: 0.12, gst: 0.05, pst: 0.07 },
+        AB: { type: 'GST', rate: 0.05, gst: 0.05, pst: 0.00 },
+        QC: { type: 'GST_QST', rate: 0.14975, gst: 0.05, pst: 0.09975 }
+    } as Record<string, { type: string, rate: number, gst: number, pst: number }>
+};
+
+const RULES = {
+    applyMealsLimit: (category: string, amount: number) => {
+        if (category === 'Meals & Entertainment') {
+            return {
+                deductible: amount * PARAMS.CA_FED.MEALS_DEDUCTION_RATE,
+                addBack: amount * (1 - PARAMS.CA_FED.MEALS_DEDUCTION_RATE),
+                tags: ['MEALS_50_LIMIT']
+            };
+        }
+        return null;
+    },
+    applyFinesLimit: (category: string, amount: number) => {
+        if (category === 'Fines' || category === 'Penalties') {
+             return {
+                deductible: 0,
+                addBack: amount,
+                tags: ['NON_DEDUCTIBLE_FINE']
+             };
+        }
+        return null;
+    }
+};
+
+const getStorage = <T,>(key: string, defaultVal: T): T => {
+  const stored = localStorage.getItem(key);
+  if (!stored) return defaultVal;
+  try { return JSON.parse(stored); } catch { return defaultVal; }
+};
+
+const setStorage = (key: string, val: any) => localStorage.setItem(key, JSON.stringify(val));
+
+export const financeApi = {
+    list: (): FinanceTransaction[] => getStorage<FinanceTransaction[]>(TRANSACTIONS_KEY, []),
+
+    add: (tx: Omit<FinanceTransaction, 'id' | 'deductibleAmount' | 'addBackAmount' | 'ruleTags'>) => {
+        const transactions = getStorage<FinanceTransaction[]>(TRANSACTIONS_KEY, []);
+        let deductible = tx.amountBeforeTax;
+        let addBack = 0;
+        let tags: string[] = [];
+
+        if (tx.type === 'EXPENSE') {
+            const mealsRule = RULES.applyMealsLimit(tx.category, tx.amountBeforeTax);
+            const finesRule = RULES.applyFinesLimit(tx.category, tx.amountBeforeTax);
+
+            if (mealsRule) {
+                deductible = mealsRule.deductible;
+                addBack = mealsRule.addBack;
+                tags.push(...mealsRule.tags);
+            } else if (finesRule) {
+                deductible = finesRule.deductible;
+                addBack = finesRule.addBack;
+                tags.push(...finesRule.tags);
+            }
+        }
+
+        const newTx: FinanceTransaction = {
+            ...tx,
+            id: `tx_${Date.now()}`,
+            deductibleAmount: deductible,
+            addBackAmount: addBack,
+            ruleTags: tags
+        };
+
+        setStorage(TRANSACTIONS_KEY, [newTx, ...transactions]);
+        return newTx;
+    },
+
+    delete: (id: string) => {
+        const list = getStorage<FinanceTransaction[]>(TRANSACTIONS_KEY, []);
+        setStorage(TRANSACTIONS_KEY, list.filter(t => t.id !== id));
+    },
+
+    getStats: (): FinanceStats & { estCPP: number, estIncomeTax: number } => {
+        const transactions = getStorage<FinanceTransaction[]>(TRANSACTIONS_KEY, []);
+        const grossIncome = transactions.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.amountBeforeTax, 0);
+        const deductibleExpenses = transactions.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + (t.deductibleAmount ?? t.amountBeforeTax), 0);
+        const netIncome = grossIncome - deductibleExpenses;
+        const gstCollected = transactions.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.taxAmount, 0);
+        const gstPaid = transactions.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.taxAmount, 0);
+
+        let cppPensionable = Math.max(0, netIncome - PARAMS.CA_FED.CPP_BASIC_EXEMPTION);
+        cppPensionable = Math.min(cppPensionable, PARAMS.CA_FED.CPP_MAX_EARNINGS - PARAMS.CA_FED.CPP_BASIC_EXEMPTION);
+        const estCPP = Math.max(0, cppPensionable * PARAMS.CA_FED.CPP_RATE);
+        const estIncomeTax = Math.max(0, netIncome * 0.25);
+
+        return {
+            grossIncomeYTD: grossIncome,
+            totalExpensesYTD: transactions.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.amountBeforeTax, 0),
+            deductibleExpensesYTD: deductibleExpenses,
+            netIncomeYTD: netIncome,
+            gstCollected,
+            gstPaid,
+            gstNetRemittance: gstCollected - gstPaid,
+            taxableIncomeProjected: netIncome,
+            estCPP,
+            estIncomeTax
+        };
+    },
+
+    getThresholdProgress: (grossIncome: number) => Math.min(100, (grossIncome / PARAMS.CA_FED.SMALL_SUPPLIER_THRESHOLD) * 100)
+};
+
+const PremiumFinanceOverlay = () => {
+   const navigate = useNavigate();
+   return (
+      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-12 text-center bg-black/60 backdrop-blur-sm">
+         <div className="max-w-xl glass-ui p-16 space-y-8 animate-in zoom-in-95 duration-500 border-accent/40 shadow-2xl">
+            <div className="w-16 h-16 bg-accent/20 border border-accent/40 rounded-full flex items-center justify-center mx-auto mb-6">
+               <Lock className="text-accent" size={24} />
+            </div>
+            <div className="space-y-4">
+               <Badge color="accent" className="italic uppercase tracking-widest">A-List Feature</Badge>
+               <h2 className="text-4xl font-serif italic text-white uppercase tracking-tight">The Ledger is Locked.</h2>
+               <p className="text-sm text-white/40 leading-relaxed italic">
+                  Compliance monitoring, tax projections, and GST threshold tracking are part of our premium suite. Upgrade to A-List to access your full financial dashboard.
+               </p>
+            </div>
+            <div className="space-y-4 pt-6">
+               <Button className="w-full h-16 text-[11px] font-black uppercase tracking-widest">Upgrade to A-List</Button>
+               <button onClick={() => navigate('/')} className="text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-white transition-colors">Return to Dashboard</button>
+            </div>
+         </div>
+      </div>
+   );
+};
 
 export const Finance = () => {
-  const [user, setUser] = useState<User | null>(api.auth.getUser());
-  const [stats, setStats] = useState<FinanceStats | null>(null);
+  const [stats, setStats] = useState<ReturnType<typeof financeApi.getStats> | null>(null);
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  
-  // Local Form State
-  const [form, setForm] = useState({
-      type: 'EXPENSE',
-      category: 'MEALS_ENTERTAINMENT',
-      amount: '',
-      tax: '',
-      desc: '',
-      date: new Date().toISOString().split('T')[0]
-  });
-
-  const isPremium = user?.isPremium;
+  const user = api.auth.getUser();
 
   useEffect(() => {
-    if (isPremium) {
-       refreshData();
-    }
-  }, [isPremium]);
+    refresh();
+  }, []);
 
-  const refreshData = () => {
-      setTransactions(financeApi.list());
-      setStats(financeApi.getStats());
+  const refresh = () => {
+    setStats(financeApi.getStats());
+    setTransactions(financeApi.list());
   };
 
-  const handleUpgrade = () => {
-      // Simulate upgrade
-      if (user) {
-          const updated = { ...user, isPremium: true };
-          api.auth.updateUser(updated);
-          setUser(updated);
-      }
-  };
+  if (!user) return null;
 
-  const handleAddTransaction = () => {
-      financeApi.add({
-          userId: user?.id || 'unknown',
-          type: form.type as any,
-          category: form.category,
-          amountBeforeTax: parseFloat(form.amount),
-          taxAmount: parseFloat(form.tax) || 0,
-          totalAmount: parseFloat(form.amount) + (parseFloat(form.tax) || 0),
-          description: form.desc,
-          dateIncurred: form.date,
-          businessUsePercent: 100
-      });
-      setIsAddModalOpen(false);
-      refreshData();
-      setForm({ type: 'EXPENSE', category: 'MEALS_ENTERTAINMENT', amount: '', tax: '', desc: '', date: new Date().toISOString().split('T')[0] });
-  };
-
-  // --- PREMIUM GATE VIEW ---
-  if (!isPremium) {
-      return (
-          <div className="relative min-h-[80vh] flex flex-col items-center justify-center p-6 overflow-hidden rounded-3xl border border-white/10 bg-surface">
-              {/* Blurred Background Mockup */}
-              <div className="absolute inset-0 blur-xl opacity-30 pointer-events-none select-none">
-                  <div className="grid grid-cols-3 gap-4 p-8">
-                      <div className="h-32 bg-white/10 rounded-xl"></div>
-                      <div className="h-32 bg-white/10 rounded-xl"></div>
-                      <div className="h-32 bg-white/10 rounded-xl"></div>
-                      <div className="col-span-3 h-64 bg-white/5 rounded-xl"></div>
-                  </div>
-              </div>
-
-              <div className="relative z-10 max-w-lg text-center space-y-8 animate-in zoom-in duration-500">
-                  <div className="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center mx-auto ring-1 ring-accent/50 shadow-[0_0_30px_rgba(199,62,29,0.4)]">
-                      <Lock className="w-8 h-8 text-accent" />
-                  </div>
-                  
-                  <div className="space-y-4">
-                      <Heading level={2}>Financial Command Center</Heading>
-                      <Text className="text-gray-400">
-                          Unlock military-grade budgeting tools. Automate your tax compliance, track deductions with our 
-                          <span className="text-white font-bold"> Audit Pack™</span> engine, and forecast your GST status.
-                      </Text>
-                  </div>
-
-                  <div className="bg-surfaceHighlight border border-white/10 rounded-xl p-6 text-left space-y-3">
-                      <div className="flex items-center gap-3">
-                          <Calculator className="w-5 h-5 text-accent" />
-                          <span className="text-sm font-bold text-white">Automated Meal Deductions (50% Rule)</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                          <AlertTriangle className="w-5 h-5 text-accent" />
-                          <span className="text-sm font-bold text-white">GST Threshold Alerts ($30k Warning)</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                          <PieChart className="w-5 h-5 text-accent" />
-                          <span className="text-sm font-bold text-white">Profit & Loss Real-time Analysis</span>
-                      </div>
-                  </div>
-
-                  <Button onClick={handleUpgrade} className="w-full h-14 text-lg bg-accent hover:bg-accentGlow shadow-glow">
-                      <Crown className="w-5 h-5 mr-2" /> Upgrade to Pro - $15/mo
-                  </Button>
-                  <p className="text-xs text-gray-600 uppercase tracking-widest">Cancel anytime. Tax deductible.</p>
-              </div>
-          </div>
-      );
-  }
-
-  // --- UNLOCKED VIEW ---
   return (
-    <div className="space-y-8 pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-             <Badge color="accent">Pro Unlocked</Badge>
+    <div className="relative min-h-screen">
+      {!user.isPremium && <PremiumFinanceOverlay />}
+      <div className={clsx("space-y-24 animate-in fade-in duration-700 pb-40", !user.isPremium && "blur-md pointer-events-none select-none")}>
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 pb-16 border-b border-white/5">
+          <div className="space-y-4">
+            <div className="flex items-center gap-6">
+               <Badge color="accent" className="uppercase tracking-[0.4em] text-[9px] font-black italic">Wrap Wallet</Badge>
+               <div className="flex items-center gap-3 text-[9px] font-black text-white/30 uppercase tracking-[0.5em]">
+                  <PiggyBank size={12} /> YTD Compliance Ledger
+               </div>
+            </div>
+            <h1 className="heading-huge text-white leading-[0.75]">THE <br /><span className="text-accent">LEDGER.</span></h1>
           </div>
-          <Heading level={1}>Finance</Heading>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1">
+          <Card className="p-10 border-accent/20 bg-accent/5">
+             <Text variant="caption">Net Position</Text>
+             <h3 className="text-6xl font-serif italic text-white mt-4">${stats?.netIncomeYTD.toLocaleString()}</h3>
+             <p className="text-[9px] text-white/30 uppercase font-black tracking-widest mt-2">After Deductibles</p>
+          </Card>
+          <Card className="p-10 border-white/5">
+             <Text variant="caption">Gross Income</Text>
+             <h3 className="text-5xl font-serif italic text-white mt-4">${stats?.grossIncomeYTD.toLocaleString()}</h3>
+             <p className="text-[9px] text-white/30 uppercase font-black tracking-widest mt-2">Before Expenses</p>
+          </Card>
+          <Card className="p-10 border-white/5">
+             <Text variant="caption">Small Supplier</Text>
+             <h3 className="text-5xl font-serif italic text-white mt-4">{Math.round(financeApi.getThresholdProgress(stats?.grossIncomeYTD || 0))}%</h3>
+             <ProgressBar progress={financeApi.getThresholdProgress(stats?.grossIncomeYTD || 0)} className="mt-4" />
+          </Card>
+          <Card className="p-10 border-white/5">
+             <Text variant="caption">Tax Reserves</Text>
+             <h3 className="text-5xl font-serif italic text-white mt-4">${Math.round((stats?.estIncomeTax || 0) + (stats?.estCPP || 0)).toLocaleString()}</h3>
+             <p className="text-[9px] text-white/30 uppercase font-black tracking-widest mt-2">Est. Tax + CPP</p>
+          </Card>
         </div>
-        <Button onClick={() => setIsAddModalOpen(!isAddModalOpen)}>
-            <Plus className="w-4 h-4 mr-2" /> Log Transaction
-        </Button>
-      </div>
 
-      {/* Stats Overview */}
-      {stats && (
-          <div className="grid md:grid-cols-4 gap-4">
-             <Card className="p-6 bg-surfaceHighlight/30 border-white/10">
-                 <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Gross Income</p>
-                 <p className="text-3xl font-serif text-white flex items-center gap-2">
-                     <TrendingUp className="w-5 h-5 text-green-500" />
-                     ${stats.grossIncomeYTD.toLocaleString()}
-                 </p>
-             </Card>
-             <Card className="p-6 bg-surfaceHighlight/30 border-white/10">
-                 <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Expenses</p>
-                 <p className="text-3xl font-serif text-white flex items-center gap-2">
-                     <TrendingDown className="w-5 h-5 text-red-400" />
-                     ${stats.totalExpensesYTD.toLocaleString()}
-                 </p>
-             </Card>
-             <Card className="p-6 bg-surfaceHighlight/30 border-white/10 relative overflow-hidden">
-                 <div className="absolute top-0 right-0 p-1 bg-accent text-[9px] font-bold uppercase text-white rounded-bl-lg">Deductible</div>
-                 <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Audit Safe Expenses</p>
-                 <p className="text-3xl font-serif text-white">
-                     ${stats.deductibleExpensesYTD.toLocaleString()}
-                 </p>
-                 <p className="text-[10px] text-gray-500 mt-1">
-                    Difference: <span className="text-red-400">${(stats.totalExpensesYTD - stats.deductibleExpensesYTD).toLocaleString()}</span> (Non-Deductible)
-                 </p>
-             </Card>
-             <Card className="p-6 bg-surfaceHighlight/30 border-white/10">
-                 <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Est. Taxable Income</p>
-                 <p className="text-3xl font-serif text-white text-accent">
-                     ${stats.taxableIncomeProjected.toLocaleString()}
-                 </p>
-             </Card>
-          </div>
-      )}
-
-      {/* Compliance Section */}
-      <div className="grid md:grid-cols-3 gap-6">
-          <Card className="md:col-span-2 p-8 border-white/10">
-             <div className="flex items-center justify-between mb-6">
-                 <Heading level={3}>GST/HST Threshold Monitor</Heading>
-                 <span className="text-xs text-gray-500 font-mono">Limit: $30,000.00</span>
-             </div>
-             
-             {stats && (
-                 <div className="space-y-4">
-                     <div className="flex justify-between text-sm">
-                         <span className="text-gray-400">Current Gross Income</span>
-                         <span className={stats.grossIncomeYTD >= 30000 ? "text-red-500 font-bold" : "text-white"}>
-                             ${stats.grossIncomeYTD.toLocaleString()} / $30k
-                         </span>
-                     </div>
-                     <ProgressBar progress={financeApi.getThresholdProgress(stats.grossIncomeYTD)} className="h-4" />
-                     
-                     {financeApi.checkGstThreshold(stats.grossIncomeYTD) ? (
-                         <div className="flex items-start gap-3 p-4 bg-red-900/20 border border-red-500/30 rounded-lg mt-4">
-                             <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
-                             <div>
-                                 <p className="text-sm font-bold text-red-400">Threshold Exceeded</p>
-                                 <p className="text-xs text-gray-400 mt-1">Rule GST-001: You have exceeded the small supplier threshold. You must register for GST/HST immediately to remain compliant.</p>
-                             </div>
-                         </div>
-                     ) : (
-                         <p className="text-xs text-gray-500 mt-2">You are a Small Supplier. GST registration is optional but recommended if you have significant expenses.</p>
-                     )}
+        <div className="grid lg:grid-cols-3 gap-12">
+           <section className="lg:col-span-2 space-y-12">
+              <div className="flex justify-between items-end border-b border-white/5 pb-8">
+                 <h3 className="font-serif italic text-4xl text-white">Entry Log</h3>
+                 <div className="flex gap-4">
+                    <Button variant="outline" className="h-12 text-[9px]">Filter</Button>
+                    <Button className="h-12 text-[9px] px-8">Add Entry</Button>
                  </div>
-             )}
-          </Card>
-
-          <Card className="p-6 bg-surfaceHighlight/10 border-white/10">
-              <Heading level={3} className="mb-4">Quick Actions</Heading>
-              <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start text-xs border-white/10">
-                      <Calculator className="w-4 h-4 mr-2" /> Estimate Income Tax
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start text-xs border-white/10">
-                      <FileText className="w-4 h-4 mr-2" /> Export Audit Pack
-                  </Button>
               </div>
-          </Card>
-      </div>
 
-      {/* Transaction List */}
-      <div className="space-y-4">
-          <Heading level={3}>Recent Transactions</Heading>
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-surface">
-              <table className="w-full text-left text-sm">
-                  <thead className="bg-white/5 text-gray-400 font-medium uppercase tracking-wider text-xs">
-                      <tr>
-                          <th className="p-4">Date</th>
-                          <th className="p-4">Description</th>
-                          <th className="p-4">Category</th>
-                          <th className="p-4 text-right">Amount</th>
-                          <th className="p-4 text-right">Deductible</th>
-                          <th className="p-4 text-center">Rules</th>
-                      </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                      {transactions.length === 0 && (
-                          <tr><td colSpan={6} className="p-8 text-center text-gray-500">No transactions logged.</td></tr>
-                      )}
-                      {transactions.map(tx => (
-                          <tr key={tx.id} className="hover:bg-white/5 transition-colors">
-                              <td className="p-4 text-gray-400 font-mono">{tx.dateIncurred}</td>
-                              <td className="p-4 text-white font-medium">{tx.description}</td>
-                              <td className="p-4 text-gray-500 text-xs uppercase">{tx.category.replace(/_/g, ' ')}</td>
-                              <td className={tx.type === 'INCOME' ? "p-4 text-right text-green-400" : "p-4 text-right text-white"}>
-                                  {tx.type === 'INCOME' ? '+' : '-'}${tx.totalAmount.toFixed(2)}
-                              </td>
-                              <td className="p-4 text-right text-gray-400">
-                                  {tx.type === 'EXPENSE' ? `$${tx.deductibleAmount?.toFixed(2)}` : '-'}
-                              </td>
-                              <td className="p-4 text-center">
-                                  {tx.ruleTags && tx.ruleTags.length > 0 && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-accent/20 text-accent uppercase border border-accent/30">
-                                          {tx.ruleTags[0].replace('MEALS_50_LIMIT', '50% Rule')}
-                                      </span>
-                                  )}
-                              </td>
-                          </tr>
-                      ))}
-                  </tbody>
-              </table>
-          </div>
-      </div>
-
-      {/* Add Transaction Modal (Simplified Inline) */}
-      {isAddModalOpen && (
-          <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <Card className="w-full max-w-md bg-surface border-white/20 shadow-2xl animate-in zoom-in duration-300">
-                  <Heading level={3} className="mb-6">Log Transaction</Heading>
-                  <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                          <div>
-                              <label className="text-xs uppercase text-gray-500 font-bold">Type</label>
-                              <Select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="bg-black border-white/10">
-                                  <option value="EXPENSE">Expense</option>
-                                  <option value="INCOME">Income</option>
-                              </Select>
+              <div className="space-y-1">
+                 {transactions.length > 0 ? transactions.map(tx => (
+                    <div key={tx.id} className="p-8 glass-ui border-white/5 hover:border-accent/30 transition-all flex items-center justify-between group">
+                       <div className="flex items-center gap-8">
+                          <div className={clsx(
+                             "w-12 h-12 flex items-center justify-center border",
+                             tx.type === 'INCOME' ? "border-green-500/20 text-green-400 bg-green-500/5" : "border-red-500/20 text-red-400 bg-red-500/5"
+                          )}>
+                             {tx.type === 'INCOME' ? <TrendingUp size={18} /> : <Receipt size={18} />}
                           </div>
                           <div>
-                              <label className="text-xs uppercase text-gray-500 font-bold">Date</label>
-                              <Input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="bg-black border-white/10" />
+                             <p className="text-xl font-serif italic text-white">{tx.description}</p>
+                             <p className="text-[9px] text-white/30 uppercase font-black tracking-widest mt-1">{tx.category} // {tx.dateIncurred}</p>
                           </div>
-                      </div>
-                      
-                      <div>
-                          <label className="text-xs uppercase text-gray-500 font-bold">Category</label>
-                          <Select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="bg-black border-white/10">
-                              {form.type === 'EXPENSE' ? (
-                                  <>
-                                      <option value="MEALS_ENTERTAINMENT">Meals (50% Rule)</option>
-                                      <option value="TRAVEL">Travel</option>
-                                      <option value="EQUIPMENT_RENTAL">Equipment Rental</option>
-                                      <option value="GEAR_SMALL_TOOLS">Gear & Small Tools</option>
-                                      <option value="UNION_DUES">Union Dues</option>
-                                      <option value="AGENT_COMMISSIONS">Agent Commissions</option>
-                                      <option value="TRAINING_WORKSHOPS">Training & Workshops</option>
-                                      <option value="OFFICE_SUPPLIES">Office Supplies</option>
-                                      <option value="FINES_PENALTIES">Fines (Non-Deductible)</option>
-                                  </>
-                              ) : (
-                                  <>
-                                      <option value="SERVICE_FEES">Service Fees</option>
-                                      <option value="ROYALTY">Royalty</option>
-                                  </>
-                              )}
-                          </Select>
-                      </div>
-
-                      <div>
-                          <label className="text-xs uppercase text-gray-500 font-bold">Description</label>
-                          <Input value={form.desc} onChange={e => setForm({...form, desc: e.target.value})} placeholder="e.g. Lunch with Director" className="bg-black border-white/10" />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
+                       </div>
+                       <div className="text-right flex items-center gap-10">
                           <div>
-                              <label className="text-xs uppercase text-gray-500 font-bold">Amount ($)</label>
-                              <Input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="bg-black border-white/10" />
+                             <p className={clsx("text-2xl font-serif italic", tx.type === 'INCOME' ? "text-white" : "text-white/40")}>
+                                {tx.type === 'INCOME' ? '+' : '-'}${tx.amountBeforeTax.toLocaleString()}
+                             </p>
+                             {tx.ruleTags && tx.ruleTags.length > 0 && (
+                                <p className="text-[8px] text-accent uppercase font-black tracking-widest mt-1 italic">{tx.ruleTags[0].replace(/_/g, ' ')}</p>
+                             )}
                           </div>
-                          <div>
-                              <label className="text-xs uppercase text-gray-500 font-bold">Tax Paid/Coll ($)</label>
-                              <Input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} className="bg-black border-white/10" />
-                          </div>
-                      </div>
+                       </div>
+                    </div>
+                 )) : (
+                    <div className="py-20 text-center border border-dashed border-white/5 opacity-20">
+                       <p className="text-[10px] font-black uppercase tracking-widest italic">No financial movements detected.</p>
+                    </div>
+                 )}
+              </div>
+           </section>
 
-                      <div className="flex gap-4 pt-4">
-                          <Button variant="ghost" onClick={() => setIsAddModalOpen(false)} className="flex-1">Cancel</Button>
-                          <Button onClick={handleAddTransaction} className="flex-1">Save Entry</Button>
-                      </div>
-                  </div>
+           <aside className="space-y-12">
+              <h3 className="font-serif italic text-4xl text-white border-b border-white/5 pb-8">Tax Compliance</h3>
+              <Card className="border-accent/20 bg-accent/5 p-12 space-y-10">
+                 <div className="flex items-center gap-4 text-accent">
+                    <Calculator size={20} strokeWidth={1} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.5em]">Real-time Calculation</span>
+                 </div>
+                 <div className="space-y-6">
+                    <div className="flex justify-between items-end border-b border-white/5 pb-4">
+                       <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">Est. Income Tax</p>
+                       <p className="text-2xl font-serif italic text-white">${Math.round(stats?.estIncomeTax || 0).toLocaleString()}</p>
+                    </div>
+                    <div className="flex justify-between items-end border-b border-white/5 pb-4">
+                       <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">Est. CPP (Sole Prop)</p>
+                       <p className="text-2xl font-serif italic text-white">${Math.round(stats?.estCPP || 0).toLocaleString()}</p>
+                    </div>
+                 </div>
               </Card>
-          </div>
-      )}
+           </aside>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 {
   "name": "CineArch",
-  "description": "A minimalist, editorial-grade tool for Canadian film workers to track union eligibility, log jobs, and manage documents.",
+  "description": "A minimalist, editorial-grade platform for Canadian film workers to track union eligibility, log jobs, and manage documents.",
   "requestFramePermissions": [
     "camera"
   ]

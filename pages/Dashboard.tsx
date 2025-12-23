@@ -1,250 +1,269 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
-import { UserUnionTracking, Job, User, UNIONS, FinanceStats } from '../types';
-import { Heading, Text, Card, Badge, Button, ProgressBar } from '../components/ui';
-import { ArrowUpRight, Zap, Calendar, ChevronRight, Clock, Shield, Sparkles, Mail, Phone, Plus } from 'lucide-react';
+import { UserUnionTracking, Job, User, FinanceStats } from '../types';
+import { Badge, Button, ProgressBar, Card, Heading, Text } from '../components/ui';
+import { 
+  ArrowUpRight, Clock, Shield, Landmark, Target, WalletCards, Lock, ChevronRight, UserPlus, Activity, Users, AlertCircle, TrendingUp, Zap, Plus, Calendar as CalendarIcon, Filter, Crosshair, Hexagon
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 
-const DashStat = ({ label, value, subtext, highlight = false }: { label: string, value: string, subtext?: string, highlight?: boolean }) => (
-  <div className={clsx("p-10 glass-ui transition-all duration-500", highlight ? "border-accent/40 bg-accent/5" : "hover:border-white/10")}>
-    <span className={clsx("text-[9px] font-black uppercase tracking-[0.4em]", highlight ? "text-accent" : "text-white/60")}>{label}</span>
-    <div className={clsx("text-6xl md:text-7xl font-serif mt-4 mb-2 tracking-tighter italic", highlight ? "text-accent" : "text-white")}>{value}</div>
-    {subtext && <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">{subtext}</p>}
+const StatBox = ({ label, value, subtext, highlight = false, icon: Icon, onClick }: { label: string, value: string, subtext?: string, highlight?: boolean, icon?: any, onClick?: () => void }) => (
+  <div onClick={onClick} className={clsx("p-10 bg-[#050505] transition-all duration-700 relative group overflow-hidden border", highlight ? "border-accent/40 bg-accent/[0.02]" : "border-white/5 hover:border-accent/20", onClick && "cursor-pointer")}>
+    <div className="flex justify-between items-start relative z-10">
+      <div className="flex items-center gap-3">
+        <div className={clsx("w-1 h-3", highlight ? "bg-accent" : "bg-white/20")}></div>
+        <span className={clsx("text-[9px] font-black uppercase tracking-[0.5em] italic", highlight ? "text-accent" : "text-white/30")}>{label}</span>
+      </div>
+      {Icon && <Icon size={12} className={highlight ? "text-accent animate-pulse" : "text-white/10"} />}
+    </div>
+    <div className={clsx("text-6xl md:text-7xl font-serif mt-8 mb-2 tracking-tighter italic relative z-10", highlight ? "text-accent" : "text-white")}>{value}</div>
+    {subtext && <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 relative z-10 italic border-t border-white/5 pt-4 inline-block">{subtext}</p>}
+    <div className="absolute -bottom-4 -right-4 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
+       <Hexagon size={120} />
+    </div>
   </div>
 );
 
-const IndividualDashboard = ({ jobs, tracking, user, financeStats }: { jobs: Job[], tracking: UserUnionTracking[], user: User, financeStats: FinanceStats }) => {
+const AgentGanttChart = ({ user }: { user: User }) => {
   const navigate = useNavigate();
-  const primaryTrack = tracking[0];
-  const eligibilityPercent = primaryTrack ? api.tracking.calculateProgress(primaryTrack.id, jobs).percent : 0;
-  const gstProgress = financeStats ? financeApi.getThresholdProgress(financeStats.grossIncomeYTD) : 0;
-  const vaultCount = api.vault.list().length;
+  const roster = user.managedUsers || [];
+  
+  const timeline = useMemo(() => {
+    const days = [];
+    const start = new Date();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  }, []);
+
+  const rosterData = useMemo(() => {
+    return roster.map(client => ({
+      client,
+      jobs: api.jobs.list(client.id)
+    }));
+  }, [roster]);
+
+  const getJobStyle = (job: Job) => {
+    const start = new Date(job.startDate);
+    const end = job.endDate ? new Date(job.endDate) : new Date(job.startDate);
+    const timelineStart = timeline[0].getTime();
+    const dayWidth = 100 / 30;
+    const diffStart = Math.max(0, (start.getTime() - timelineStart) / (1000 * 60 * 60 * 24));
+    const diffEnd = Math.max(0, (end.getTime() - timelineStart) / (1000 * 60 * 60 * 24)) + 1;
+
+    if (diffStart >= 30 || (diffEnd <= 0 && job.endDate)) return null;
+
+    const left = Math.max(0, diffStart) * dayWidth;
+    const width = Math.min(30 - diffStart, diffEnd - Math.max(0, diffStart)) * dayWidth;
+
+    return { 
+      left: `${left}%`, 
+      width: `${width}%`,
+      backgroundColor: job.status === 'CONFIRMED' ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+      border: job.status === 'TENTATIVE' ? '1px dashed rgba(250,204,21,0.3)' : 'none'
+    };
+  };
 
   return (
-    <div className="space-y-16 animate-in fade-in duration-700">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-12 border-b border-white/5">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-             <Badge color="accent" className="uppercase tracking-widest text-[8px]">On Set Now</Badge>
-             {user.selectedRoles && user.selectedRoles.length > 1 && (
-               <div className="flex items-center gap-2 text-[8px] font-black text-white/60 uppercase tracking-widest">
-                  <Sparkles size={10} className="text-accent" /> Dual-Department
-               </div>
-             )}
+    <div className="space-y-20 animate-in fade-in duration-1000 pb-20">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 pb-16 border-b border-white/10">
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Badge color="accent" className="italic tracking-widest uppercase">Command Console v1.0</Badge>
+            <div className="w-px h-6 bg-white/10"></div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/40 italic">System Stable</span>
           </div>
-          <h1 className="heading-huge text-white">THE <br /><span className="text-accent">WRAP.</span></h1>
+          <h1 className="text-8xl md:text-9xl font-serif text-white leading-[0.7] uppercase tracking-tighter italic">TACTICAL <br /><span className="text-accent">ROSTER.</span></h1>
         </div>
-        <Button onClick={() => navigate('/jobs/new')} className="h-16 px-10 text-[11px] font-black tracking-[0.4em]">Log Production <ArrowUpRight className="ml-3" size={14}/></Button>
+        <div className="flex gap-4">
+          <Button variant="outline" className="h-16 px-8 text-[10px] font-black uppercase tracking-[0.4em] italic border-white/10">
+            <Filter size={14} className="mr-3" /> Filters
+          </Button>
+          <Button onClick={() => navigate('/app/jobs/new')} className="h-16 px-12 text-[10px] font-black tracking-[0.5em] accent-glow uppercase">
+            Deploy Talent <Plus size={14} className="ml-3" />
+          </Button>
+        </div>
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-1">
-        <DashStat 
-          label="Guild Alignment" 
-          value={tracking.length > 0 ? `${Math.round(eligibilityPercent)}%` : '0%'} 
-          subtext={primaryTrack ? `${primaryTrack.unionName} Track` : 'No Guild Targets'} 
-          highlight 
-        />
-        <DashStat 
-          label="Total Scale" 
-          value={`$${((financeStats?.grossIncomeYTD || 0) / 1000).toFixed(1)}k`} 
-          subtext="YTD Gross Earnings" 
-        />
-        <DashStat 
-          label="The Vault" 
-          value={vaultCount > 0 ? "Verified" : "Empty"} 
-          subtext={`${vaultCount} Key Documents`} 
-        />
-        <DashStat 
-          label="GST Status" 
-          value={`${Math.round(gstProgress)}%`} 
-          subtext="Threshold Progress" 
-        />
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-10">
-        <section className="lg:col-span-2 glass-ui p-10 space-y-12">
-           <div className="flex items-end justify-between border-b border-white/5 pb-8">
-              <h3 className="font-serif italic text-4xl text-white">Guild Trajectory</h3>
-              <Badge color="neutral">{user.province}</Badge>
-           </div>
-           
-           <div className="space-y-16">
-              {tracking.length > 0 ? tracking.map(t => {
-                 const { percent } = api.tracking.calculateProgress(t.id, jobs);
-                 return (
-                    <div key={t.id} className="space-y-6 group">
-                       <div className="flex justify-between items-end">
-                          <div>
-                             <div className="flex items-center gap-2 text-white">
-                                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-accent italic">{t.unionName}</span>
-                                <div className="h-[1px] w-8 bg-accent/20"></div>
-                             </div>
-                             <p className="text-lg font-serif text-white italic mt-1 group-hover:text-accent transition-colors">{t.tierLabel} Continuity</p>
-                          </div>
-                          <span className="text-6xl font-serif text-white italic leading-none">{Math.round(percent)}%</span>
-                       </div>
-                       <ProgressBar progress={percent} />
-                    </div>
-                 );
-              }) : (
-                <div className="py-24 text-center space-y-8 border border-dashed border-white/10 glass-ui">
-                   <Landmark size={32} className="mx-auto text-white/20" />
-                   <div className="space-y-2">
-                      <p className="text-white font-serif italic text-2xl">No guild objectives established.</p>
-                      <p className="text-[10px] text-white/40 uppercase font-black tracking-widest max-w-xs mx-auto">Guild alignment is required to track continuity toward membership or upgrades.</p>
-                   </div>
-                   <Button variant="outline" onClick={() => navigate('/settings')}>Identify Guilds</Button>
+      {/* Modern Tactical Gantt */}
+      <div className="bg-[#050505] border border-white/5 shadow-2xl overflow-x-auto">
+        <div className="min-w-[1400px]">
+          {/* Header Axis */}
+          <div className="grid grid-cols-[320px_1fr] border-b border-white/10">
+            <div className="p-8 border-r border-white/10 flex items-center gap-4 bg-[#080808]">
+               <Crosshair size={16} className="text-accent" />
+               <span className="text-[11px] font-black uppercase tracking-widest text-white italic">Active Coordinates</span>
+            </div>
+            <div className="grid grid-cols-30">
+              {timeline.map((date, i) => (
+                <div key={i} className={clsx(
+                  "h-20 flex flex-col items-center justify-center border-r border-white/5 transition-colors",
+                  date.getDay() === 0 || date.getDay() === 6 ? "bg-white/[0.01]" : "hover:bg-white/[0.03]"
+                )}>
+                  <span className="text-[8px] font-black text-white/20 uppercase tracking-tighter">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                  <span className={clsx("text-xs font-serif mt-1 italic", i === 0 ? "text-accent" : "text-white/40")}>{date.getDate()}</span>
                 </div>
-              )}
-           </div>
-        </section>
+              ))}
+            </div>
+          </div>
 
-        <aside className="p-10 glass-ui flex flex-col justify-end min-h-[400px] relative overflow-hidden group border-accent/20">
-           <img src="https://i.pinimg.com/736x/b2/35/cc/b235cc9c47f96a370bec8f76be06fd24.jpg" className="absolute inset-0 w-full h-full object-cover opacity-10 grayscale group-hover:scale-110 transition-transform duration-[3000ms]" />
-           <div className="relative z-10 space-y-6">
-              <div className="flex items-center gap-2">
-                 <Shield className="text-accent" size={16} />
-                 <span className="text-[9px] font-black uppercase tracking-[0.4em] text-accent">Archival Security</span>
+          {/* Roster Stream */}
+          <div className="divide-y divide-white/5">
+            {rosterData.map(({ client, jobs }) => (
+              <div key={client.id} className="grid grid-cols-[320px_1fr] group hover:bg-white/[0.02] transition-colors relative">
+                <div 
+                  onClick={() => api.auth.switchClient(client.id)}
+                  className="p-8 border-r border-white/10 flex items-center gap-6 cursor-pointer hover:bg-white/5 transition-colors bg-[#080808]/50"
+                >
+                  <div className="relative">
+                    <div className="w-16 h-16 border border-white/10 flex items-center justify-center font-serif italic text-2xl text-white group-hover:bg-accent group-hover:text-black transition-all">
+                      {client.name.charAt(0)}
+                    </div>
+                    {jobs.length > 0 && <div className="absolute -top-2 -right-2 w-5 h-5 bg-accent text-black text-[10px] font-black flex items-center justify-center border-2 border-black">{jobs.length}</div>}
+                  </div>
+                  <div className="truncate">
+                    <h4 className="text-2xl font-serif italic text-white leading-none truncate group-hover:text-accent transition-colors">{client.name}</h4>
+                    <p className="text-[9px] text-white/30 uppercase font-black tracking-widest mt-3 truncate">{client.role || client.selectedRoles?.[0] || 'Member'}</p>
+                  </div>
+                </div>
+
+                <div className="relative grid grid-cols-30">
+                  {timeline.map((_, i) => (
+                    <div key={i} className="border-r border-white/5 h-full pointer-events-none" />
+                  ))}
+
+                  {/* High-Resolution Booking Bars */}
+                  {jobs.map(job => {
+                    const style = getJobStyle(job);
+                    if (!style) return null;
+                    return (
+                      <div
+                        key={job.id}
+                        onClick={() => navigate(`/app/jobs/${job.id}`)}
+                        className={clsx(
+                          "absolute top-1/2 -translate-y-1/2 h-10 cursor-pointer transition-all hover:scale-y-110 z-10 group/bar flex items-center px-4 shadow-xl",
+                          job.status === 'CONFIRMED' ? "text-black" : "text-accent"
+                        )}
+                        style={style}
+                      >
+                         <div className="flex items-center gap-3 overflow-hidden">
+                           <div className={clsx("w-1 h-4", job.status === 'CONFIRMED' ? "bg-black/30" : "bg-accent")}></div>
+                           <span className="text-[9px] font-black uppercase tracking-tighter truncate opacity-0 group-hover/bar:opacity-100 transition-all">
+                             {job.productionName}
+                           </span>
+                         </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <h3 className="text-white italic font-serif text-4xl leading-tight">Audit <br/>Vault.</h3>
-              <p className="text-white/60 text-xs font-light leading-relaxed">Encrypted local archive. Your deal memos and call sheets are secure.</p>
-              <Button variant="outline" className="w-full h-12 border-accent text-accent hover:bg-accent hover:text-black" onClick={() => navigate('/settings')}>Open Archive</Button>
-           </div>
-        </aside>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* Visual Identity Legend */}
+      <div className="flex flex-wrap items-center gap-10 p-10 bg-[#080808] border border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-4 h-4 bg-accent"></div>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 italic">Confirmed Deployment</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-4 h-4 border border-accent/40 bg-accent/5"></div>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 italic">Tentative Holding</span>
+        </div>
+        <div className="w-px h-6 bg-white/10"></div>
+        <div className="flex items-center gap-3">
+           <Activity size={14} className="text-accent/40" />
+           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 italic">Live Roster Feed</span>
+        </div>
       </div>
     </div>
   );
 };
 
-// Re-import Landmark which was missing from icons above
-import { Landmark } from 'lucide-react';
-
-const AgencyDashboard = ({ user }: { user: User }) => {
+const IndividualDashboard = ({ jobs, tracking, user, financeStats }: { jobs: Job[], tracking: UserUnionTracking[], user: User, financeStats: FinanceStats }) => {
   const navigate = useNavigate();
-  const [roster, setRoster] = useState<{client: User, jobs: Job[]}[]>([]);
-
-  useEffect(() => {
-    const data = (user.managedUsers || []).map(client => {
-      const jobsStr = localStorage.getItem(`cinearch_data_jobs_${client.id}`);
-      return { client, jobs: jobsStr ? JSON.parse(jobsStr) : [] };
-    });
-    setRoster(data);
-  }, [user]);
+  const primaryTrack = tracking[0];
+  const { percent } = primaryTrack ? api.tracking.calculateProgress(primaryTrack.id, jobs) : { percent: 0 };
+  const gstProgress = financeStats ? financeApi.getThresholdProgress(financeStats.grossIncomeYTD) : 0;
 
   return (
-    <div className="space-y-16 animate-in fade-in duration-700">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-12 border-b border-white/5">
-        <div className="space-y-2">
-           <div className="flex items-center gap-3 mb-2">
-              <Zap className="text-accent w-5 h-5 fill-current" />
-              <span className="text-accent text-[10px] font-black uppercase tracking-[0.5em] italic">Agency Command</span>
-           </div>
-           <h1 className="heading-huge text-white">SHOW <br /><span className="text-accent">RUNNER.</span></h1>
+    <div className="space-y-24 animate-in fade-in duration-1000">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 pb-16 border-b border-white/10">
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+             <Badge color="accent" className="italic tracking-widest uppercase">Professional Terminal v1.0</Badge>
+          </div>
+          <h1 className="text-9xl font-serif text-white leading-[0.7] uppercase tracking-tighter italic">THE <br /><span className="text-accent">WRAP.</span></h1>
         </div>
-        <div className="glass-ui p-10 min-w-[280px] text-center space-y-2 border-accent/20">
-           <span className="text-[9px] font-black uppercase tracking-[0.4em] text-accent">Active Roster Sync</span>
-           <div className="text-7xl font-serif text-white italic leading-none">{roster.length}<span className="text-xl font-sans not-italic text-white/40">/35</span></div>
-           <p className="text-[9px] text-white/40 font-black uppercase tracking-widest mt-2">Verified Members</p>
-        </div>
+        <Button onClick={() => navigate('/app/jobs/new')} className="h-20 px-16 text-[12px] font-black tracking-[0.6em] accent-glow uppercase">Secure Log <Plus size={16} className="ml-4" /></Button>
       </header>
 
-      <div className="grid lg:grid-cols-3 gap-1">
-        <section className="lg:col-span-2 glass-ui p-10 space-y-10">
-          <div className="flex justify-between items-end border-b border-white/5 pb-6">
-            <h3 className="font-serif italic text-4xl text-white">Production Roster</h3>
-            <Badge color="accent">Real-time Feed</Badge>
-          </div>
-          <div className="space-y-2">
-             {roster.length > 0 ? roster.slice(0, 10).map((r, i) => (
-               <div key={i} className="flex flex-col p-6 hover:bg-white/5 transition-all group border-b border-white/5 last:border-none">
-                 <div className="flex items-center gap-8 mb-4">
-                    <div className="w-14 h-14 bg-white/5 border border-white/10 flex items-center justify-center font-serif italic text-2xl text-accent group-hover:bg-accent group-hover:text-black">
-                      {r.client.name.charAt(0)}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xl font-serif text-white italic">{r.client.name}</p>
-                      <p className="text-[9px] text-white/40 uppercase font-black tracking-widest">
-                        {r.jobs[0]?.productionName || 'Off-Production'} // {r.client.selectedRoles?.[0]}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-accent group-hover:translate-x-1 transition-all" />
-                 </div>
-                 <div className="flex items-center gap-6 pl-22">
-                    <div className="flex items-center gap-2 text-[10px] text-white/60 font-light italic">
-                       <Mail size={12} className="text-accent" /> {r.client.email}
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] text-white/60 font-light italic">
-                       <Phone size={12} className="text-accent" /> {r.client.phone || 'No Contact Info'}
-                    </div>
-                 </div>
-               </div>
-             )) : (
-               <div className="py-20 text-center text-[9px] text-white/40 uppercase tracking-[0.4em] italic font-black">No talent records synchronized.</div>
-             )}
-          </div>
-        </section>
-
-        <section className="glass-ui p-10 space-y-10">
-           <h3 className="font-serif italic text-3xl text-white border-b border-white/5 pb-6">Guild Compliance</h3>
-           <div className="space-y-10">
-              {[
-                { union: 'ACTRA', desc: 'Dues Sync', date: 'Oct 31', urgent: true },
-                { union: 'IATSE 873', desc: 'Q4 Membership', date: 'Nov 15', urgent: false },
-                { union: 'DGC', desc: 'Administrative Fee Gap', date: 'Dec 01', urgent: false },
-                { union: 'WGC', desc: 'Script Credit Verification', date: 'Dec 05', urgent: false }
-              ].map((due, i) => (
-                <div key={i} className="flex items-start gap-6 group">
-                  <div className={clsx("h-14 w-[1px] transition-all", due.urgent ? "bg-accent scale-y-110" : "bg-white/10")}></div>
-                  <div>
-                    <p className="text-[9px] font-black text-white uppercase tracking-[0.3em] mb-1">{due.union}</p>
-                    <p className="text-xs text-white/60 leading-relaxed">{due.desc}</p>
-                    <p className={clsx("text-[9px] font-black uppercase tracking-widest mt-2", due.urgent ? "text-accent" : "text-white/40")}>{due.date}</p>
-                  </div>
-                </div>
-              ))}
-           </div>
-        </section>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1">
+        <StatBox label="Guild Vector" value={`${Math.round(percent)}%`} subtext={primaryTrack ? `${primaryTrack.unionName} Sync` : 'Unassigned'} highlight icon={Target} />
+        <StatBox label="The Ledger" value={`$${((financeStats?.grossIncomeYTD || 0) / 1000).toFixed(1)}k`} subtext="YTD Gross Yield" icon={WalletCards} />
+        <StatBox label="Tax Logic" value={`${Math.round(gstProgress)}%`} subtext="CRA Threshold" icon={Landmark} />
+        <StatBox label="File Archive" value={api.vault.list().length.toString()} subtext="Verified Tokens" icon={Shield} />
       </div>
+
+      <section className="bg-[#050505] p-16 space-y-16 border border-white/5 relative overflow-hidden">
+         <div className="flex items-center gap-6">
+            <h3 className="font-serif italic text-5xl text-white uppercase tracking-tight">Continuity Record</h3>
+            <div className="flex-1 h-px bg-white/5"></div>
+         </div>
+         <div className="space-y-24">
+            {tracking.map(t => {
+               const { percent, current, target } = api.tracking.calculateProgress(t.id, jobs);
+               return (
+                  <div key={t.id} className="space-y-10 group">
+                     <div className="flex justify-between items-end">
+                        <div className="space-y-2">
+                           <span className="text-4xl font-serif text-white italic group-hover:text-accent transition-colors">{t.unionName} Trajectory</span>
+                           <p className="text-[9px] text-white/30 uppercase font-black tracking-widest italic">{current.toLocaleString()} / {target.toLocaleString()} Units Completed</p>
+                        </div>
+                        <span className="text-8xl font-serif text-white italic opacity-40 group-hover:opacity-100 transition-all">{Math.round(percent)}%</span>
+                     </div>
+                     <ProgressBar progress={percent} />
+                  </div>
+               );
+            })}
+         </div>
+         <div className="absolute top-0 right-0 p-12 opacity-[0.03]">
+            <Hexagon size={200} />
+         </div>
+      </section>
     </div>
   );
 };
 
 export const Dashboard = () => {
-  const [tracking, setTracking] = useState<UserUnionTracking[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [financeStats, setFinanceStats] = useState<FinanceStats | null>(null);
+  const [loading, setLoading] = useState(true);
   const user = api.auth.getUser();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [tracking, setTracking] = useState<UserUnionTracking[]>([]);
+  const [financeStats, setFinanceStats] = useState<FinanceStats | null>(null);
 
   useEffect(() => {
-    setTracking(api.tracking.get());
-    setJobs(api.jobs.list());
-    
-    // Logic to calculate real stats based on logs if finance data isn't initialized
-    const realJobs = api.jobs.list();
-    const grossIncome = realJobs.reduce((a,c) => a + (c.grossEarnings || 0), 0);
-    
-    if (user?.isPremium) {
-      const stats = financeApi.getStats();
-      setFinanceStats(stats);
-    } else {
-      setFinanceStats({
-        grossIncomeYTD: grossIncome,
-        totalExpensesYTD: 0,
-        deductibleExpensesYTD: 0,
-        netIncomeYTD: grossIncome,
-        gstCollected: 0,
-        gstPaid: 0,
-        gstNetRemittance: 0,
-        taxableIncomeProjected: grossIncome
-      });
-    }
+    if (!user) return;
+    const load = async () => {
+      setJobs(api.jobs.list());
+      setTracking(api.tracking.get());
+      setFinanceStats(financeApi.getStats());
+      setLoading(false);
+    };
+    load();
   }, [user]);
 
-  if (!user) return null;
-  return user.accountType === 'AGENT' 
-    ? <AgencyDashboard user={user} /> 
+  if (!user || loading) return null;
+
+  return user.accountType === 'AGENT' && !user.activeViewId
+    ? <AgentGanttChart user={user} />
     : <IndividualDashboard jobs={jobs} tracking={tracking} user={user} financeStats={financeStats!} />;
 };
