@@ -1,16 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { Heading, Text, Card, Button, Input, Select, Badge, ProgressBar } from '../components/ui';
-import { Lock, Crown, Plus, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Calculator, PieChart, FileText } from 'lucide-react';
+import { Lock, Crown, Plus, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Calculator, PieChart, FileText, Landmark, Wallet } from 'lucide-react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
-import { User, FinanceTransaction, FinanceStats } from '../types';
+import { User, FinanceTransaction, FinanceStats, UNIONS } from '../types';
+import { clsx } from 'clsx';
 
 export const Finance = () => {
   const [user, setUser] = useState<User | null>(api.auth.getUser());
   const [stats, setStats] = useState<FinanceStats | null>(null);
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [tracking, setTracking] = useState(api.tracking.get());
   
   // Local Form State
   const [form, setForm] = useState({
@@ -33,10 +35,10 @@ export const Finance = () => {
   const refreshData = () => {
       setTransactions(financeApi.list());
       setStats(financeApi.getStats());
+      setTracking(api.tracking.get());
   };
 
   const handleUpgrade = () => {
-      // Simulate upgrade
       if (user) {
           const updated = { ...user, isPremium: true };
           api.auth.updateUser(updated);
@@ -63,11 +65,9 @@ export const Finance = () => {
       setForm({ type: 'EXPENSE', category: 'MEALS_ENTERTAINMENT', amount: '', tax: '', desc: '', date: new Date().toISOString().split('T')[0] });
   };
 
-  // --- PREMIUM GATE VIEW ---
   if (!isPremium) {
       return (
-          <div className="relative min-h-[80vh] flex flex-col items-center justify-center p-6 overflow-hidden rounded-3xl border border-white/10 bg-surface">
-              {/* Blurred Background Mockup */}
+          <div className="relative min-h-[80vh] flex flex-col items-center justify-center p-6 overflow-hidden border border-white/10 bg-surface">
               <div className="absolute inset-0 blur-xl opacity-30 pointer-events-none select-none">
                   <div className="grid grid-cols-3 gap-4 p-8">
                       <div className="h-32 bg-white/10 rounded-xl"></div>
@@ -76,176 +76,147 @@ export const Finance = () => {
                       <div className="col-span-3 h-64 bg-white/5 rounded-xl"></div>
                   </div>
               </div>
-
               <div className="relative z-10 max-w-lg text-center space-y-8 animate-in zoom-in duration-500">
-                  <div className="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center mx-auto ring-1 ring-accent/50 shadow-[0_0_30px_rgba(199,62,29,0.4)]">
+                  <div className="w-20 h-20 bg-accent/20 flex items-center justify-center mx-auto ring-1 ring-accent/50 shadow-[0_0_30px_rgba(250,204,21,0.4)]">
                       <Lock className="w-8 h-8 text-accent" />
                   </div>
-                  
                   <div className="space-y-4">
-                      <Heading level={2}>Wrap Wallet</Heading>
-                      <Text className="text-gray-400">
-                          Unlock military-grade budgeting tools. Automate your tax compliance, track deductions with our 
-                          <span className="text-white font-bold"> Audit Pack™</span> engine, and forecast your GST status.
+                      <h1 className="heading-huge text-white italic uppercase leading-none">Wrap <br/><span className="text-accent">Wallet.</span></h1>
+                      <Text className="text-gray-400 italic">
+                          Unlock precision budgeting for the Canadian guild landscape. Automate tax compliance, track union initiation fees, and forecast your GST status.
                       </Text>
                   </div>
-
-                  <div className="bg-surfaceHighlight border border-white/10 rounded-xl p-6 text-left space-y-3">
-                      <div className="flex items-center gap-3">
-                          <Calculator className="w-5 h-5 text-accent" />
-                          <span className="text-sm font-bold text-white">Automated Meal Deductions (50% Rule)</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                          <AlertTriangle className="w-5 h-5 text-accent" />
-                          <span className="text-sm font-bold text-white">GST Threshold Alerts ($30k Warning)</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                          <PieChart className="w-5 h-5 text-accent" />
-                          <span className="text-sm font-bold text-white">Profit & Loss Real-time Analysis</span>
-                      </div>
-                  </div>
-
-                  <Button onClick={handleUpgrade} className="w-full h-14 text-lg bg-accent hover:bg-accentGlow shadow-glow">
-                      <Crown className="w-5 h-5 mr-2" /> Upgrade to Pro - $15/mo
+                  <Button onClick={handleUpgrade} className="w-full h-20 text-[10px] tracking-[0.5em] bg-white text-black hover:bg-accent font-black">
+                      <Crown className="w-5 h-5 mr-3" /> Initialize Wallet // $15 mo
                   </Button>
-                  <p className="text-xs text-gray-600 uppercase tracking-widest">Cancel anytime. Tax deductible.</p>
               </div>
           </div>
       );
   }
 
-  // --- UNLOCKED VIEW ---
   return (
-    <div className="space-y-8 pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="space-y-16 pb-40">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 border-b border-white/10 pb-12">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-             <Badge color="accent">Pro Unlocked</Badge>
-          </div>
-          <Heading level={1}>Wrap Wallet</Heading>
+           <Badge color="accent" className="italic tracking-widest">Financial Terminal</Badge>
+           <h1 className="heading-huge uppercase italic leading-none">WRAP <br/><span className="text-accent">WALLET.</span></h1>
         </div>
-        <Button onClick={() => setIsAddModalOpen(!isAddModalOpen)}>
-            <Plus className="w-4 h-4 mr-2" /> Log Transaction
+        <Button onClick={() => setIsAddModalOpen(true)} className="h-16 px-10 text-[10px] tracking-[0.4em] font-black">
+            <Plus className="w-4 h-4 mr-3" /> Log Transaction
         </Button>
-      </div>
+      </header>
 
       {/* Stats Overview */}
       {stats && (
-          <div className="grid md:grid-cols-4 gap-4">
-             <Card className="p-6 bg-surfaceHighlight/30 border-white/10">
-                 <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Gross Income</p>
-                 <p className="text-3xl font-serif text-white flex items-center gap-2">
-                     <TrendingUp className="w-5 h-5 text-green-500" />
-                     ${stats.grossIncomeYTD.toLocaleString()}
-                 </p>
-             </Card>
-             <Card className="p-6 bg-surfaceHighlight/30 border-white/10">
-                 <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Expenses</p>
-                 <p className="text-3xl font-serif text-white flex items-center gap-2">
-                     <TrendingDown className="w-5 h-5 text-red-400" />
-                     ${stats.totalExpensesYTD.toLocaleString()}
-                 </p>
-             </Card>
-             <Card className="p-6 bg-surfaceHighlight/30 border-white/10 relative overflow-hidden">
-                 <div className="absolute top-0 right-0 p-1 bg-accent text-[9px] font-bold uppercase text-white rounded-bl-lg">Deductible</div>
-                 <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Audit Safe Expenses</p>
-                 <p className="text-3xl font-serif text-white">
-                     ${stats.deductibleExpensesYTD.toLocaleString()}
-                 </p>
-                 <p className="text-[10px] text-gray-500 mt-1">
-                    Difference: <span className="text-red-400">${(stats.totalExpensesYTD - stats.deductibleExpensesYTD).toLocaleString()}</span> (Non-Deductible)
-                 </p>
-             </Card>
-             <Card className="p-6 bg-surfaceHighlight/30 border-white/10">
-                 <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Est. Taxable Income</p>
-                 <p className="text-3xl font-serif text-white text-accent">
-                     ${stats.taxableIncomeProjected.toLocaleString()}
-                 </p>
-             </Card>
+          <div className="grid md:grid-cols-4 gap-1">
+             <div className="p-10 glass-ui space-y-6">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">Gross Scale</p>
+                 <div className="text-4xl font-serif text-white italic">${stats.grossIncomeYTD.toLocaleString()}</div>
+             </div>
+             <div className="p-10 glass-ui space-y-6">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">Expenses</p>
+                 <div className="text-4xl font-serif text-white italic">${stats.totalExpensesYTD.toLocaleString()}</div>
+             </div>
+             <div className="p-10 glass-ui space-y-6 border-accent/20 bg-accent/5">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-accent italic">Audit Safe Yield</p>
+                 <div className="text-4xl font-serif text-white italic">${stats.deductibleExpensesYTD.toLocaleString()}</div>
+             </div>
+             <div className="p-10 glass-ui space-y-6">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">Est. Taxable Base</p>
+                 <div className="text-4xl font-serif text-accent italic">${stats.taxableIncomeProjected.toLocaleString()}</div>
+             </div>
           </div>
       )}
 
-      {/* Compliance Section */}
-      <div className="grid md:grid-cols-3 gap-6">
-          <Card className="md:col-span-2 p-8 border-white/10">
-             <div className="flex items-center justify-between mb-6">
-                 <Heading level={3}>GST/HST Threshold Monitor</Heading>
-                 <span className="text-xs text-gray-500 font-mono">Limit: $30,000.00</span>
+      <div className="grid lg:grid-cols-3 gap-12">
+          {/* GST Monitor */}
+          <div className="lg:col-span-2 glass-ui p-12 space-y-12">
+             <div className="flex justify-between items-center border-b border-white/5 pb-8">
+                 <div className="space-y-1">
+                    <h3 className="font-serif italic text-4xl text-white">Small Supplier Status</h3>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">Threshold Tracking: Rule GST-001</p>
+                 </div>
+                 <Badge color="neutral">Limit: $30k</Badge>
              </div>
              
              {stats && (
-                 <div className="space-y-4">
-                     <div className="flex justify-between text-sm">
-                         <span className="text-gray-400">Current Gross Income</span>
-                         <span className={stats.grossIncomeYTD >= 30000 ? "text-red-500 font-bold" : "text-white"}>
-                             ${stats.grossIncomeYTD.toLocaleString()} / $30k
+                 <div className="space-y-8">
+                     <div className="flex justify-between text-[11px] font-black uppercase tracking-widest">
+                         <span className="text-white/40 italic">Current Gross</span>
+                         <span className={stats.grossIncomeYTD >= 30000 ? "text-accent" : "text-white"}>
+                             ${stats.grossIncomeYTD.toLocaleString()}
                          </span>
                      </div>
-                     <ProgressBar progress={financeApi.getThresholdProgress(stats.grossIncomeYTD)} className="h-4" />
+                     <ProgressBar progress={financeApi.getThresholdProgress(stats.grossIncomeYTD)} />
                      
-                     {financeApi.checkGstThreshold(stats.grossIncomeYTD) ? (
-                         <div className="flex items-start gap-3 p-4 bg-red-900/20 border border-red-500/30 rounded-lg mt-4">
-                             <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
-                             <div>
-                                 <p className="text-sm font-bold text-red-400">Threshold Exceeded</p>
-                                 <p className="text-xs text-gray-400 mt-1">Rule GST-001: You have exceeded the small supplier threshold. You must register for GST/HST immediately to remain compliant.</p>
+                     {financeApi.checkGstThreshold(stats.grossIncomeYTD) && (
+                         <div className="p-8 bg-accent/5 border border-accent/20 flex gap-6 items-start">
+                             <AlertTriangle className="text-accent" size={24} />
+                             <div className="space-y-2">
+                                 <p className="text-[10px] font-black uppercase tracking-widest text-accent italic">Action Required</p>
+                                 <p className="text-sm text-white/60 italic leading-relaxed">Threshold exceeded. Register for GST/HST to remain in compliance with the CRA.</p>
                              </div>
                          </div>
-                     ) : (
-                         <p className="text-xs text-gray-500 mt-2">You are a Small Supplier. GST registration is optional but recommended if you have significant expenses.</p>
                      )}
                  </div>
              )}
-          </Card>
+          </div>
 
-          <Card className="p-6 bg-surfaceHighlight/10 border-white/10">
-              <Heading level={3} className="mb-4">Quick Actions</Heading>
-              <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start text-xs border-white/10">
-                      <Calculator className="w-4 h-4 mr-2" /> Estimate Income Tax
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start text-xs border-white/10">
-                      <FileText className="w-4 h-4 mr-2" /> Export Audit Pack
-                  </Button>
+          {/* Union Fee Projections */}
+          <div className="p-12 glass-ui space-y-10 border-accent/20 bg-accent/5">
+              <div className="flex items-center gap-4">
+                 <Landmark size={20} className="text-accent" />
+                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-accent">Compliance Budget</h4>
               </div>
-          </Card>
+              <div className="space-y-8">
+                 {tracking.length > 0 ? tracking.map(t => {
+                    const master = UNIONS.find(u => u.name === t.unionName);
+                    if (!master?.applicationFee) return null;
+                    return (
+                        <div key={t.id} className="space-y-3">
+                           <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/40 italic">
+                              <span>{t.unionName} Application</span>
+                              <span className="text-white">${master.applicationFee}</span>
+                           </div>
+                           <p className="text-[9px] text-white/20 leading-relaxed italic">Estimated initiation for {t.tierLabel}.</p>
+                        </div>
+                    );
+                 }) : (
+                    <p className="text-xs text-white/20 italic">No guild fees initialized. Set targets in Base Camp to forecast initiation costs.</p>
+                 )}
+              </div>
+          </div>
       </div>
 
       {/* Transaction List */}
-      <div className="space-y-4">
-          <Heading level={3}>Recent Transactions</Heading>
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-surface">
-              <table className="w-full text-left text-sm">
-                  <thead className="bg-white/5 text-gray-400 font-medium uppercase tracking-wider text-xs">
-                      <tr>
-                          <th className="p-4">Date</th>
-                          <th className="p-4">Description</th>
-                          <th className="p-4">Category</th>
-                          <th className="p-4 text-right">Amount</th>
-                          <th className="p-4 text-right">Deductible</th>
-                          <th className="p-4 text-center">Rules</th>
+      <div className="space-y-10">
+          <h3 className="font-serif italic text-4xl text-white">Production Ledger</h3>
+          <div className="overflow-x-auto border border-white/5">
+              <table className="w-full text-left text-sm font-sans">
+                  <thead className="bg-white/[0.02] border-b border-white/5">
+                      <tr className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                          <th className="p-6">Date</th>
+                          <th className="p-6">Context</th>
+                          <th className="p-6">Sector</th>
+                          <th className="p-6 text-right">Magnitude</th>
+                          <th className="p-6 text-center">Protocol</th>
                       </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
                       {transactions.length === 0 && (
-                          <tr><td colSpan={6} className="p-8 text-center text-gray-500">No transactions logged.</td></tr>
+                          <tr><td colSpan={5} className="p-20 text-center text-white/20 italic uppercase font-black tracking-widest">Slate Clear</td></tr>
                       )}
                       {transactions.map(tx => (
-                          <tr key={tx.id} className="hover:bg-white/5 transition-colors">
-                              <td className="p-4 text-gray-400 font-mono">{tx.dateIncurred}</td>
-                              <td className="p-4 text-white font-medium">{tx.description}</td>
-                              <td className="p-4 text-gray-500 text-xs uppercase">{tx.category.replace(/_/g, ' ')}</td>
-                              <td className={tx.type === 'INCOME' ? "p-4 text-right text-green-400" : "p-4 text-right text-white"}>
+                          <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors group">
+                              <td className="p-6 font-mono text-[10px] text-white/30">{tx.dateIncurred}</td>
+                              <td className="p-6 font-serif italic text-lg text-white">{tx.description}</td>
+                              <td className="p-6 text-[10px] font-black uppercase tracking-widest text-white/20">{tx.category.replace(/_/g, ' ')}</td>
+                              <td className={clsx("p-6 text-right font-serif italic text-lg", tx.type === 'INCOME' ? "text-accent" : "text-white")}>
                                   {tx.type === 'INCOME' ? '+' : '-'}${tx.totalAmount.toFixed(2)}
                               </td>
-                              <td className="p-4 text-right text-gray-400">
-                                  {tx.type === 'EXPENSE' ? `$${tx.deductibleAmount?.toFixed(2)}` : '-'}
-                              </td>
-                              <td className="p-4 text-center">
+                              <td className="p-6 text-center">
                                   {tx.ruleTags && tx.ruleTags.length > 0 && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-accent/20 text-accent uppercase border border-accent/30">
-                                          {tx.ruleTags[0].replace('MEALS_50_LIMIT', '50% Rule')}
-                                      </span>
+                                      <Badge color="accent" className="text-[8px]">{tx.ruleTags[0].replace('MEALS_50_LIMIT', '50% Rule')}</Badge>
                                   )}
                               </td>
                           </tr>
@@ -255,72 +226,70 @@ export const Finance = () => {
           </div>
       </div>
 
-      {/* Add Transaction Modal (Simplified Inline) */}
+      {/* Modal - Shutter Style */}
       {isAddModalOpen && (
-          <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <Card className="w-full max-w-md bg-surface border-white/20 shadow-2xl animate-in zoom-in duration-300">
-                  <Heading level={3} className="mb-6">Log Transaction</Heading>
-                  <div className="space-y-4">
+          <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6">
+              <div className="w-full max-w-xl glass-ui p-12 border-white/20 animate-in zoom-in-95 duration-300">
+                  <div className="flex justify-between items-center mb-10">
+                     <h3 className="font-serif italic text-4xl text-white">Log Mark</h3>
+                     <button onClick={() => setIsAddModalOpen(false)} className="text-white/20 hover:text-white transition-colors">DISCARD</button>
+                  </div>
+                  <div className="space-y-8">
                       <div className="grid grid-cols-2 gap-4">
-                          <div>
-                              <label className="text-xs uppercase text-gray-500 font-bold">Type</label>
-                              <Select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="bg-black border-white/10">
-                                  <option value="EXPENSE">Expense</option>
-                                  <option value="INCOME">Income</option>
+                          <div className="space-y-2">
+                              <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Entry Type</label>
+                              <Select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="h-16 text-sm font-serif italic">
+                                  <option value="EXPENSE" className="bg-black">Expense</option>
+                                  <option value="INCOME" className="bg-black">Income</option>
                               </Select>
                           </div>
-                          <div>
-                              <label className="text-xs uppercase text-gray-500 font-bold">Date</label>
-                              <Input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="bg-black border-white/10" />
+                          <div className="space-y-2">
+                              <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Date</label>
+                              <Input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="h-16 text-sm" />
                           </div>
                       </div>
                       
-                      <div>
-                          <label className="text-xs uppercase text-gray-500 font-bold">Category</label>
-                          <Select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="bg-black border-white/10">
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Sector</label>
+                          <Select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="h-16 text-sm font-serif italic">
                               {form.type === 'EXPENSE' ? (
                                   <>
-                                      <option value="MEALS_ENTERTAINMENT">Meals (50% Rule)</option>
-                                      <option value="TRAVEL">Travel</option>
-                                      <option value="EQUIPMENT_RENTAL">Equipment Rental</option>
-                                      <option value="GEAR_SMALL_TOOLS">Gear & Small Tools</option>
-                                      <option value="UNION_DUES">Union Dues</option>
-                                      <option value="AGENT_COMMISSIONS">Agent Commissions</option>
-                                      <option value="TRAINING_WORKSHOPS">Training & Workshops</option>
-                                      <option value="OFFICE_SUPPLIES">Office Supplies</option>
-                                      <option value="FINES_PENALTIES">Fines (Non-Deductible)</option>
+                                      <option value="MEALS_ENTERTAINMENT" className="bg-black">Meals (50% Rule)</option>
+                                      <option value="UNION_DUES" className="bg-black">Union Dues</option>
+                                      <option value="APPLICATION_FEE" className="bg-black">Initiation/App Fee</option>
+                                      <option value="GEAR_SMALL_TOOLS" className="bg-black">Gear & Small Tools</option>
+                                      <option value="OFFICE_SUPPLIES" className="bg-black">Office Supplies</option>
                                   </>
                               ) : (
                                   <>
-                                      <option value="SERVICE_FEES">Service Fees</option>
-                                      <option value="ROYALTY">Royalty</option>
+                                      <option value="SERVICE_FEES" className="bg-black">Service Fees</option>
+                                      <option value="RESIDUAL" className="bg-black">Residuals</option>
                                   </>
                               )}
                           </Select>
                       </div>
 
-                      <div>
-                          <label className="text-xs uppercase text-gray-500 font-bold">Description</label>
-                          <Input value={form.desc} onChange={e => setForm({...form, desc: e.target.value})} placeholder="e.g. Lunch with Director" className="bg-black border-white/10" />
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Description</label>
+                          <Input value={form.desc} onChange={e => setForm({...form, desc: e.target.value})} placeholder="e.g. Local 634 App Fee" className="h-16 text-lg italic" />
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
-                          <div>
-                              <label className="text-xs uppercase text-gray-500 font-bold">Amount ($)</label>
-                              <Input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="bg-black border-white/10" />
+                          <div className="space-y-2">
+                              <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Subtotal ($)</label>
+                              <Input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="h-16 text-lg font-mono" />
                           </div>
-                          <div>
-                              <label className="text-xs uppercase text-gray-500 font-bold">Tax Paid/Coll ($)</label>
-                              <Input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} className="bg-black border-white/10" />
+                          <div className="space-y-2">
+                              <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">GST/HST ($)</label>
+                              <Input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} className="h-16 text-lg font-mono" />
                           </div>
                       </div>
 
-                      <div className="flex gap-4 pt-4">
-                          <Button variant="ghost" onClick={() => setIsAddModalOpen(false)} className="flex-1">Cancel</Button>
-                          <Button onClick={handleAddTransaction} className="flex-1">Save Entry</Button>
+                      <div className="pt-8">
+                         <Button onClick={handleAddTransaction} className="w-full h-20 text-[11px] font-black uppercase tracking-[0.5em] bg-white text-black hover:bg-accent">Print Record</Button>
                       </div>
                   </div>
-              </Card>
+              </div>
           </div>
       )}
     </div>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
@@ -7,6 +6,13 @@ import { Heading, Text, Card, Badge, Button, ProgressBar } from '../components/u
 import { ArrowUpRight, Zap, Calendar, ChevronRight, Clock, Shield, Sparkles, Mail, Phone, Plus, Landmark, Radar, GanttChartSquare, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
+
+// Explicit interface for Roster item to ensure type safety across the agency dashboard
+interface RosterMember {
+  client: User;
+  jobs: Job[];
+  tracks: UserUnionTracking[];
+}
 
 const DashStat = ({ label, value, subtext, highlight = false }: { label: string, value: string, subtext?: string, highlight?: boolean }) => (
   <div className={clsx("p-12 glass-ui transition-all duration-700", highlight ? "border-accent/30 bg-accent/5" : "hover:border-white/20")}>
@@ -189,32 +195,33 @@ const IndividualDashboard = ({ jobs, tracking, user, financeStats }: { jobs: Job
 
 const AgencyDashboard = ({ user }: { user: User }) => {
   const navigate = useNavigate();
-  const [roster, setRoster] = useState<{ client: User, jobs: Job[], tracks: UserUnionTracking[] }[]>([]);
+  // Ensure activeRoster is explicitly typed as RosterMember[] to avoid inference issues
+  const [activeRoster, setActiveRoster] = useState<RosterMember[]>([]);
   const [activeUnionFilter, setActiveUnionFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    const data = (user.managedUsers || []).map(client => {
+    const data: RosterMember[] = (user.managedUsers || []).map(client => {
       const jobsStr = localStorage.getItem(`cinearch_data_jobs_${client.id}`);
       const tracksStr = localStorage.getItem(`cinearch_data_tracking_${client.id}`);
       return { 
         client, 
-        jobs: jobsStr ? JSON.parse(jobsStr) : [],
-        tracks: tracksStr ? JSON.parse(tracksStr) : []
+        jobs: (jobsStr ? JSON.parse(jobsStr) : []) as Job[],
+        tracks: (tracksStr ? JSON.parse(tracksStr) : []) as UserUnionTracking[]
       };
     });
-    setRoster(data);
+    setActiveRoster(data);
   }, [user]);
 
   const groupedByUnion = useMemo(() => {
     const map: Record<string, { client: User, role: string }[]> = {};
-    roster.forEach(({ client, tracks }) => {
+    activeRoster.forEach(({ client, tracks }) => {
       tracks.forEach(track => {
         if (!map[track.unionName]) map[track.unionName] = [];
         map[track.unionName].push({ client, role: client.selectedRoles?.[0] || 'Unknown Role' });
       });
     });
     return map;
-  }, [roster]);
+  }, [activeRoster]);
 
   return (
     <div className="space-y-24 animate-in fade-in duration-1000">
@@ -228,14 +235,15 @@ const AgencyDashboard = ({ user }: { user: User }) => {
         </div>
         <div className="glass-ui p-12 min-w-[320px] text-center space-y-4 border-accent/20 bg-accent/5">
            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-accent italic">Active Roster Sync</span>
-           <div className="text-8xl font-serif text-white italic leading-none">{roster.length}<span className="text-2xl font-sans not-italic text-white/20 ml-2">/35</span></div>
+           <div className="text-8xl font-serif text-white italic leading-none">{activeRoster.length}<span className="text-2xl font-sans not-italic text-white/20 ml-2">/35</span></div>
            <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.3em] mt-4 italic">Personnel Verified</p>
         </div>
       </header>
 
       {/* Gantt Visualization */}
       <section className="animate-in slide-in-from-bottom-8 duration-700">
-         <TacticalTimeline roster={roster.map(r => ({ client: r.client, jobs: r.jobs }))} />
+         {/* Mapping activeRoster to TacticalTimeline expected format */}
+         <TacticalTimeline roster={activeRoster.map(r => ({ client: r.client, jobs: r.jobs }))} />
       </section>
 
       <div className="grid lg:grid-cols-12 gap-12">
@@ -248,7 +256,8 @@ const AgencyDashboard = ({ user }: { user: User }) => {
            </div>
 
            <div className="grid sm:grid-cols-2 gap-1">
-              {Object.entries(groupedByUnion).map(([union, members]) => (
+              {/* Fix: Explicitly casting Object.entries to resolve 'unknown' type inference on members */}
+              {(Object.entries(groupedByUnion) as [string, { client: User, role: string }[]][]).map(([union, members]) => (
                  <Card 
                    key={union} 
                    className={clsx(
