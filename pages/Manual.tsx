@@ -3,7 +3,6 @@ import React, { useState, useMemo } from 'react';
 import { Heading, Badge, Input, Card, Text, Button } from '../components/ui';
 import { CanadianProvince } from '../types';
 import { UNION_SPECS } from '../config/unions_data';
-// Added PROVINCIAL_EXCEPTIONS to the import list below to fix the undefined variable error
 import { resolveUnionsForRole, PROVINCIAL_EXCEPTIONS } from '../config/jurisdiction_map';
 import { INDUSTRY_DEPARTMENTS } from '../config/industry_roles';
 import { Search, Shield, ChevronRight, Mail, Landmark, Info, MapPin, Briefcase, LayoutGrid, BookOpen } from 'lucide-react';
@@ -37,8 +36,8 @@ export const Manual = () => {
     <div className="space-y-24 pb-40 animate-in fade-in duration-1000">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 border-b border-white/10 pb-12 relative">
         <div className="space-y-4">
-           <Badge color="accent" className="italic tracking-widest uppercase">Registry v0.5</Badge>
-           <h1 className="heading-huge uppercase italic leading-none">THE <br/><span className="text-accent">MATRIX.</span></h1>
+           <Badge color="accent" className="italic tracking-widest uppercase italic">Registry v0.5</Badge>
+           <h1 className="heading-huge uppercase italic leading-none">YOUR <br/><span className="text-accent">REGISTRY.</span></h1>
         </div>
         <div className="flex-1 max-w-md relative group">
            <Search size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-hover:text-accent transition-colors" />
@@ -58,26 +57,26 @@ export const Manual = () => {
                 onClick={() => setActiveTab('ROLES')} 
                 className={clsx("text-left px-8 py-5 text-[10px] font-black uppercase tracking-[0.4em] border transition-all flex items-center justify-between", activeTab === 'ROLES' ? "bg-white text-black border-white" : "text-white/30 border-white/5 hover:bg-white/5")}
               >
-                Role Directory <Briefcase size={12} />
+                Your Role Directory <Briefcase size={12} />
               </button>
               <button 
                 onClick={() => setActiveTab('GUILDS')} 
                 className={clsx("text-left px-8 py-5 text-[10px] font-black uppercase tracking-[0.4em] border transition-all flex items-center justify-between", activeTab === 'GUILDS' ? "bg-white text-black border-white" : "text-white/30 border-white/5 hover:bg-white/5")}
               >
-                Guild Registry <Landmark size={12} />
+                Your Guild Registry <Landmark size={12} />
               </button>
               <button 
                 onClick={() => setActiveTab('MAP')} 
                 className={clsx("text-left px-8 py-5 text-[10px] font-black uppercase tracking-[0.4em] border transition-all flex items-center justify-between", activeTab === 'MAP' ? "bg-white text-black border-white" : "text-white/30 border-white/5 hover:bg-white/5")}
               >
-                Jurisdiction Map <MapPin size={12} />
+                Your Jurisdiction Map <MapPin size={12} />
               </button>
            </div>
            
            <Card className="p-8 space-y-6 bg-accent/5 border-accent/20">
               <div className="flex items-center gap-3">
                  <MapPin size={14} className="text-accent" />
-                 <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Hub Context</h4>
+                 <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Your Hub Context</h4>
               </div>
               <div className="flex flex-col gap-2">
                  {['Ontario', 'Quebec', 'British Columbia', 'Alberta', 'Manitoba'].map(p => (
@@ -94,8 +93,8 @@ export const Manual = () => {
                     </button>
                  ))}
               </div>
-              <p className="text-[8px] text-white/20 font-black uppercase tracking-[0.2em] leading-relaxed">
-                Selected jurisdiction informs the union resolution logic across the Role Directory.
+              <p className="text-[8px] text-white/20 font-black uppercase tracking-[0.2em] leading-relaxed italic">
+                Your selected jurisdiction informs the union resolution logic across the Role Directory.
               </p>
            </Card>
         </aside>
@@ -105,9 +104,9 @@ export const Manual = () => {
              <div className="space-y-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="flex items-center gap-6 mb-12">
                    <Briefcase className="text-accent" size={24} />
-                   <h2 className="text-5xl font-serif italic text-white leading-none">Role Directory</h2>
+                   <h2 className="text-5xl font-serif italic text-white leading-none">Your Role Directory</h2>
                    <div className="flex-1 h-px bg-white/5"></div>
-                   <Badge color="accent">Jurisdiction: {selectedProvince}</Badge>
+                   <Badge color="accent">Hub: {selectedProvince}</Badge>
                 </div>
 
                 {filteredDepartments.map(dept => (
@@ -209,11 +208,11 @@ export const Manual = () => {
               </div>
            )}
 
-           {activeTab === 'MAP' && (
+           {activeTab === 'MAP' && (activeTab === 'MAP' && (
               <div className="space-y-12 animate-in fade-in duration-700">
                  <div className="flex items-center gap-6">
                     <MapPin className="text-accent" size={24} />
-                    <h2 className="text-5xl font-serif italic text-white leading-none">Rules for {selectedProvince}</h2>
+                    <h2 className="text-5xl font-serif italic text-white leading-none">Rules for Your Hub: {selectedProvince}</h2>
                  </div>
                  
                  <div className="grid gap-1">
@@ -244,7 +243,7 @@ export const Manual = () => {
                     <p className="text-[10px] font-black uppercase tracking-widest italic">All roles not listed above follow standard National Guild benchmarks.</p>
                  </Card>
               </div>
-           )}
+           ))}
         </main>
       </div>
     </div>

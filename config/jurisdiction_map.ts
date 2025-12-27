@@ -21,7 +21,7 @@ export const PROVINCIAL_EXCEPTIONS: Record<string, ProvincialRule[]> = {
       assignedUnionId: 'u-aqtis' 
     },
     { 
-      roleIncludes: ['Director', 'Assistant Director'], 
+      roleIncludes: ['Director', 'Assistant Director', 'Script Supervisor'], 
       assignedUnionId: 'u-dgc' 
     }
   ],
@@ -31,14 +31,22 @@ export const PROVINCIAL_EXCEPTIONS: Record<string, ProvincialRule[]> = {
       assignedUnionId: 'u-411' 
     },
     { 
-      deptIncludes: ['Camera'], 
+      deptIncludes: ['Camera', 'Publicity'], 
       assignedUnionId: 'u-667' 
+    },
+    {
+      roleIncludes: ['Script Supervisor'],
+      assignedUnionId: 'u-873'
     }
   ],
   'British Columbia': [
     { 
       deptIncludes: ['Camera'], 
-      assignedUnionId: 'u-669' // Placeholder for 669
+      assignedUnionId: 'u-669'
+    },
+    {
+      deptIncludes: ['Director', 'Art', 'Logistics'],
+      assignedUnionId: 'u-dgc'
     }
   ]
 };
@@ -63,8 +71,12 @@ export const resolveUnionsForRole = (province: string, roleName: string, deptNam
 
   // 2. If no provincial match found, use a baseline heuristic
   if (suggestions.size === 0) {
-    if (roleName.includes('Director') || roleName.includes('Set PA')) suggestions.add('u-dgc');
-    else if (deptName.includes('Camera')) suggestions.add('u-667');
+    const lowRole = roleName.toLowerCase();
+    const lowDept = deptName.toLowerCase();
+
+    if (lowRole.includes('director') || lowRole.includes('set pa')) suggestions.add('u-dgc');
+    else if (lowDept.includes('camera') || lowRole.includes('photographer')) suggestions.add('u-667');
+    else if (lowRole.includes('actor') || lowRole.includes('stunt')) suggestions.add('u-actra');
     else suggestions.add('u-873');
   }
 

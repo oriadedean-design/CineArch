@@ -1,12 +1,13 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/storage';
 import { Job, UNIONS, JobStatus, User } from '../types';
 import { INDUSTRY_DEPARTMENTS } from '../config/industry_roles';
 import { UNION_SPECS } from '../config/unions_data';
 import { resolveUnionsForRole } from '../config/jurisdiction_map';
-import { Heading, Text, Button, Input, Select, Badge } from '../components/ui';
+import { Heading, Text, Button, Input, Select, Badge, Card } from '../components/ui';
 import { BulkJobUpload } from '../components/BulkJobUpload';
-import { ArrowLeft, ArrowUpRight, Camera, Briefcase, Calendar, Info, Search, Star, ChevronDown, Sparkles, Layers, UploadCloud, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Camera, Briefcase, Calendar, Info, Search, Star, ChevronDown, Sparkles, Layers, UploadCloud, ShieldCheck, ShieldAlert, Zap } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import clsx from 'clsx';
 
@@ -106,7 +107,7 @@ export const JobDetail = () => {
     status: 'CONFIRMED',
     productionName: '',
     role: user?.selectedRoles?.[0] || '',
-    department: user?.department || '',
+    department: user?.department || 'Camera Department',
     isUnion: true,
     unionTypeId: '',
     startDate: new Date().toISOString().split('T')[0],
@@ -128,21 +129,21 @@ export const JobDetail = () => {
     }
   }, [id, isNew]);
 
-  // Handle auto-guild selection when role/dept/province changes
+  // JURISDICTIONAL INTELLIGENCE: Auto-guild assignment
   useEffect(() => {
     if (form.role && form.department && form.province) {
       const suggestedIds = resolveUnionsForRole(form.province, form.role, form.department);
       if (suggestedIds.length > 0) {
         setSuggestedUnion(suggestedIds[0]);
-        // Only auto-select if it's a new job and not already explicitly set
-        if (isNew && !form.unionTypeId) {
+        // Only auto-select if it's a new job and not already explicitly set or different from suggestion
+        if (isNew && form.isUnion && !form.unionTypeId) {
           setForm(prev => ({ ...prev, unionTypeId: suggestedIds[0] }));
         }
       } else {
         setSuggestedUnion(null);
       }
     }
-  }, [form.role, form.department, form.province, isNew]);
+  }, [form.role, form.department, form.province, isNew, form.isUnion]);
 
   const handleSave = () => {
     if (!user) return navigate('/auth');
@@ -171,17 +172,18 @@ export const JobDetail = () => {
   }
 
   const allRoles = INDUSTRY_DEPARTMENTS.flatMap(d => d.roles.map(r => ({ ...r, dept: d.name })));
+  const currentRoleObj = allRoles.find(r => r.name === form.role);
 
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in duration-700">
       <div className="flex justify-between items-center mb-16">
-         <button onClick={() => navigate('/jobs')} className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-white hover:text-accent transition-colors">
+         <button onClick={() => navigate('/jobs')} className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors">
             <ArrowLeft size={16} /> Back to Ones
          </button>
          <Badge color="accent">{isNew ? "Marking the Slate" : "Reviewing the Cut"}</Badge>
       </div>
 
-      <div className="space-y-20">
+      <div className="space-y-24">
          <div className="border-b border-white/5 pb-12">
             <label className="text-[11px] font-black uppercase tracking-[0.6em] text-accent mb-6 block italic">Production Title</label>
             <Input 
@@ -194,33 +196,37 @@ export const JobDetail = () => {
 
          <div className="grid md:grid-cols-2 gap-20">
             <div className="space-y-12">
-               <div className="space-y-6">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white">Jurisdictional Hub</label>
-                  <Select value={form.province} onChange={e => setForm({...form, province: e.target.value})} className="h-20 text-xl font-serif italic">
-                     {['Ontario', 'Quebec', 'British Columbia', 'Alberta', 'Manitoba'].map(p => <option key={p} value={p} className="bg-black">{p}</option>)}
-                  </Select>
+               {/* 1. Hub & Role */}
+               <div className="space-y-10">
+                  <div className="space-y-6">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Jurisdictional Hub</label>
+                     <Select value={form.province} onChange={e => setForm({...form, province: e.target.value})} className="h-20 text-xl font-serif italic">
+                        {['Ontario', 'Quebec', 'British Columbia', 'Alberta', 'Manitoba'].map(p => <option key={p} value={p} className="bg-black">{p}</option>)}
+                     </Select>
+                  </div>
+
+                  <div className="space-y-6">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Technical Assignment</label>
+                     <Select value={form.role} onChange={e => {
+                       const roleName = e.target.value;
+                       const roleObj = allRoles.find(r => r.name === roleName);
+                       setForm({...form, role: roleName, department: roleObj?.dept || form.department});
+                     }} className="h-20 text-xl font-serif italic">
+                        <option value="" className="bg-black">Select Mark...</option>
+                        {INDUSTRY_DEPARTMENTS.map(dept => (
+                           <optgroup key={dept.name} label={dept.name} className="bg-black text-accent font-black uppercase tracking-widest">
+                              {dept.roles.map(r => <option key={r.name} value={r.name} className="bg-black text-white">{r.name}</option>)}
+                           </optgroup>
+                        ))}
+                     </Select>
+                  </div>
                </div>
 
-               <div className="space-y-6">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white">Technical Role</label>
-                  <Select value={form.role} onChange={e => {
-                    const roleName = e.target.value;
-                    const roleObj = allRoles.find(r => r.name === roleName);
-                    setForm({...form, role: roleName, department: roleObj?.dept || form.department});
-                  }} className="h-20 text-xl font-serif italic">
-                     <option value="" className="bg-black">Select Mark...</option>
-                     {INDUSTRY_DEPARTMENTS.map(dept => (
-                        <optgroup key={dept.name} label={dept.name} className="bg-black text-accent">
-                           {dept.roles.map(r => <option key={r.name} value={r.name} className="bg-black text-white">{r.name}</option>)}
-                        </optgroup>
-                     ))}
-                  </Select>
-               </div>
-               
-               <div className="space-y-8 p-10 glass-ui border-white/5 bg-white/[0.02] transition-all">
-                  <div className="flex justify-between items-center mb-4">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-white">Production Category</label>
-                     <div className="flex gap-2">
+               {/* 2. Union Protocols */}
+               <Card className="p-10 border-white/5 bg-white/[0.02] space-y-10">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-6">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Production Category</label>
+                     <div className="flex gap-1">
                         <button 
                           onClick={() => setForm({...form, isUnion: true})} 
                           className={clsx("px-4 py-2 text-[9px] font-black uppercase tracking-widest border transition-all", form.isUnion ? "bg-accent text-black border-accent" : "text-white/20 border-white/5")}
@@ -236,7 +242,7 @@ export const JobDetail = () => {
                      </div>
                   </div>
 
-                  {form.isUnion && (
+                  {form.isUnion ? (
                     <div className="space-y-6 animate-in slide-in-from-top-2 duration-500">
                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Guild Alignment</label>
                        <Select 
@@ -247,37 +253,55 @@ export const JobDetail = () => {
                           <option value="" className="bg-black">Resolve Guild...</option>
                           {Object.values(UNION_SPECS).map(u => <option key={u.id} value={u.id} className="bg-black">{u.name}</option>)}
                        </Select>
+                       
                        {suggestedUnion && (
                          <div className="flex items-center gap-3 text-accent animate-in fade-in">
                             <ShieldCheck size={14} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Protocol-Matched: {UNION_SPECS[suggestedUnion]?.name}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest italic tracking-tight">Protocol-Matched via Matrix: {UNION_SPECS[suggestedUnion]?.name}</span>
                          </div>
                        )}
                     </div>
-                  )}
-
-                  {!form.isUnion && (
-                    <div className="flex items-center gap-3 text-white/20">
-                       <ShieldAlert size={14} />
-                       <span className="text-[10px] font-black uppercase tracking-widest italic">Independent workflow detected. Continuity hours will not track for guild eligibility.</span>
+                  ) : (
+                    <div className="flex items-start gap-4 p-4 border border-white/5 opacity-40 italic">
+                       <ShieldAlert size={14} className="mt-1" />
+                       <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Independent Workflow. Continuity hours for this project will not contribute to guild eligibility trajectories.</p>
                     </div>
                   )}
-               </div>
+               </Card>
             </div>
 
             <div className="space-y-12">
+               {/* 3. Temporal & Fiscal */}
                <div className="grid grid-cols-2 gap-10">
                   <div className="space-y-6">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-white">Start Date</label>
-                     <Input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} className="h-20 text-white" />
+                     <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Start Date</label>
+                     <Input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} className="h-20 text-white font-mono" />
                   </div>
                   <div className="space-y-6">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-white">Gross Scale ($)</label>
-                     <Input type="number" value={form.grossEarnings} onChange={e => setForm({...form, grossEarnings: Number(e.target.value)})} className="h-20 text-xl font-mono text-white" />
+                     <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Gross Scale ($)</label>
+                     <Input type="number" value={form.grossEarnings} onChange={e => setForm({...form, grossEarnings: Number(e.target.value)})} className="h-20 text-2xl font-mono text-white" />
                   </div>
                </div>
+
+               {/* 4. Description HUD */}
+               {currentRoleObj && (
+                 <Card className="p-10 border-white/5 space-y-6">
+                    <div className="flex items-center gap-4 text-accent">
+                       <Zap size={14} fill="currentColor" />
+                       <h4 className="text-[11px] font-black uppercase tracking-[0.4em] italic leading-none">Manifesto</h4>
+                    </div>
+                    <p className="text-sm text-white/60 leading-relaxed italic font-light">
+                      {currentRoleObj.description}
+                    </p>
+                    <div className="pt-4 flex gap-4">
+                       <Badge color="neutral" className="opacity-30 border-white/5">{form.department}</Badge>
+                       <Badge color="neutral" className="opacity-30 border-white/5">{form.province} Hub</Badge>
+                    </div>
+                 </Card>
+               )}
+
                <div className="space-y-6">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white">Production Status</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Production Status</label>
                   <div className="flex gap-1">
                      {['CONFIRMED', 'TENTATIVE'].map(s => (
                        <button 
@@ -285,7 +309,7 @@ export const JobDetail = () => {
                          onClick={() => setForm({...form, status: s as any})}
                          className={clsx(
                            "flex-1 h-16 border text-[10px] font-black uppercase tracking-widest transition-all",
-                           form.status === s ? "bg-white text-black border-white" : "glass-ui text-white hover:border-white/20"
+                           form.status === s ? "bg-white text-black border-white" : "glass-ui text-white/20 hover:text-white hover:border-white/20"
                          )}
                        >
                          {s}
@@ -293,17 +317,12 @@ export const JobDetail = () => {
                      ))}
                   </div>
                </div>
-
-               <div className="p-10 glass-ui border-white/5 flex flex-col gap-6 justify-end h-40">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Department</span>
-                  <h4 className="text-4xl font-serif italic text-white leading-none">{form.department || 'General Production'}</h4>
-               </div>
             </div>
          </div>
 
-         <div className="pt-20 border-t border-white/5 flex justify-end gap-10 items-center">
-            <button onClick={() => navigate('/jobs')} className="text-[10px] font-black uppercase tracking-widest text-white hover:text-accent transition-colors">Discard Mark</button>
-            <Button onClick={handleSave} className="h-14 px-10 bg-white text-black font-black uppercase tracking-[0.5em] text-[11px]">Print It // Save</Button>
+         <div className="pt-20 border-t border-white/5 flex justify-end gap-10 items-center pb-24">
+            <button onClick={() => navigate('/jobs')} className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors">Discard Mark</button>
+            <Button onClick={handleSave} className="h-16 px-16 bg-white text-black font-black uppercase tracking-[0.5em] text-[11px]">Print It // Save</Button>
          </div>
       </div>
     </div>
