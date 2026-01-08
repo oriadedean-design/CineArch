@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
@@ -85,10 +86,16 @@ const TacticalTimeline = ({ roster }: { roster: { client: User, jobs: Job[] }[] 
 
 const IndividualDashboard = ({ jobs, tracking, user, financeStats }: { jobs: Job[], tracking: UserUnionTracking[], user: User, financeStats: any }) => {
   const navigate = useNavigate();
+  const [vaultCount, setVaultCount] = useState(0);
+
+  useEffect(() => {
+    // Fix: vault.list() is async, moved to state to track length properly
+    api.vault.list().then(docs => setVaultCount(docs.length));
+  }, []);
+
   const primaryTrack = tracking[0];
   const eligibilityPercent = primaryTrack ? api.tracking.calculateProgress(primaryTrack.id, jobs).percent : 0;
   const gstProgress = financeStats ? financeApi.getThresholdProgress(financeStats.grossIncomeYTD) : 0;
-  const vaultCount = api.vault.list().length;
 
   return (
     <div className="space-y-24 animate-in fade-in duration-1000">
@@ -336,28 +343,33 @@ export const Dashboard = () => {
   const user = api.auth.getUser();
 
   useEffect(() => {
-    setTracking(api.tracking.get());
-    setJobs(api.jobs.list());
-    
-    const realJobs = api.jobs.list();
-    const grossIncome = realJobs.reduce((a,c) => a + (c.grossEarnings || 0), 0);
-    
-    if (user?.isPremium) {
-      const stats = financeApi.getStats();
-      setFinanceStats(stats);
-    } else {
-      setFinanceStats({
-        grossIncomeYTD: grossIncome,
-        totalExpensesYTD: 0,
-        deductibleExpensesYTD: 0,
-        netIncomeYTD: grossIncome,
-        gstCollected: 0,
-        gstPaid: 0,
-        gstNetRemittance: 0,
-        taxableIncomeProjected: grossIncome
-      });
-    }
-  }, []);
+    // Fix: Handle async data loading in Dashboard useEffect
+    const loadData = async () => {
+      const ts = api.tracking.get();
+      const js = await api.jobs.list();
+      setTracking(ts);
+      setJobs(js);
+      
+      const grossIncome = js.reduce((a,c) => a + (c.grossEarnings || 0), 0);
+      
+      if (user?.isPremium) {
+        const stats = financeApi.getStats();
+        setFinanceStats(stats);
+      } else {
+        setFinanceStats({
+          grossIncomeYTD: grossIncome,
+          totalExpensesYTD: 0,
+          deductibleExpensesYTD: 0,
+          netIncomeYTD: grossIncome,
+          gstCollected: 0,
+          gstPaid: 0,
+          gstNetRemittance: 0,
+          taxableIncomeProjected: grossIncome
+        });
+      }
+    };
+    loadData();
+  }, [user]);
 
   if (!user) return null;
   return user.accountType === 'AGENT' 

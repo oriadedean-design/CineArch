@@ -17,12 +17,14 @@ export const Settings = () => {
 
   useEffect(() => { refreshData(); }, []);
 
-  const refreshData = () => {
+  const refreshData = async () => {
     const u = api.auth.getUser();
     setUser(u);
     setProfileForm(u || {});
+    // Fix: Handle async calls for jobs and docs in Settings refresh
     setTrackings(api.tracking.get());
-    setDocs(api.vault.list());
+    const dList = await api.vault.list();
+    setDocs(dList);
     
     // Auto-switch to Agency tab if agent
     if (u?.accountType === 'AGENT' && activeTab === 'ACCOUNT') {
@@ -30,9 +32,9 @@ export const Settings = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (profileForm) {
-      api.auth.updateUser(profileForm);
+      await api.auth.updateUser(profileForm);
       refreshData();
     }
   };
@@ -63,7 +65,7 @@ export const Settings = () => {
     refreshData();
   };
 
-  const handleUploadSim = (type: keyof typeof RESIDENCY_DOC_TYPES) => {
+  const handleUploadSim = async (type: keyof typeof RESIDENCY_DOC_TYPES) => {
     if (!user) return;
     const newDoc: ResidencyDocument = {
       id: `doc_${Date.now()}`,
@@ -73,12 +75,14 @@ export const Settings = () => {
       uploadedAt: new Date().toISOString(),
       verified: true
     };
-    api.vault.add(newDoc);
+    // Fix: Await async vault addition
+    await api.vault.add(newDoc);
     refreshData();
   };
 
-  const deleteDoc = (id: string) => {
-    api.vault.delete(id);
+  const deleteDoc = async (id: string) => {
+    // Fix: Await async vault deletion
+    await api.vault.delete(id);
     refreshData();
   };
 
@@ -110,7 +114,7 @@ export const Settings = () => {
           
           <div className="pt-20">
              <button 
-               onClick={() => { if(confirm('Checking the gate: Purge all drive data?')) api.system.resetData(); window.location.reload(); }}
+               onClick={async () => { if(confirm('Checking the gate: Purge all drive data?')) await api.system.resetData(); window.location.reload(); }}
                className="text-[9px] font-black uppercase tracking-widest text-red-500/40 hover:text-red-500 transition-colors p-6"
              >
                Purge Drive
@@ -237,7 +241,12 @@ export const Settings = () => {
 
                   <div className="grid gap-1">
                      {trackings.length > 0 ? trackings.map(t => {
-                        const { percent, current, target } = api.tracking.calculateProgress(t.id, api.jobs.list());
+                        // Fix: Calculate progress from async job list
+                        const [progress, setProgress] = useState({ percent: 0, current: 0, target: 0 });
+                        useEffect(() => {
+                          api.jobs.list().then(js => setProgress(api.tracking.calculateProgress(t.id, js)));
+                        }, [t.id]);
+                        
                         return (
                           <div key={t.id} className="glass-ui p-8 group flex items-center justify-between hover:bg-white/5 transition-all">
                              <div className="flex gap-8 items-center flex-1">
@@ -251,10 +260,10 @@ export const Settings = () => {
                                    </div>
                                    <div className="max-w-md mt-4">
                                       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">
-                                         <span>Progress: {Math.round(percent)}%</span>
-                                         <span>{current} / {target} {t.targetType}</span>
+                                         <span>Progress: {Math.round(progress.percent)}%</span>
+                                         <span>{progress.current} / {progress.target} {t.targetType}</span>
                                       </div>
-                                      <ProgressBar progress={percent} />
+                                      <ProgressBar progress={progress.percent} />
                                    </div>
                                 </div>
                              </div>

@@ -41,7 +41,7 @@ export const JobDetail = () => {
     }
   }, [form.province, form.department, form.role, isNew, form.isUnion]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.productionName) return alert('System Check: Production Name is required.');
     
     const unionSpec = getUnionSpec(form.unionTypeId || '');
@@ -55,8 +55,9 @@ export const JobDetail = () => {
       unionName
     } as Job;
 
-    if (isNew) api.jobs.add(jobData); 
-    else api.jobs.update(jobData);
+    // Fix: Await async job storage operations
+    if (isNew) await api.jobs.add(jobData); 
+    else await api.jobs.update(jobData);
     navigate('/jobs');
   };
 
