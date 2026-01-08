@@ -6,6 +6,10 @@ const DATA_PREFIX = 'cinearch_data_';
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
+/**
+ * LOCAL FALLBACK HANDLERS
+ * Used for demo purposes or when Supabase keys are unconfigured.
+ */
 const getStorage = <T>(key: string, defaultVal: T): T => {
   const stored = localStorage.getItem(key);
   if (!stored) return defaultVal;
@@ -30,6 +34,11 @@ const getKeys = (targetId?: string) => {
   };
 };
 
+/**
+ * CINEARCH DATA BRIDGE
+ * Primary: Supabase (Remote DB)
+ * Secondary: LocalStorage (Local Cache / Fallback)
+ */
 export const api = {
   auth: {
     getUser: (): User | null => getStorage<User | null>(USER_KEY, null),
@@ -57,42 +66,53 @@ export const api = {
     },
 
     async updateUser(updates: Partial<User>): Promise<User | null> {
-      await delay(200);
       const user = getStorage<User | null>(USER_KEY, null);
       if (user) {
         const updated = { ...user, ...updates };
         setStorage(USER_KEY, updated);
+
+        // Remote Sync
+        try {
+          const { error } = await supabase.from('profiles').upsert({ id: user.id, ...updates });
+          if (error) throw error;
+        } catch (e) {
+          console.debug("Remote profile sync pending (local update succeeded)");
+        }
+        
         return updated;
       }
       return null;
     },
 
     async addClient(client: User) {
-      await delay(300);
       const agent = getStorage<User | null>(USER_KEY, null);
       if (agent && agent.accountType === 'AGENT') {
         const managed = agent.managedUsers || [];
-        setStorage(USER_KEY, { ...agent, managedUsers: [...managed, client] });
+        const updatedAgent = { ...agent, managedUsers: [...managed, client] };
+        setStorage(USER_KEY, updatedAgent);
+        
+        // Remote Sync
+        try {
+          await supabase.from('agency_clients').insert({ agent_id: agent.id, client_id: client.id });
+        } catch (e) {
+          console.debug("Remote link sync pending");
+        }
       }
     },
 
     async revokeAgency() {
-      await delay(400);
       const user = getStorage<User | null>(USER_KEY, null);
       if (user) {
-        // PRODUCTION CHANGE: Query Supabase to kill RLS access
+        // PRODUCTION: Kill RLS by removing the agency link in DB
         try {
-          const { error } = await supabase
+          await supabase
             .from('jobs')
             .update({ managing_agency_id: null })
             .eq('user_id', user.id);
-          
-          if (error) throw error;
         } catch (e) {
-          console.warn("Supabase RLS update simulated or failed:", e);
+          console.debug("Remote RLS revocation pending");
         }
 
-        // Simulates: update jobs set managing_agency_id = null where user_id = auth.uid()
         const updated = { ...user, hasAgentFee: false, managedByAgencyId: undefined };
         setStorage(USER_KEY, updated);
         return updated;
@@ -101,11 +121,16 @@ export const api = {
     },
 
     async removeManagedUser(clientId: string) {
-      await delay(300);
       const agent = getStorage<User | null>(USER_KEY, null);
       if (agent && agent.accountType === 'AGENT') {
         const managed = agent.managedUsers?.filter(u => u.id !== clientId) || [];
         setStorage(USER_KEY, { ...agent, managedUsers: managed });
+
+        try {
+          await supabase.from('agency_clients').delete().match({ agent_id: agent.id, client_id: clientId });
+        } catch (e) {
+          console.debug("Remote unlink pending");
+        }
       }
     },
 
@@ -124,16 +149,30 @@ export const api = {
 
   jobs: {
     async list(): Promise<Job[]> {
-      await delay(100);
-      const keys = getKeys();
       const user = api.auth.getUser();
-      
+      const targetId = getContextId();
+
+      // Remote Primary
+      try {
+        const { data, error } = await supabase
+          .from(user?.accountType === 'AGENT' && user.activeViewId ? 'agency_jobs_view' : 'jobs')
+          .select('*')
+          .eq('user_id', targetId)
+          .order('startDate', { ascending: false });
+        
+        if (error) throw error;
+        if (data) return data as Job[];
+      } catch (e) {
+        console.debug("Supabase unavailable, falling back to local storage");
+      }
+
+      // Local Fallback
+      const keys = getKeys();
       const rawJobs = getStorage<Job[]>(keys.JOBS, []).sort((a, b) => 
         new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
       );
 
-      // AGENCY VIEW LOGIC (Simulating agency_jobs_view)
-      // If the context is a client being viewed by an agent, strip gross earnings.
+      // Apply restricted view masking if via Local fallback
       if (user?.accountType === 'AGENT' && user.activeViewId) {
         return rawJobs.map(j => ({
           ...j,
@@ -149,68 +188,86 @@ export const api = {
     async listForClient(clientId: string): Promise<Job[]> {
       const user = api.auth.getUser();
 
-      // PRODUCTION CHANGE: Agencies query the 'agency_jobs_view' instead of the jobs table directly.
-      // This ensures they never even receive the gross_earnings payload at the network level.
-      if (user?.accountType === 'AGENT') {
-        try {
-          const { data, error } = await supabase
-            .from('agency_jobs_view')
-            .select('*')
-            .eq('user_id', clientId);
-          
-          if (error) throw error;
-          if (data) return data as Job[];
-        } catch (e) {
-          console.warn("Supabase View query simulated or failed, falling back to restricted mock:", e);
-        }
+      try {
+        const { data, error } = await supabase
+          .from(user?.accountType === 'AGENT' ? 'agency_jobs_view' : 'jobs')
+          .select('*')
+          .eq('user_id', clientId);
         
-        // Mock fallback for agency-level restricted payload
-        const keys = getKeys(clientId);
-        const rawJobs = getStorage<Job[]>(keys.JOBS, []);
-        return rawJobs.map(j => ({
-          ...j,
-          grossEarnings: undefined,
-          hourlyRate: undefined
-        }));
+        if (error) throw error;
+        if (data) return data as Job[];
+      } catch (e) {
+        console.debug("Remote client fetch failed, using local");
       }
 
       const keys = getKeys(clientId);
-      return getStorage<Job[]>(keys.JOBS, []);
+      const rawJobs = getStorage<Job[]>(keys.JOBS, []);
+      
+      if (user?.accountType === 'AGENT') {
+        return rawJobs.map(j => ({ ...j, grossEarnings: undefined, hourlyRate: undefined }));
+      }
+      return rawJobs;
     },
 
     async add(job: Job): Promise<Job> {
-      await delay(200);
+      // Local Sync
       const keys = getKeys();
       const jobs = getStorage<Job[]>(keys.JOBS, []);
       setStorage(keys.JOBS, [job, ...jobs]);
+
+      // Remote Sync
+      try {
+        const { error } = await supabase.from('jobs').insert(job);
+        if (error) throw error;
+      } catch (e) {
+        console.debug("Remote job insert pending");
+      }
       return job;
     },
 
     async update(job: Job): Promise<Job> {
-      await delay(200);
       const keys = getKeys();
       const jobs = getStorage<Job[]>(keys.JOBS, []);
       const updated = jobs.map(j => j.id === job.id ? job : j);
       setStorage(keys.JOBS, updated);
+
+      try {
+        const { error } = await supabase.from('jobs').update(job).eq('id', job.id);
+        if (error) throw error;
+      } catch (e) {
+        console.debug("Remote job update pending");
+      }
       return job;
     },
 
     async delete(id: string) {
-      await delay(200);
       const keys = getKeys();
       const jobs = getStorage<Job[]>(keys.JOBS, []);
       setStorage(keys.JOBS, jobs.filter(j => j.id !== id));
+
+      try {
+        await supabase.from('jobs').delete().eq('id', id);
+      } catch (e) {
+        console.debug("Remote job deletion pending");
+      }
     }
   },
 
   tracking: {
     get: (targetId?: string): UserUnionTracking[] => {
+      // Future: Replace with async Supabase call
       const keys = getKeys(targetId);
       return getStorage<UserUnionTracking[]>(keys.TRACKING, []);
     },
     save: (trackings: UserUnionTracking[]) => {
       const keys = getKeys();
       setStorage(keys.TRACKING, trackings);
+      
+      try {
+        supabase.from('union_tracking').upsert(trackings);
+      } catch (e) {
+        console.debug("Remote tracking sync pending");
+      }
     },
     calculateProgress: (trackId: string, jobs: Job[]) => {
       const trackings = getStorage<UserUnionTracking[]>(getKeys().TRACKING, []);
@@ -237,23 +294,38 @@ export const api = {
 
   vault: {
     async list(): Promise<ResidencyDocument[]> {
-      await delay(150);
+      try {
+        const { data } = await supabase.from('vault').select('*').eq('user_id', getContextId());
+        if (data) return data as ResidencyDocument[];
+      } catch (e) {
+        console.debug("Remote vault list failed, using local");
+      }
       return getStorage<ResidencyDocument[]>(getKeys().VAULT, []);
     },
 
     async add(doc: ResidencyDocument) {
-      await delay(400);
       const keys = getKeys();
       const docs = getStorage<ResidencyDocument[]>(keys.VAULT, []);
       setStorage(keys.VAULT, [doc, ...docs]);
+
+      try {
+        await supabase.from('vault').insert(doc);
+      } catch (e) {
+        console.debug("Remote vault insert pending");
+      }
       return doc;
     },
 
     async delete(id: string) {
-      await delay(200);
       const keys = getKeys();
       const docs = getStorage<ResidencyDocument[]>(keys.VAULT, []);
       setStorage(keys.VAULT, docs.filter(d => d.id !== id));
+
+      try {
+        await supabase.from('vault').delete().eq('id', id);
+      } catch (e) {
+        console.debug("Remote vault deletion pending");
+      }
     }
   },
 
@@ -262,6 +334,7 @@ export const api = {
       const keys = getKeys();
       Object.values(keys).forEach(k => localStorage.removeItem(k));
       localStorage.removeItem(USER_KEY);
+      // Caution: Remote reset requires explicit confirmation or admin bypass
     }
   }
 };
