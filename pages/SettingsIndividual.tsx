@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
 import { User, CanadianProvince } from '../types';
@@ -5,13 +6,23 @@ import { Heading, Text, Button, Input, Select, Card, Badge } from '../components
 import { Shield, User as UserIcon, Lock, Landmark, FileText, Trash2, Users, XCircle } from 'lucide-react';
 
 export const SettingsIndividual = () => {
-  const [user, setUser] = useState<User | null>(api.auth.getUser());
-  const [profileForm, setProfileForm] = useState<Partial<User>>(user || {});
+  const [user, setUser] = useState<User | null>(null);
+  const [profileForm, setProfileForm] = useState<Partial<User>>({});
+
+  useEffect(() => {
+    const init = async () => {
+      const u = await api.auth.getUser();
+      setUser(u);
+      setProfileForm(u || {});
+    };
+    init();
+  }, []);
 
   const handleSave = async () => {
     if (profileForm) {
       await api.auth.updateUser(profileForm);
-      setUser(api.auth.getUser());
+      const u = await api.auth.getUser();
+      setUser(u);
       alert("Profile Canonical Synchronized.");
     }
   };
@@ -19,7 +30,8 @@ export const SettingsIndividual = () => {
   const handleRevokeAgency = async () => {
     if (window.confirm("CRITICAL ACTION: Revoking agency access will immediately disconnect your ledger from their command terminal. Proceed?")) {
       await api.auth.revokeAgency();
-      setUser(api.auth.getUser());
+      const u = await api.auth.getUser();
+      setUser(u);
       alert("Agency RLS Access Killed.");
     }
   };

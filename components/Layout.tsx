@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Layers, FileText, Settings, Plus, WalletCards, Bell, X, Users, BookOpen } from 'lucide-react';
@@ -13,7 +12,11 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
   const [showNotifications, setShowNotifications] = useState(false);
   
   useEffect(() => {
-    setUser(api.auth.getUser());
+    const refreshUser = async () => {
+      const u = await api.auth.getUser();
+      setUser(u);
+    };
+    refreshUser();
   }, [location]);
 
   const isDashboardMode = user && user.isOnboarded;

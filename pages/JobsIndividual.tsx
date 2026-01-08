@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
-import { Job } from '../types';
+import { Job, User } from '../types';
 import { Heading, Text, Button, Badge } from '../components/ui';
 import { BulkJobUploadIndividual } from '../components/BulkJobUploadIndividual';
 import { UploadCloud, Plus, Layers } from 'lucide-react';
@@ -11,9 +12,16 @@ export const JobsIndividual = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [showIngest, setShowIngest] = useState(false);
-  const user = api.auth.getUser();
+  const [user, setUser] = useState<User | null>(null);
 
-  const refresh = () => api.jobs.list().then(setJobs);
+  const refresh = async () => {
+    // Correctly await async session retrieval
+    const u = await api.auth.getUser();
+    setUser(u);
+    const jobList = await api.jobs.list();
+    setJobs(jobList);
+  };
+  
   useEffect(() => { refresh(); }, []);
 
   return (

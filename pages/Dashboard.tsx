@@ -89,7 +89,7 @@ const IndividualDashboard = ({ jobs, tracking, user, financeStats }: { jobs: Job
   const [vaultCount, setVaultCount] = useState(0);
 
   useEffect(() => {
-    // Fix: vault.list() is async, moved to state to track length properly
+    // vault.list() is async, move to useEffect to track length properly
     api.vault.list().then(docs => setVaultCount(docs.length));
   }, []);
 
@@ -340,11 +340,14 @@ export const Dashboard = () => {
   const [tracking, setTracking] = useState<UserUnionTracking[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [financeStats, setFinanceStats] = useState<any>(null);
-  const user = api.auth.getUser();
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Fix: Handle async data loading in Dashboard useEffect
+    // Handle async data loading in Dashboard useEffect to correctly await api.auth.getUser()
     const loadData = async () => {
+      const u = await api.auth.getUser();
+      setUser(u);
+      
       const ts = api.tracking.get();
       const js = await api.jobs.list();
       setTracking(ts);
@@ -352,7 +355,7 @@ export const Dashboard = () => {
       
       const grossIncome = js.reduce((a,c) => a + (c.grossEarnings || 0), 0);
       
-      if (user?.isPremium) {
+      if (u?.isPremium) {
         const stats = financeApi.getStats();
         setFinanceStats(stats);
       } else {
@@ -369,7 +372,7 @@ export const Dashboard = () => {
       }
     };
     loadData();
-  }, [user]);
+  }, []);
 
   if (!user) return null;
   return user.accountType === 'AGENT' 

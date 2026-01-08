@@ -12,15 +12,24 @@ import { clsx } from 'clsx';
 
 export const Management = () => {
   const navigate = useNavigate();
-  const agent = api.auth.getUser();
+  const [agent, setAgent] = useState<User | null>(null);
   const [roster, setRoster] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showIngest, setShowIngest] = useState<string | null>(null);
 
+  // Correct async session handling for Management component
   useEffect(() => {
-    if (agent?.accountType !== 'AGENT') navigate('/');
-    setRoster(agent?.managedUsers || []);
-  }, [agent]);
+    const initManagement = async () => {
+      const u = await api.auth.getUser();
+      if (u?.accountType !== 'AGENT') {
+        navigate('/');
+        return;
+      }
+      setAgent(u);
+      setRoster(u.managedUsers || []);
+    };
+    initManagement();
+  }, [navigate]);
 
   const filteredRoster = roster.filter(r => 
     r.name.toLowerCase().includes(searchTerm.toLowerCase()) || 

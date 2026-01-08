@@ -35,12 +35,20 @@ const MainApp = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const u = api.auth.getUser();
-    if (u) {
-      setUser(u);
-      setShowWelcome(false);
-    }
-    setLoading(false);
+    const hydrateSession = async () => {
+      try {
+        const u = await api.auth.getUser();
+        if (u) {
+          setUser(u);
+          setShowWelcome(false);
+        }
+      } catch (e) {
+        console.error("Session hydration failed:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    hydrateSession();
   }, []);
 
   const handleLogin = (u: User) => {
@@ -65,7 +73,6 @@ const MainApp = () => {
 
   const isAgent = user?.accountType === 'AGENT';
 
-  // Wrapper for private content that requires login - children prop is marked as optional to avoid TS errors
   const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
     if (!user) {
       if (showWelcome) return <Welcome onEnter={handleWelcomeEnter} />;
@@ -82,14 +89,12 @@ const MainApp = () => {
   return (
     <Layout onLogout={handleLogout}>
       <Routes>
-        {/* PUBLIC INTERFACE */}
         <Route path="/about" element={<About />} />
         <Route path="/resources" element={<Resources />} />
         <Route path="/resources/:slug" element={<Resources />} />
         <Route path="/manual" element={<Manual />} />
         <Route path="/privacy" element={<Privacy />} />
 
-        {/* AUTHENTICATED COMMAND CENTER */}
         <Route path="/" element={
           <PrivateRoute>
             {isAgent ? <DashboardEnterprise /> : <DashboardIndividual />}

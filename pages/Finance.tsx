@@ -8,7 +8,7 @@ import { User, FinanceTransaction, FinanceStats, UNIONS } from '../types';
 import { clsx } from 'clsx';
 
 export const Finance = () => {
-  const [user, setUser] = useState<User | null>(api.auth.getUser());
+  const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<FinanceStats | null>(null);
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -24,13 +24,21 @@ export const Finance = () => {
       date: new Date().toISOString().split('T')[0]
   });
 
-  const isPremium = user?.isPremium;
-
+  // Handle async session retrieval and finance data initialization
   useEffect(() => {
-    if (isPremium) {
-       refreshData();
-    }
-  }, [isPremium]);
+    const initFinance = async () => {
+      const u = await api.auth.getUser();
+      setUser(u);
+      if (u?.isPremium) {
+        setTransactions(financeApi.list());
+        setStats(financeApi.getStats());
+        setTracking(api.tracking.get());
+      }
+    };
+    initFinance();
+  }, []);
+
+  const isPremium = user?.isPremium;
 
   const refreshData = () => {
       setTransactions(financeApi.list());
@@ -38,11 +46,12 @@ export const Finance = () => {
       setTracking(api.tracking.get());
   };
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
       if (user) {
           const updated = { ...user, isPremium: true };
-          api.auth.updateUser(updated);
+          await api.auth.updateUser(updated);
           setUser(updated);
+          refreshData();
       }
   };
 

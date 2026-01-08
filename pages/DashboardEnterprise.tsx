@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/storage';
 import { Job, User, UserUnionTracking } from '../types';
@@ -15,13 +16,16 @@ interface RosterMember {
 export const DashboardEnterprise = () => {
   const navigate = useNavigate();
   const [roster, setRoster] = useState<RosterMember[]>([]);
-  const user = api.auth.getUser();
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const loadRoster = async () => {
-      if (!user?.managedUsers) return;
+      // Correctly await the async getUser call
+      const u = await api.auth.getUser();
+      setUser(u);
+      if (!u?.managedUsers) return;
       
-      const data: RosterMember[] = await Promise.all(user.managedUsers.map(async (client) => {
+      const data: RosterMember[] = await Promise.all(u.managedUsers.map(async (client) => {
         // Use the restricted client job list (simulates agency_jobs_view)
         const jobs = await api.jobs.listForClient(client.id);
         const tracks = api.tracking.get(client.id);
@@ -31,7 +35,7 @@ export const DashboardEnterprise = () => {
     };
     
     loadRoster();
-  }, [user]);
+  }, []);
 
   const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 

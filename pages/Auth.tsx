@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button, Input, Heading, Text, Badge } from '../components/ui';
 import { api } from '../services/storage';
 import { User } from '../types';
 import { Briefcase, ArrowLeft, Camera, Shield } from 'lucide-react';
-// Import clsx for conditional class names
 import { clsx } from 'clsx';
 
 export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (u: User) => void, onBack: () => void, initialAgentMode?: boolean }) => {
@@ -14,26 +12,26 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
   const [loading, setLoading] = useState(false);
   const [isAgent, setIsAgent] = useState(initialAgentMode);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate set prep
-    setTimeout(async () => {
-      // Fix: Await async login call from storage api
-      const user = await api.auth.login(email, isAgent);
+    try {
+      // Database Authentication Protocol
+      const user = await api.auth.login(email, password, isAgent);
       onLogin(user);
+    } catch (err: any) {
+      console.error("CineArch Auth Failure:", err);
+      alert("Authentication Denied: " + (err.message || "Invalid Coordinates"));
       setLoading(false);
-    }, 1200);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 relative bg-black overflow-hidden font-sans">
-      {/* Background Cinematic Texture */}
       <div className="absolute inset-0 bg-cinematic-universal opacity-20 pointer-events-none"></div>
       <div className="bg-vignette-universal"></div>
 
-      {/* Back to First Positions */}
       <div 
         className="absolute top-12 left-12 cursor-pointer z-50 flex items-center gap-4 group" 
         onClick={onBack}
@@ -85,6 +83,7 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
             <Button 
               className="w-full h-24 text-[11px] font-black uppercase tracking-[0.6em] transition-all hover:scale-[1.02]" 
               isLoading={loading}
+              type="submit"
             >
               {loading ? "Checking the Gate..." : isLogin ? "Report to Set" : "Sign for the Block"}
             </Button>

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { api } from '../services/storage';
 import { Job, UNIONS, User } from '../types';
@@ -9,8 +9,13 @@ import { Button, Select, Badge } from './ui';
 export const BulkJobUploadEnterprise = ({ userId, onComplete }: { userId: string, onComplete: () => void }) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const agent = api.auth.getUser();
+  const [agent, setAgent] = useState<User | null>(null);
   const [targetUserId, setTargetUserId] = useState<string>(userId);
+
+  // Await async user retrieval on mount
+  useEffect(() => {
+    api.auth.getUser().then(setAgent);
+  }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,7 +49,7 @@ export const BulkJobUploadEnterprise = ({ userId, onComplete }: { userId: string
           const originalActiveId = agent?.activeViewId;
           api.auth.switchClient(targetUserId);
           jobsToInsert.forEach(job => api.jobs.add(job));
-          api.auth.switchClient(originalActiveId);
+          api.auth.switchClient(originalActiveId || null);
 
           onComplete();
         } catch (err: any) {

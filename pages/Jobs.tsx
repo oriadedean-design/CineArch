@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
-import { Job } from '../types';
+import { Job, User } from '../types';
 import { resolveGuildsForRole, getUnionSpec, getAllUnions } from '../services/union_engine';
 import { INDUSTRY_DEPARTMENTS } from '../config/industry_roles';
 import { Heading, Text, Button, Input, Select, Badge, Card } from '../components/ui';
@@ -13,21 +13,38 @@ export const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === 'new';
-  const user = api.auth.getUser();
+  const [user, setUser] = useState<User | null>(null);
   
   const [form, setForm] = useState<Partial<Job>>({
     status: 'CONFIRMED',
     productionName: '',
-    role: user?.selectedRoles?.[0] || '',
-    department: user?.department || 'Camera Department',
+    role: '',
+    department: 'Camera Department',
     isUnion: true,
     unionTypeId: '',
     startDate: new Date().toISOString().split('T')[0],
     grossEarnings: 0,
-    province: user?.province || 'Ontario'
+    province: 'Ontario'
   });
 
   const [resolvedUnionIds, setResolvedUnionIds] = useState<string[]>([]);
+
+  // Fetch user data on mount asynchronously
+  useEffect(() => {
+    const fetchUser = async () => {
+      const u = await api.auth.getUser();
+      setUser(u);
+      if (u && isNew) {
+        setForm(prev => ({
+          ...prev,
+          role: u.selectedRoles?.[0] || '',
+          department: u.department || 'Camera Department',
+          province: u.province || 'Ontario'
+        }));
+      }
+    };
+    fetchUser();
+  }, [isNew]);
 
   // THE JURISDICTIONAL ENGINE
   useEffect(() => {
@@ -55,7 +72,7 @@ export const JobDetail = () => {
       unionName
     } as Job;
 
-    // Fix: Await async job storage operations
+    // Await async job storage operations
     if (isNew) await api.jobs.add(jobData); 
     else await api.jobs.update(jobData);
     navigate('/jobs');

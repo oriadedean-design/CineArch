@@ -20,13 +20,21 @@ export const DashboardIndividual = () => {
   const [tracking, setTracking] = useState<UserUnionTracking[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [financeStats, setFinanceStats] = useState<any>(null);
-  const user = api.auth.getUser();
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    setTracking(api.tracking.get());
-    api.jobs.list().then(setJobs);
-    const stats = financeApi.getStats();
-    setFinanceStats(stats);
+    const initializeDashboard = async () => {
+      const u = await api.auth.getUser();
+      setUser(u);
+      
+      setTracking(api.tracking.get());
+      const jobList = await api.jobs.list();
+      setJobs(jobList);
+      
+      const stats = financeApi.getStats();
+      setFinanceStats(stats);
+    };
+    initializeDashboard();
   }, []);
 
   if (!user) return null;

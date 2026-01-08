@@ -18,10 +18,10 @@ export const Settings = () => {
   useEffect(() => { refreshData(); }, []);
 
   const refreshData = async () => {
-    const u = api.auth.getUser();
+    // Fix: Await api.auth.getUser() to resolve Promise<User | null>
+    const u = await api.auth.getUser();
     setUser(u);
     setProfileForm(u || {});
-    // Fix: Handle async calls for jobs and docs in Settings refresh
     setTrackings(api.tracking.get());
     const dList = await api.vault.list();
     setDocs(dList);

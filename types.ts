@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export enum EntityType {
@@ -41,6 +42,8 @@ export interface User {
   managedUsers?: User[]; 
   activeViewId?: string; 
   primaryIndustry?: string;
+  // Track which agency is managing this individual
+  managedByAgencyId?: string;
 
   stats?: {
     totalHours: number;

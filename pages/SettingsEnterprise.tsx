@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
 import { User, EntityType, CanadianProvince } from '../types';
@@ -5,13 +6,23 @@ import { Heading, Text, Button, Input, Select, Card, Badge } from '../components
 import { Landmark, Users, GraduationCap, Building, FolderSync, Percent, Briefcase, UserMinus } from 'lucide-react';
 
 export const SettingsEnterprise = () => {
-  const [user, setUser] = useState<User | null>(api.auth.getUser());
-  const [profileForm, setProfileForm] = useState<Partial<User>>(user || {});
+  const [user, setUser] = useState<User | null>(null);
+  const [profileForm, setProfileForm] = useState<Partial<User>>({});
+
+  useEffect(() => {
+    const init = async () => {
+      const u = await api.auth.getUser();
+      setUser(u);
+      setProfileForm(u || {});
+    };
+    init();
+  }, []);
 
   const handleSave = async () => {
     if (profileForm) {
       await api.auth.updateUser(profileForm);
-      setUser(api.auth.getUser());
+      const u = await api.auth.getUser();
+      setUser(u);
       alert("Organization Terminal Calibrated.");
     }
   };
@@ -19,7 +30,8 @@ export const SettingsEnterprise = () => {
   const handleReleaseUser = async (clientId: string) => {
     if (window.confirm("Release this personnel from your roster? This will disconnect their ledger from your command view.")) {
       await api.auth.removeManagedUser(clientId);
-      setUser(api.auth.getUser());
+      const u = await api.auth.getUser();
+      setUser(u);
     }
   };
 
