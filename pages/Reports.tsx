@@ -1,16 +1,22 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Heading, Text, Card, Button, Badge } from '../components/ui';
 import { Download, FileSpreadsheet, FileCheck, Landmark, Target, ShieldCheck, ArrowDownToLine, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
+import { Job } from '../types';
 import { clsx } from 'clsx';
 
 export const Reports = () => {
-  const jobs = api.jobs.list();
+  // Fix: Handle async jobs list using state
+  const [jobs, setJobs] = useState<Job[]>([]);
   const user = api.auth.getUser();
   const stats = financeApi.getStats();
   const tracking = api.tracking.get();
+
+  useEffect(() => {
+    api.jobs.list().then(setJobs);
+  }, []);
 
   // Logic: Calculate documentation integrity score
   const auditScore = useMemo(() => {
@@ -84,6 +90,7 @@ export const Reports = () => {
 
               <div className="space-y-1">
                  {tracking.length > 0 ? tracking.map((t, i) => {
+                   // Fix: calculate progress using stateful jobs list instead of Promise
                    const { percent, current, target } = api.tracking.calculateProgress(t.id, jobs);
                    return (
                       <div key={t.id} className="p-12 bg-surface/30 border border-white/5 flex items-center justify-between group hover:bg-white/[0.02] transition-colors">

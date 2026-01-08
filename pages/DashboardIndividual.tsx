@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
@@ -25,7 +24,7 @@ export const DashboardIndividual = () => {
 
   useEffect(() => {
     setTracking(api.tracking.get());
-    setJobs(api.jobs.list());
+    api.jobs.list().then(setJobs);
     const stats = financeApi.getStats();
     setFinanceStats(stats);
   }, []);

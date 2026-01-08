@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
 import { Job } from '../types';
@@ -14,7 +13,7 @@ export const JobsIndividual = () => {
   const [showIngest, setShowIngest] = useState(false);
   const user = api.auth.getUser();
 
-  const refresh = () => setJobs(api.jobs.list());
+  const refresh = () => api.jobs.list().then(setJobs);
   useEffect(() => { refresh(); }, []);
 
   return (
@@ -50,7 +49,6 @@ export const JobsIndividual = () => {
         ))}
         {jobs.length === 0 && (
           <div className="col-span-full py-24 md:py-40 text-center border border-dashed border-white/5 opacity-30 italic">
-             {/* Fix: Lucide icons do not support responsive props like 'md:size'. Replaced with Tailwind utility classes for responsive sizing. */}
              <Layers className="mx-auto mb-4 md:mb-6 opacity-20 w-8 h-8 md:w-12 md:h-12" />
              Personnel slate is clear.
           </div>

@@ -1,11 +1,8 @@
-
 /**
  * CANONICAL ENCRYPTION SERVICE
  * Implements AES-GCM (256-bit) client-side encryption.
  * Supports the "Zero-Knowledge" charter.
  */
-
-const ENCRYPTION_KEY_ID = 'cinearch-vault-key';
 
 async function getDerivedKey(password: string): Promise<CryptoKey> {
   const encoder = new TextEncoder();

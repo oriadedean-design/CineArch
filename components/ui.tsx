@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 /**
  * PRODUCTION-GRADE UI COMPONENTS
  * Optimized for high-glare environments (Film Sets).
- * Enhanced hit areas for mobile/gloved usage.
+ * Enhanced hit areas for mobile/gloved usage (Min 54px).
  */
 
 export const Heading = ({ children, level = 1, className }: { children?: React.ReactNode, level?: 1 | 2 | 3 | 4, className?: string }) => {
@@ -41,18 +41,18 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export const Button = ({ children, variant = 'primary', className, isLoading, disabled, ...props }: ButtonProps) => {
   const variants = {
-    primary: "bg-white text-black hover:bg-accent transition-all duration-300",
-    secondary: "bg-white/10 text-white hover:bg-white hover:text-black border border-white/20",
-    outline: "bg-transparent border border-white/30 text-white hover:border-accent hover:text-accent",
-    ghost: "bg-transparent text-white/60 hover:text-white hover:bg-white/5",
-    danger: "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white",
+    primary: "bg-white text-black hover:bg-accent transition-all duration-300 shadow-[0_4px_14px_0_rgba(255,255,255,0.1)]",
+    secondary: "bg-white/10 text-white hover:bg-white hover:text-black border border-white/30",
+    outline: "bg-transparent border border-white/40 text-white hover:border-accent hover:text-accent",
+    ghost: "bg-transparent text-white/70 hover:text-white hover:bg-white/10",
+    danger: "bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500 hover:text-white",
     glass: "glass-ui text-white hover:bg-white/20"
   };
 
   return (
     <button 
       className={clsx(
-        "inline-flex items-center justify-center px-8 md:px-12 py-5 md:py-6 min-h-[54px] text-[11px] md:text-[12px] font-black uppercase tracking-[0.5em] transition-all duration-500 active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed rounded-none border border-transparent",
+        "inline-flex items-center justify-center px-8 md:px-12 py-5 md:py-6 min-h-[58px] text-[12px] font-black uppercase tracking-[0.5em] transition-all duration-500 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed rounded-none border border-transparent",
         variants[variant],
         className
       )}
@@ -70,7 +70,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     <input
       ref={ref}
       className={clsx(
-        "w-full px-8 py-6 bg-white/[0.03] border border-white/10 text-white text-lg focus:outline-none focus:border-accent transition-all placeholder:text-white/20 backdrop-blur-3xl rounded-none font-light italic min-h-[64px]",
+        "w-full px-8 py-6 bg-white/[0.05] border border-white/20 text-white text-lg focus:outline-none focus:border-accent transition-all placeholder:text-white/30 backdrop-blur-3xl rounded-none font-light italic min-h-[64px]",
         className
       )}
       {...props}
@@ -84,14 +84,14 @@ export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttrib
       <select
         ref={ref}
         className={clsx(
-          "w-full px-8 py-6 bg-white/[0.03] border border-white/10 text-white text-lg focus:outline-none focus:border-accent transition-all backdrop-blur-3xl rounded-none font-light italic appearance-none cursor-pointer min-h-[64px]",
+          "w-full px-8 py-6 bg-white/[0.05] border border-white/20 text-white text-lg focus:outline-none focus:border-accent transition-all backdrop-blur-3xl rounded-none font-light italic appearance-none cursor-pointer min-h-[64px]",
           className
         )}
         {...props}
       >
         {children}
       </select>
-      <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 group-hover:text-accent transition-colors">
+      <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-white/60 group-hover:text-accent transition-colors">
         <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
         </svg>
@@ -100,11 +100,12 @@ export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttrib
   );
 });
 
-// Fix: Added HTMLAttributes to support standard props like 'key' in directory layouts
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  // Fix: Explicitly include key for TypeScript support in lists
+  key?: React.Key;
 }
 
 export const Card = ({ children, className, onClick, ...props }: CardProps) => {
@@ -113,9 +114,9 @@ export const Card = ({ children, className, onClick, ...props }: CardProps) => {
       {...props}
       onClick={onClick} 
       className={clsx(
-        "glass-ui p-8 md:p-14 relative overflow-hidden group transition-all duration-700 rounded-none border border-white/15", 
+        "glass-ui p-8 md:p-14 relative overflow-hidden group transition-all duration-700 rounded-none border border-white/20", 
         className, 
-        onClick && "cursor-pointer hover:border-accent/50"
+        onClick && "cursor-pointer hover:border-accent/40"
       )}
     >
       {children}
@@ -123,24 +124,25 @@ export const Card = ({ children, className, onClick, ...props }: CardProps) => {
   );
 };
 
-// Fix: Added HTMLAttributes to support standard props like 'key'
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children?: React.ReactNode;
   color?: "neutral" | "success" | "blue" | "accent";
   className?: string;
+  // Fix: Explicitly include key for TypeScript support in lists
+  key?: React.Key;
 }
 
 export const Badge = ({ children, color = "neutral", className, ...props }: BadgeProps) => {
   const colors = {
-    neutral: "bg-white/10 text-white/80 border-white/20",
-    success: "bg-green-500/20 text-green-300 border-green-500/30",
-    blue: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    accent: "bg-accent/15 text-accent border-accent/40"
+    neutral: "bg-white/10 text-white border-white/30",
+    success: "bg-green-500/20 text-green-400 border-green-500/40",
+    blue: "bg-blue-500/20 text-blue-400 border-blue-500/40",
+    accent: "bg-accent/15 text-accent border-accent/50"
   };
   return (
     <span 
       {...props}
-      className={clsx("inline-flex items-center px-5 py-2.5 border text-[10px] md:text-[11px] font-black uppercase tracking-[0.4em] italic", colors[color], className)}
+      className={clsx("inline-flex items-center px-5 py-2.5 border text-[11px] font-black uppercase tracking-[0.4em] italic", colors[color], className)}
     >
       {children}
     </span>
@@ -149,9 +151,9 @@ export const Badge = ({ children, color = "neutral", className, ...props }: Badg
 
 export const ProgressBar = ({ progress, className }: { progress: number, className?: string }) => {
   return (
-    <div className={clsx("w-full bg-white/10 overflow-hidden h-[3px] rounded-none", className)}>
+    <div className={clsx("w-full bg-white/10 overflow-hidden h-[4px] rounded-none", className)}>
       <div 
-        className="h-full bg-accent transition-all duration-[2000ms] ease-in-out shadow-[0_0_15px_rgba(250,204,21,0.5)]" 
+        className="h-full bg-accent transition-all duration-[2000ms] ease-in-out shadow-[0_0_15px_rgba(250,204,21,0.6)]" 
         style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
       />
     </div>

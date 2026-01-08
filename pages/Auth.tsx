@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button, Input, Heading, Text, Badge } from '../components/ui';
 import { api } from '../services/storage';
@@ -18,8 +19,9 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
     setLoading(true);
     
     // Simulate set prep
-    setTimeout(() => {
-      const user = api.auth.login(email, isAgent);
+    setTimeout(async () => {
+      // Fix: Await async login call from storage api
+      const user = await api.auth.login(email, isAgent);
       onLogin(user);
       setLoading(false);
     }, 1200);

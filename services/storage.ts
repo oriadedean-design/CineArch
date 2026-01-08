@@ -1,14 +1,7 @@
-
 import { User, Job, UserUnionTracking, ResidencyDocument } from '../types';
 
 const USER_KEY = 'cinearch_user';
 const DATA_PREFIX = 'cinearch_data_';
-
-/**
- * ASYNC PERSISTENCE ABSTRACTION
- * This file acts as the primary facade for the CineArch data layer.
- * Currently uses LocalStorage with async/await wrappers to simulate API latency.
- */
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
@@ -41,7 +34,7 @@ export const api = {
     getUser: (): User | null => getStorage<User | null>(USER_KEY, null),
     
     async login(email: string, asAgent: boolean = false): Promise<User> {
-      await delay(800);
+      await delay(600);
       let user = getStorage<User | null>(USER_KEY, null);
       if (!user || user.email !== email) {
         user = {
@@ -63,7 +56,7 @@ export const api = {
     },
 
     async updateUser(updates: Partial<User>): Promise<User | null> {
-      await delay(300);
+      await delay(200);
       const user = getStorage<User | null>(USER_KEY, null);
       if (user) {
         const updated = { ...user, ...updates };
@@ -74,7 +67,7 @@ export const api = {
     },
 
     async addClient(client: User) {
-      await delay(400);
+      await delay(300);
       const agent = getStorage<User | null>(USER_KEY, null);
       if (agent && agent.accountType === 'AGENT') {
         const managed = agent.managedUsers || [];
@@ -82,7 +75,6 @@ export const api = {
       }
     },
 
-    // Fix: Added switchClient to support agency impersonation
     switchClient(clientId: string | null) {
       const user = getStorage<User | null>(USER_KEY, null);
       if (user) {
@@ -98,7 +90,7 @@ export const api = {
 
   jobs: {
     async list(): Promise<Job[]> {
-      await delay(200);
+      await delay(100);
       const keys = getKeys();
       return getStorage<Job[]>(keys.JOBS, []).sort((a, b) => 
         new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
@@ -106,16 +98,15 @@ export const api = {
     },
 
     async add(job: Job): Promise<Job> {
-      await delay(400);
+      await delay(200);
       const keys = getKeys();
       const jobs = getStorage<Job[]>(keys.JOBS, []);
       setStorage(keys.JOBS, [job, ...jobs]);
       return job;
     },
 
-    // Fix: Added update method for editing existing jobs
     async update(job: Job): Promise<Job> {
-      await delay(400);
+      await delay(200);
       const keys = getKeys();
       const jobs = getStorage<Job[]>(keys.JOBS, []);
       const updated = jobs.map(j => j.id === job.id ? job : j);
@@ -124,14 +115,13 @@ export const api = {
     },
 
     async delete(id: string) {
-      await delay(300);
+      await delay(200);
       const keys = getKeys();
       const jobs = getStorage<Job[]>(keys.JOBS, []);
       setStorage(keys.JOBS, jobs.filter(j => j.id !== id));
     }
   },
 
-  // Fix: Added missing tracking service for guild progress
   tracking: {
     get: (): UserUnionTracking[] => {
       const keys = getKeys();
@@ -144,7 +134,7 @@ export const api = {
     calculateProgress: (trackId: string, jobs: Job[]) => {
       const trackings = getStorage<UserUnionTracking[]>(getKeys().TRACKING, []);
       const track = trackings.find(t => t.id === trackId);
-      if (!track) return { percent: 0, current: 0, target: 0 };
+      if (!track || !Array.isArray(jobs)) return { percent: 0, current: 0, target: 0 };
       
       let current = track.startingValue;
       jobs.forEach(j => {
@@ -166,21 +156,20 @@ export const api = {
 
   vault: {
     async list(): Promise<ResidencyDocument[]> {
-      await delay(200);
+      await delay(150);
       return getStorage<ResidencyDocument[]>(getKeys().VAULT, []);
     },
 
     async add(doc: ResidencyDocument) {
-      await delay(600);
+      await delay(400);
       const keys = getKeys();
       const docs = getStorage<ResidencyDocument[]>(keys.VAULT, []);
       setStorage(keys.VAULT, [doc, ...docs]);
       return doc;
     },
 
-    // Fix: Added missing delete method for vault documents
     async delete(id: string) {
-      await delay(300);
+      await delay(200);
       const keys = getKeys();
       const docs = getStorage<ResidencyDocument[]>(keys.VAULT, []);
       setStorage(keys.VAULT, docs.filter(d => d.id !== id));
@@ -188,14 +177,10 @@ export const api = {
   },
 
   system: {
-    async reset() {
-      const keys = getKeys();
-      Object.values(keys).forEach(k => localStorage.removeItem(k));
-    },
-    // Fix: Added resetData to match component calls
     async resetData() {
       const keys = getKeys();
       Object.values(keys).forEach(k => localStorage.removeItem(k));
+      localStorage.removeItem(USER_KEY);
     }
   }
 };
