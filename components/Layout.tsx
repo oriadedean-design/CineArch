@@ -6,221 +6,107 @@ import { api } from '../services/storage';
 import { User, CineNotification } from '../types';
 import { clsx } from 'clsx';
 
-interface LayoutProps {
-  children?: React.ReactNode;
-  onLogout: () => void;
-}
-
-export const Layout = ({ children, onLogout }: LayoutProps) => {
+export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onLogout: () => void }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [isClapperAnimating, setIsClapperAnimating] = useState(false);
-  const [notifications, setNotifications] = useState<CineNotification[]>([]);
-
+  
   useEffect(() => {
-    const currentUser = api.auth.getUser();
-    setUser(currentUser);
-    if (currentUser) {
-      setNotifications([
-        { id: '1', type: 'GST_THRESHOLD', title: 'Threshold Sync', message: 'Small Supplier limit reached 82%. Prepare registration.', timestamp: '2h ago', isRead: false, priority: 'high' },
-        { id: '2', type: 'PRODUCTION_START', title: 'Session Verified', message: 'Project "Midnight" call sheet sync complete.', timestamp: '4h ago', isRead: false, priority: 'medium' }
-      ]);
-    }
+    setUser(api.auth.getUser());
   }, [location]);
 
-  const handleNotificationToggle = () => {
-    setIsClapperAnimating(true);
-    setShowNotifications(!showNotifications);
-    setTimeout(() => setIsClapperAnimating(false), 500);
-  };
-
-  const navItems = user?.accountType === 'AGENT' ? [
-    { label: 'Your Wrap', icon: LayoutDashboard, path: '/' },
-    { label: 'Your Roster', icon: Users, path: '/roster' },
-    { label: 'Your Wallet', icon: WalletCards, path: '/finance' },
-    { label: 'Your Reports', icon: FileText, path: '/reports' },
-    { label: 'Your Settings', icon: Settings, path: '/settings' },
-  ] : [
-    { label: 'Your Wrap', icon: LayoutDashboard, path: '/' },
-    { label: 'Your Slate', icon: Layers, path: '/jobs' },
-    { label: 'Your Wallet', icon: WalletCards, path: '/finance' },
-    { label: 'Your Reports', icon: FileText, path: '/reports' },
-    { label: 'Your Settings', icon: Settings, path: '/settings' },
-  ];
-
-  const isActive = (path: string) => location.pathname === path;
   const isDashboardMode = user && user.isOnboarded;
   const isAuthPage = location.pathname === '/auth';
 
+  const navItems = user?.accountType === 'AGENT' ? [
+    { icon: LayoutDashboard, path: '/', label: 'Your Wrap' },
+    { icon: Users, path: '/roster', label: 'Your Roster' },
+    { icon: WalletCards, path: '/finance', label: 'Your Wallet' },
+    { icon: FileText, path: '/reports', label: 'Your Ledger' },
+    { icon: Settings, path: '/settings', label: 'Your Config' },
+  ] : [
+    { icon: LayoutDashboard, path: '/', label: 'Your Wrap' },
+    { icon: Layers, path: '/jobs', label: 'Your Slate' },
+    { icon: WalletCards, path: '/finance', label: 'Your Wallet' },
+    { icon: FileText, path: '/reports', label: 'Your Ledger' },
+    { icon: Settings, path: '/settings', label: 'Your Config' },
+  ];
+
   return (
-    <div className="min-h-screen font-sans bg-transparent">
-      {/* Universal HUD Header - Only one header to rule them all */}
+    <div className="min-h-screen bg-black flex flex-col">
+      {/* THE HUD: Singular Global Header */}
       {!isAuthPage && (
-        <header className="fixed top-0 left-0 right-0 z-[100] h-20 px-6 md:px-12 flex items-center justify-between pointer-events-none">
+        <header className="fixed top-0 left-0 right-0 z-[100] h-16 md:h-24 px-6 md:px-12 flex items-center justify-between pointer-events-none safe-top">
           <div className="pointer-events-auto flex items-center gap-6">
             <div className="cursor-pointer group flex items-center gap-3" onClick={() => navigate('/')}>
-              <span className="font-serif italic text-3xl text-white">Ca</span>
+              <span className="font-serif italic text-3xl md:text-4xl text-white">Ca</span>
               <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white group-hover:text-accent transition-colors">CineArch</span>
-                <span className="text-[7px] font-black uppercase tracking-[0.2em] text-white/30">v 0.5 build</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white">CineArch</span>
+                <span className="text-[7px] font-black uppercase tracking-[0.2em] text-white/30 italic">Registry // v0.5</span>
               </div>
             </div>
             
-            {/* Global Nav - Visible on all pages except when in heavy dashboard mode */}
-            <div className="h-4 w-px bg-white/10 mx-2 hidden md:block"></div>
-            <div className="hidden md:flex items-center gap-8">
-               <button 
-                  onClick={() => navigate('/about')} 
-                  className={clsx(
-                    "text-[9px] font-black uppercase tracking-[0.4em] transition-all", 
-                    location.pathname === '/about' ? "text-accent" : "text-white/20 hover:text-white"
-                  )}
-               >
-                  Your Charter
+            <div className="hidden lg:flex items-center gap-10 ml-10 border-l border-white/10 pl-10">
+               <button onClick={() => navigate('/manual')} className={clsx("text-[10px] font-black uppercase tracking-[0.4em] transition-colors flex items-center gap-3", location.pathname === '/manual' ? "text-accent" : "text-white/30 hover:text-white")}>
+                 <BookOpen size={14}/> Your Manual
                </button>
-               <button 
-                  onClick={() => navigate('/resources')} 
-                  className={clsx(
-                    "text-[9px] font-black uppercase tracking-[0.4em] transition-all", 
-                    location.pathname.startsWith('/resources') ? "text-accent" : "text-white/20 hover:text-white"
-                  )}
-               >
-                  Your Archive
-               </button>
-               <button 
-                  onClick={() => navigate('/manual')}
-                  className={clsx(
-                    "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.4em] transition-all px-4 py-1.5", 
-                    location.pathname === '/manual' ? "text-white bg-accent border-accent" : "text-accent hover:text-white bg-accent/5 border border-accent/20"
-                  )}
-               >
-                  <BookOpen size={12} className={location.pathname === '/manual' ? "text-white" : "text-accent"} /> Your Field Manual
+               <button onClick={() => navigate('/resources')} className={clsx("text-[10px] font-black uppercase tracking-[0.4em] transition-colors", location.pathname === '/resources' ? "text-accent" : "text-white/30 hover:text-white")}>
+                 Your Archive
                </button>
             </div>
           </div>
 
           <div className="pointer-events-auto flex items-center gap-6">
             {user ? (
-              <>
-                {isDashboardMode && (
-                  <div className="relative">
-                     <button 
-                        onClick={handleNotificationToggle}
-                        className={clsx(
-                          "w-10 h-10 flex flex-col items-center justify-center transition-all group",
-                          showNotifications ? "text-accent" : "text-white/40 hover:text-white"
-                        )}
-                     >
-                        <div className={clsx(
-                          "w-6 h-[2px] bg-current rounded-full mb-[2px] transition-transform duration-300 origin-left",
-                          showNotifications ? "rotate-0" : "-rotate-[25deg]",
-                          isClapperAnimating && "animate-snap"
-                        )}></div>
-                        <div className="w-6 h-4 border-2 border-current rounded-sm flex items-center justify-center relative">
-                           {notifications.some(n => !n.isRead) && (
-                             <span className="absolute -top-1.5 -right-1.5 w-2 h-2 bg-accent rounded-full animate-pulse"></span>
-                           )}
-                           <Bell size={10} />
-                        </div>
-                     </button>
-
-                     {showNotifications && (
-                       <div className="absolute top-14 right-0 w-80 glass-ui p-6 animate-in fade-in slide-in-from-top-2 border-accent/20 shadow-2xl">
-                         <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-2">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-accent italic tracking-[0.2em]">Your Alerts</span>
-                            <button onClick={() => setShowNotifications(false)}><X size={14} className="text-white" /></button>
-                         </div>
-                         <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-                            {notifications.map(n => (
-                               <div key={n.id} className="p-4 bg-white/5 border-l-2 border-accent hover:bg-white/10 transition-colors cursor-pointer text-white">
-                                  <p className="text-[10px] font-bold text-white mb-1 uppercase tracking-widest">{n.title}</p>
-                                  <p className="text-[10px] text-white/80 leading-relaxed">{n.message}</p>
-                                  <span className="text-[8px] text-white/40 mt-2 block font-black">{n.timestamp}</span>
-                               </div>
-                            ))}
-                         </div>
-                       </div>
-                     )}
-                  </div>
-                )}
-
-                <div 
-                   className="flex items-center gap-4 bg-white/5 border border-white/10 px-4 py-2 hover:bg-white/10 transition-all cursor-pointer group"
-                   onClick={() => navigate('/settings')}
-                >
-                    <div className="w-6 h-6 bg-white text-black font-black flex items-center justify-center text-[8px]">
-                        {user?.name?.charAt(0)}
-                    </div>
-                    <span className="text-[8px] font-black uppercase tracking-widest text-white/40 group-hover:text-white">{user?.name}</span>
-                    <div className="w-px h-3 bg-white/10"></div>
-                    <button onClick={(e) => { e.stopPropagation(); onLogout(); }} className="text-[8px] font-black uppercase tracking-widest text-accent hover:text-white">Sign Out</button>
+              <div className="flex items-center gap-4 bg-white/5 border border-white/10 px-5 py-2 hover:bg-white/10 transition-all cursor-pointer group" onClick={() => navigate('/settings')}>
+                <div className="w-6 h-6 bg-white text-black font-black flex items-center justify-center text-[8px]">
+                  {user.name?.charAt(0)}
                 </div>
-              </>
+                <div className="flex flex-col">
+                   <span className="text-[8px] font-black uppercase tracking-widest text-white/40 group-hover:text-white transition-colors leading-none">{user.name}</span>
+                   <button onClick={(e) => { e.stopPropagation(); onLogout(); }} className="text-[7px] font-black uppercase tracking-widest text-accent mt-1 text-left">Exit Protocol</button>
+                </div>
+              </div>
             ) : (
-              <button 
-                onClick={() => navigate('/')} 
-                className="text-[10px] font-black uppercase tracking-[0.4em] text-black bg-white px-8 py-3 hover:bg-accent transition-all shadow-glow"
-              >
-                Verify Your Identity
-              </button>
+              <button onClick={() => navigate('/')} className="text-[10px] font-black uppercase tracking-[0.4em] bg-white text-black px-10 py-4 shadow-glow hover:bg-accent transition-all">Verify Your Identity</button>
             )}
           </div>
         </header>
       )}
 
-      {/* Command Dock (Persistent for authenticated/onboarded users) */}
+      {/* COMMAND DOCK: Dashboard Controls */}
       {isDashboardMode && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4 animate-in slide-in-from-bottom-12 duration-1000">
-           <nav className="flex items-center gap-1 p-2 glass-ui shadow-2xl justify-center">
-              {navItems.map((item) => (
-                <button
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className={clsx(
-                    "relative flex items-center justify-center w-12 h-12 transition-all duration-300",
-                    isActive(item.path) 
-                      ? 'bg-white text-black' 
-                      : 'text-white/40 hover:text-white hover:bg-white/5'
-                  )}
-                  title={item.label}
-                >
-                  <item.icon size={18} strokeWidth={isActive(item.path) ? 3 : 2} />
-                </button>
-              ))}
-              <div className="w-[1px] h-6 bg-white/10 mx-2"></div>
+        <nav className="fixed bottom-8 left-0 right-0 z-[100] flex justify-center px-6 safe-bottom">
+          <div className="flex items-center gap-2 p-2 glass-ui shadow-2xl w-full max-w-lg justify-around md:justify-center">
+            {navItems.map((item) => (
               <button
-                 onClick={() => navigate(user?.accountType === 'AGENT' ? '/roster' : '/jobs/new')}
-                 className="flex items-center justify-center w-12 h-12 bg-accent text-black hover:scale-105 transition-all"
-                 title={user?.accountType === 'AGENT' ? 'Manage Roster' : 'Log Production'}
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={clsx(
+                  "relative flex flex-col items-center justify-center w-14 h-14 transition-all duration-300",
+                  location.pathname === item.path ? 'bg-white text-black' : 'text-white/30 hover:text-white'
+                )}
+                title={item.label}
               >
-                 <Plus size={20} strokeWidth={3} />
+                <item.icon size={18} strokeWidth={location.pathname === item.path ? 3 : 2} />
+                <span className="text-[6px] font-black uppercase tracking-widest mt-1">{item.label.split(' ')[1]}</span>
               </button>
-           </nav>
-        </div>
+            ))}
+            <div className="w-px h-8 bg-white/10 mx-2"></div>
+            <button
+              onClick={() => navigate(user?.accountType === 'AGENT' ? '/roster' : '/jobs/new')}
+              className="flex items-center justify-center w-14 h-14 bg-accent text-black hover:scale-105 transition-all shadow-glow"
+            >
+              <Plus size={24} strokeWidth={3} />
+            </button>
+          </div>
+        </nav>
       )}
 
-      {/* Main Content Viewport */}
-      <main className={clsx("mobile-wrapper pt-32 min-h-screen", (isDashboardMode) ? "pb-48" : "pb-24")}>
+      <main className={clsx("mobile-wrapper flex-1 pt-32 pb-48", isDashboardMode ? "md:pt-40" : "md:pt-32")}>
         {children}
       </main>
-      
-      {/* Editorial Footer for Public Pages */}
-      {!isDashboardMode && !isAuthPage && (
-        <footer className="py-24 border-t border-white/5 bg-black/40 text-center space-y-12">
-           <div className="flex justify-center gap-16 text-[9px] font-black uppercase tracking-[0.6em] text-white/20">
-              <button onClick={() => navigate('/about')} className="hover:text-accent">Your Charter</button>
-              <button onClick={() => navigate('/resources')} className="hover:text-accent">Your Archive</button>
-              <button onClick={() => navigate('/manual')} className="hover:text-accent">Your Protocol</button>
-              <button onClick={() => navigate('/privacy')} className="hover:text-accent">Your Privacy</button>
-           </div>
-           <div className="space-y-4">
-              <span className="font-serif italic text-6xl text-white">Ca</span>
-              <p className="text-[8px] font-black uppercase tracking-[1em] text-white/10">CineArch // Your Archival System</p>
-           </div>
-        </footer>
-      )}
     </div>
   );
 };

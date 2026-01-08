@@ -1,11 +1,10 @@
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Heading, Badge, Input, Card, Text, Button } from '../components/ui';
 import { CanadianProvince } from '../types';
-import { UNION_SPECS } from '../config/unions_data';
-import { resolveUnionsForRole, PROVINCIAL_EXCEPTIONS } from '../config/jurisdiction_map';
+import { getAllUnions, resolveGuildsForRole } from '../services/union_engine';
 import { INDUSTRY_DEPARTMENTS } from '../config/industry_roles';
-import { Search, Shield, ChevronRight, Mail, Landmark, Info, MapPin, Briefcase, LayoutGrid, BookOpen } from 'lucide-react';
+import { Search, Shield, ChevronRight, Mail, Landmark, Info, MapPin, Briefcase, LayoutGrid, BookOpen, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export const Manual = () => {
@@ -14,13 +13,12 @@ export const Manual = () => {
   const [selectedProvince, setSelectedProvince] = useState<string>('Ontario');
 
   const filteredGuilds = useMemo(() => {
-    return Object.values(UNION_SPECS).filter(u => 
+    return getAllUnions().filter(u => 
       u.name.toLowerCase().includes(search.toLowerCase()) || 
       u.description.toLowerCase().includes(search.toLowerCase())
     );
   }, [search]);
 
-  // Logic to get all roles across all departments, filtered by search
   const filteredDepartments = useMemo(() => {
     if (!search) return INDUSTRY_DEPARTMENTS;
     return INDUSTRY_DEPARTMENTS.map(dept => ({
@@ -33,17 +31,17 @@ export const Manual = () => {
   }, [search]);
 
   return (
-    <div className="space-y-24 pb-40 animate-in fade-in duration-1000">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 border-b border-white/10 pb-12 relative">
-        <div className="space-y-4">
-           <Badge color="accent" className="italic tracking-widest uppercase italic">Registry v0.5</Badge>
+    <div className="space-y-24 animate-in fade-in duration-1000">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 border-b border-white/10 pb-16 relative">
+        <div className="space-y-6">
+           <Badge color="accent" className="italic tracking-widest uppercase italic px-6">Your Registry // v0.5</Badge>
            <h1 className="heading-huge uppercase italic leading-none">YOUR <br/><span className="text-accent">REGISTRY.</span></h1>
         </div>
         <div className="flex-1 max-w-md relative group">
-           <Search size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-hover:text-accent transition-colors" />
+           <Search size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-hover:text-accent transition-colors" />
            <Input 
-             placeholder="Search roles, guilds, or specs..." 
-             className="pl-16 h-16 border-white/10 focus:border-accent/40" 
+             placeholder="Search roles or guilds..." 
+             className="pl-16 h-20 border-white/10 focus:border-accent/40" 
              value={search} 
              onChange={e => setSearch(e.target.value)} 
            />
@@ -51,98 +49,92 @@ export const Manual = () => {
       </header>
 
       <div className="grid lg:grid-cols-12 gap-12">
-        <aside className="lg:col-span-3 space-y-8">
+        <aside className="lg:col-span-3 space-y-12">
            <div className="flex flex-col gap-1">
-              <button 
-                onClick={() => setActiveTab('ROLES')} 
-                className={clsx("text-left px-8 py-5 text-[10px] font-black uppercase tracking-[0.4em] border transition-all flex items-center justify-between", activeTab === 'ROLES' ? "bg-white text-black border-white" : "text-white/30 border-white/5 hover:bg-white/5")}
-              >
-                Your Role Directory <Briefcase size={12} />
+              <button onClick={() => setActiveTab('ROLES')} className={clsx("text-left px-10 py-6 text-[11px] font-black uppercase tracking-[0.5em] border transition-all flex items-center justify-between", activeTab === 'ROLES' ? "bg-white text-black border-white shadow-glow" : "text-white/30 border-white/5 hover:bg-white/5")}>
+                Your Role Directory <Briefcase size={14} />
               </button>
-              <button 
-                onClick={() => setActiveTab('GUILDS')} 
-                className={clsx("text-left px-8 py-5 text-[10px] font-black uppercase tracking-[0.4em] border transition-all flex items-center justify-between", activeTab === 'GUILDS' ? "bg-white text-black border-white" : "text-white/30 border-white/5 hover:bg-white/5")}
-              >
-                Your Guild Registry <Landmark size={12} />
-              </button>
-              <button 
-                onClick={() => setActiveTab('MAP')} 
-                className={clsx("text-left px-8 py-5 text-[10px] font-black uppercase tracking-[0.4em] border transition-all flex items-center justify-between", activeTab === 'MAP' ? "bg-white text-black border-white" : "text-white/30 border-white/5 hover:bg-white/5")}
-              >
-                Your Jurisdiction Map <MapPin size={12} />
+              <button onClick={() => setActiveTab('GUILDS')} className={clsx("text-left px-10 py-6 text-[11px] font-black uppercase tracking-[0.5em] border transition-all flex items-center justify-between", activeTab === 'GUILDS' ? "bg-white text-black border-white shadow-glow" : "text-white/30 border-white/5 hover:bg-white/5")}>
+                Your Guild Registry <Landmark size={14} />
               </button>
            </div>
            
-           <Card className="p-8 space-y-6 bg-accent/5 border-accent/20">
-              <div className="flex items-center gap-3">
-                 <MapPin size={14} className="text-accent" />
-                 <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Your Hub Context</h4>
+           <Card className="p-10 space-y-8 bg-accent/5 border-accent/20">
+              <div className="flex items-center gap-4">
+                 <MapPin size={18} className="text-accent" />
+                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-white italic">Your Hub Context</h4>
               </div>
               <div className="flex flex-col gap-2">
-                 {['Ontario', 'Quebec', 'British Columbia', 'Alberta', 'Manitoba'].map(p => (
+                 {['Ontario', 'Quebec', 'British Columbia', 'Alberta', 'Manitoba', 'Nova Scotia'].map(p => (
                     <button 
                       key={p} 
                       onClick={() => setSelectedProvince(p)}
                       className={clsx(
-                        "text-left text-[9px] font-black uppercase tracking-widest px-4 py-3 border transition-all flex items-center justify-between group", 
+                        "text-left text-[10px] font-black uppercase tracking-[0.3em] px-6 py-4 border transition-all flex items-center justify-between group", 
                         selectedProvince === p ? "border-accent text-accent bg-accent/5" : "border-transparent text-white/20 hover:text-white"
                       )}
                     >
                       {p}
-                      {selectedProvince === p && <div className="w-1 h-1 bg-accent rounded-full"></div>}
+                      {selectedProvince === p && <div className="w-1 h-1 bg-accent rounded-full animate-pulse"></div>}
                     </button>
                  ))}
               </div>
-              <p className="text-[8px] text-white/20 font-black uppercase tracking-[0.2em] leading-relaxed italic">
-                Your selected jurisdiction informs the union resolution logic across the Role Directory.
+              <p className="text-[9px] text-white/20 font-black uppercase tracking-[0.3em] leading-relaxed italic">
+                Your selected jurisdiction drives the real-time union resolution matrix.
               </p>
            </Card>
         </aside>
 
         <main className="lg:col-span-9">
            {activeTab === 'ROLES' && (
-             <div className="space-y-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div className="flex items-center gap-6 mb-12">
-                   <Briefcase className="text-accent" size={24} />
-                   <h2 className="text-5xl font-serif italic text-white leading-none">Your Role Directory</h2>
-                   <div className="flex-1 h-px bg-white/5"></div>
-                   <Badge color="accent">Hub: {selectedProvince}</Badge>
-                </div>
-
+             <div className="space-y-32 animate-in fade-in slide-in-from-bottom-8 duration-700">
                 {filteredDepartments.map(dept => (
-                   <div key={dept.name} className="space-y-10">
-                      <div className="flex items-center gap-4">
-                         <span className="text-[10px] font-black uppercase tracking-[0.6em] text-white/40">Dept // {dept.code}</span>
-                         <h3 className="text-4xl font-serif italic text-white">{dept.name}</h3>
-                         <div className="flex-1 h-[1px] bg-white/10"></div>
+                   <div key={dept.name} className="space-y-12">
+                      <div className="flex items-center gap-6">
+                         <span className="text-[10px] font-black uppercase tracking-[0.8em] text-white/20 italic">DEPT // {dept.code}</span>
+                         <h3 className="text-5xl font-serif italic text-white leading-none">{dept.name}</h3>
+                         <div className="flex-1 h-[1px] bg-white/5"></div>
                       </div>
                       
                       <div className="grid md:grid-cols-2 gap-1">
                          {dept.roles.map(role => {
-                            const resolvedUnionIds = resolveUnionsForRole(selectedProvince, role.name, dept.name);
-                            const resolvedUnions = resolvedUnionIds.map(id => UNION_SPECS[id]).filter(Boolean);
+                            const unionIds = resolveGuildsForRole(selectedProvince, role.name, dept.name);
+                            const guilds = getAllUnions().filter(u => unionIds.includes(u.id));
                             
                             return (
-                               <Card key={role.name} className="p-10 space-y-8 hover:bg-white/[0.02] border-white/5 flex flex-col justify-between group">
-                                  <div className="space-y-4">
-                                     <div className="flex justify-between items-start">
-                                        <h4 className="text-3xl font-serif italic text-white group-hover:text-accent transition-colors leading-none">{role.name}</h4>
-                                     </div>
-                                     <p className="text-sm text-white/40 font-light italic leading-relaxed">{role.description}</p>
+                               <Card key={role.name} className="p-12 space-y-10 hover:bg-white/[0.02] border-white/5 group flex flex-col justify-between">
+                                  <div className="space-y-6">
+                                     <h4 className="text-4xl font-serif italic text-white group-hover:text-accent transition-colors leading-none">{role.name}</h4>
+                                     <p className="text-base text-white/40 font-light italic leading-relaxed">{role.description}</p>
+                                     
+                                     {role.requirements && (
+                                       <div className="pt-6 space-y-4">
+                                          <span className="text-[9px] font-black uppercase tracking-widest text-accent italic">Personnel Requirements</span>
+                                          <div className="flex flex-wrap gap-2">
+                                             {role.requirements.map(req => (
+                                               <Badge key={req} color="neutral" className="opacity-60">{req}</Badge>
+                                             ))}
+                                          </div>
+                                       </div>
+                                     )}
                                   </div>
                                   
-                                  <div className="pt-6 border-t border-white/5 space-y-4">
-                                     <span className="text-[9px] font-black uppercase tracking-widest text-white/20 block italic">Coverage Protocol</span>
-                                     <div className="flex flex-wrap gap-2">
-                                        {resolvedUnions.length > 0 ? resolvedUnions.map(u => (
-                                           <div key={u.id} className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2">
-                                              <Landmark size={10} className="text-accent" />
-                                              <span className="text-[10px] font-black uppercase tracking-widest text-white">{u.name}</span>
-                                           </div>
-                                        )) : (
-                                          <Badge color="neutral">Non-Union / Permit</Badge>
-                                        )}
+                                  <div className="pt-8 border-t border-white/5 space-y-6">
+                                     <span className="text-[10px] font-black uppercase tracking-widest text-white/20 block italic">Your Coverage Protocol</span>
+                                     <div className="flex flex-wrap gap-3">
+                                       {guilds.map(g => (
+                                          <div key={g.id} className="flex items-center gap-4 bg-white/5 border border-white/10 px-6 py-3 w-fit">
+                                             <Landmark size={14} className="text-accent" />
+                                             <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white">{g.name}</span>
+                                          </div>
+                                       ))}
                                      </div>
+                                     {guilds.length > 1 && (
+                                       <div className="flex items-center gap-3 text-accent/60">
+                                          <AlertCircle size={12} />
+                                          <span className="text-[9px] font-black uppercase tracking-widest italic">Overlapping Jurisdiction Detected</span>
+                                       </div>
+                                     )}
                                   </div>
                                </Card>
                             );
@@ -150,100 +142,62 @@ export const Manual = () => {
                       </div>
                    </div>
                 ))}
-                
-                {filteredDepartments.length === 0 && (
-                   <div className="py-40 text-center border border-dashed border-white/5 opacity-30 italic">
-                      No roles matching "{search}" in the {selectedProvince} archive.
-                   </div>
-                )}
              </div>
            )}
 
            {activeTab === 'GUILDS' && (
               <div className="grid gap-1 animate-in fade-in duration-700">
                  {filteredGuilds.map(u => (
-                    <Card key={u.id} className="p-12 space-y-12 hover:border-accent/20 transition-all">
-                       <div className="flex flex-col md:flex-row md:items-start justify-between gap-10">
-                          <div className="space-y-4 max-w-xl">
-                             <Badge color="accent">Standard Spec</Badge>
-                             <h3 className="text-6xl font-serif italic text-white leading-none">{u.name}</h3>
-                             <p className="text-xl text-white/40 font-light italic leading-relaxed">{u.description}</p>
+                    <Card key={u.id} className="p-16 space-y-16 hover:border-accent/20 transition-all">
+                       <div className="flex flex-col md:flex-row md:items-start justify-between gap-12">
+                          <div className="space-y-6 max-w-2xl">
+                             <Badge color="accent" className="italic px-6">Personnel Spec</Badge>
+                             <h3 className="text-7xl font-serif italic text-white leading-[0.8] uppercase tracking-tighter">{u.name}</h3>
+                             <p className="text-2xl text-white/40 font-light italic leading-relaxed">{u.description}</p>
+                             {u.jurisdictionalNotes && (
+                               <div className="p-6 bg-accent/5 border border-accent/20 flex gap-4 items-start">
+                                  <Info size={16} className="text-accent shrink-0 mt-1" />
+                                  <p className="text-xs text-accent italic leading-relaxed">{u.jurisdictionalNotes}</p>
+                               </div>
+                             )}
                           </div>
-                          <div className="text-right space-y-4">
-                             <p className="text-[10px] font-black uppercase text-white/20 tracking-widest italic">Entrance Magnitude</p>
-                             <p className="text-5xl font-serif italic text-white leading-none">${u.applicationFee || 0}</p>
+                          <div className="text-left md:text-right space-y-6 border-l md:border-l-0 md:border-r border-white/5 pl-8 md:pr-8">
+                             <p className="text-[11px] font-black uppercase text-white/20 tracking-[0.5em] italic">Entrance Magnitude</p>
+                             <p className="text-6xl font-serif italic text-white leading-none tracking-tighter">${u.applicationFee || 0}</p>
+                             {u.residencyRule && (
+                               <p className="text-[9px] font-black uppercase text-white/30 tracking-widest italic">{u.residencyRule}</p>
+                             )}
                           </div>
                        </div>
 
-                       <div className="grid md:grid-cols-2 gap-16 border-t border-white/5 pt-12">
-                          <div className="space-y-6">
-                             <h4 className="text-[10px] font-black uppercase text-accent tracking-[0.5em] italic">Member Benefits</h4>
-                             <ul className="grid grid-cols-2 gap-4">
+                       <div className="grid md:grid-cols-2 gap-20 border-t border-white/5 pt-16">
+                          <div className="space-y-8">
+                             <h4 className="text-[11px] font-black uppercase text-accent tracking-[0.6em] italic">Your Member Benefits</h4>
+                             <ul className="grid grid-cols-1 gap-6">
                                 {u.memberBenefits?.map((b, i) => (
-                                   <li key={i} className="text-[11px] text-white/60 flex items-center gap-3 italic"><ChevronRight size={12} className="text-accent" /> {b}</li>
+                                   <li key={i} className="text-base text-white/60 flex items-center gap-4 italic"><ChevronRight size={14} className="text-accent" /> {b}</li>
                                 ))}
                              </ul>
                           </div>
-                          <div className="space-y-6">
-                             <h4 className="text-[10px] font-black uppercase text-accent tracking-[0.5em] italic">Protocol: Joining</h4>
-                             <ul className="space-y-3">
-                                {u.applicationProcess?.map((step, i) => (
-                                   <li key={i} className="text-[11px] text-white/40 flex items-start gap-4 italic leading-relaxed">
-                                      <span className="text-[8px] font-mono mt-1">0{i+1}</span>
-                                      {step}
+                          <div className="space-y-8 bg-white/5 p-12">
+                             <h4 className="text-[11px] font-black uppercase text-accent tracking-[0.6em] italic">Entrance Tiers</h4>
+                             <ul className="space-y-8">
+                                {u.tiers.map((tier, i) => (
+                                   <li key={i} className="space-y-2">
+                                      <div className="flex justify-between items-center">
+                                         <span className="text-xl font-serif italic text-white">{tier.name}</span>
+                                         <Badge color="neutral">{tier.targetType}</Badge>
+                                      </div>
+                                      <p className="text-sm text-white/40 italic leading-relaxed">{tier.description} — Target: {tier.targetValue}</p>
                                    </li>
                                 ))}
                              </ul>
                           </div>
                        </div>
-                       
-                       {u.jurisdictionalNotes && (
-                          <div className="p-6 bg-white/[0.02] border border-white/5 flex gap-4 items-start">
-                             <Info size={14} className="text-white/20 mt-1" />
-                             <p className="text-[10px] text-white/30 italic leading-relaxed">{u.jurisdictionalNotes}</p>
-                          </div>
-                       )}
                     </Card>
                  ))}
               </div>
            )}
-
-           {activeTab === 'MAP' && (activeTab === 'MAP' && (
-              <div className="space-y-12 animate-in fade-in duration-700">
-                 <div className="flex items-center gap-6">
-                    <MapPin className="text-accent" size={24} />
-                    <h2 className="text-5xl font-serif italic text-white leading-none">Rules for Your Hub: {selectedProvince}</h2>
-                 </div>
-                 
-                 <div className="grid gap-1">
-                    {(PROVINCIAL_EXCEPTIONS[selectedProvince] || []).map((rule, idx) => {
-                       const union = UNION_SPECS[rule.assignedUnionId];
-                       const unionName = union?.name || rule.assignedUnionId;
-                       
-                       return (
-                          <Card key={idx} className="p-10 flex flex-col md:flex-row md:items-center justify-between gap-10 hover:bg-white/[0.02]">
-                             <div className="space-y-4">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-accent italic">Scope: {rule.roleIncludes ? rule.roleIncludes.join(', ') : rule.deptIncludes?.join(', ')}</span>
-                                <h4 className="text-3xl font-serif italic text-white leading-none">Routed to {unionName}</h4>
-                             </div>
-                             <div className="text-right">
-                                <Badge color="neutral">Regional Authority</Badge>
-                             </div>
-                          </Card>
-                       );
-                    })}
-                    {(PROVINCIAL_EXCEPTIONS[selectedProvince] || []).length === 0 && (
-                      <div className="p-20 text-center glass-ui opacity-20 italic font-black uppercase tracking-widest text-xs">
-                        No provincial overrides found for this hub. National standards apply.
-                      </div>
-                    )}
-                 </div>
-                 
-                 <Card className="p-10 border-dashed border-white/10 opacity-30 text-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest italic">All roles not listed above follow standard National Guild benchmarks.</p>
-                 </Card>
-              </div>
-           ))}
         </main>
       </div>
     </div>

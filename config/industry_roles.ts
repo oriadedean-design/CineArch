@@ -1,3 +1,4 @@
+
 export interface JurisdictionOverride {
   province: 'Quebec' | 'Ontario' | 'BC' | 'Other';
   union: string;
@@ -12,6 +13,7 @@ export interface IndustryRole {
   primaryUnion: string;
   description: string;
   departmentCode: string;
+  requirements?: string[];
   jurisdictionOverrides?: JurisdictionOverride[];
 }
 
@@ -32,25 +34,22 @@ export const INDUSTRY_DEPARTMENTS: IndustryDepartment[] = [
         name: "Director", 
         primaryUnion: "DGC", 
         departmentCode: "DIR",
-        description: "The primary creative lead responsible for guiding technical crew and performances from development through to the final cut."
+        description: "The primary creative lead responsible for guiding technical crew and performances.",
+        requirements: ["DGC Membership", "Creative Portfolio", "Gap Training"]
       },
       { 
         name: "1st Assistant Director", 
         primaryUnion: "DGC", 
         departmentCode: "DIR",
-        description: "The Director's right hand. Responsible for set discipline, scheduling, and ensuring the production stays on track. The primary 'Voice' of the floor."
+        description: "The Director's right hand. Responsible for set discipline and the daily shooting schedule.",
+        requirements: ["DGC Membership", "WHMIS", "First Aid Level 1"]
       },
       { 
-        name: "2nd Assistant Director", 
+        name: "Script Supervisor", 
         primaryUnion: "DGC", 
         departmentCode: "DIR",
-        description: "Manages the back-base, actor movements, and background performers. Responsible for the generation of the daily Call Sheet."
-      },
-      { 
-        name: "Set P.A.", 
-        primaryUnion: "DGC", 
-        departmentCode: "DIR",
-        description: "Entry-level production staff responsible for lock-ups, safety protocols on the floor, and general support for the AD department."
+        description: "The guardian of continuity, timing, and editing notes for the production.",
+        requirements: ["Script Supervisor Course", "Attention to detail", "Digital Continuity Tools"]
       }
     ]
   },
@@ -60,33 +59,23 @@ export const INDUSTRY_DEPARTMENTS: IndustryDepartment[] = [
     description: "Optics, lighting, and visual capture technical crew.",
     roles: [
       { 
-        name: "Director of Photography", 
+        name: "DOP / Operator", 
         primaryUnion: "IATSE 667", 
         departmentCode: "CAM",
-        description: "Chief of camera and lighting, responsible for the cinematic look and technical execution of the visual narrative."
+        description: "Chief of camera and lighting, responsible for the cinematic look.",
+        requirements: ["667/669 Membership", "Technical Reel", "Adv. Optics Certification"]
       },
       { 
-        name: "1st Assistant Camera", 
+        name: "Assistant (1st/2nd)", 
         primaryUnion: "IATSE 667", 
         departmentCode: "CAM",
-        description: "The Focus Puller. Responsible for camera maintenance, technical assembly, and ensuring the image remains sharp at all times."
-      },
-      { 
-        name: "Camera Trainee", 
-        primaryUnion: "IATSE 667", 
-        departmentCode: "CAM",
-        description: "Apprentice role assisting the 2nd AC with equipment organization, slate marking, and battery management."
-      },
-      { 
-        name: "Still Photographer", 
-        primaryUnion: "IATSE 667", 
-        departmentCode: "CAM",
-        description: "Captures high-resolution production stills for marketing, archival, and unit publicity."
+        description: "Responsible for camera maintenance, focus pulling, and technical assembly.",
+        requirements: ["Equipment Knowledge", "Focus Pulling Exp", "667/669 Permit"]
       }
     ]
   },
   {
-    name: "Art Department",
+    name: "Art Dept",
     code: "ART",
     description: "Visual generation of sets, environments, and overall design concepts.",
     roles: [
@@ -94,57 +83,71 @@ export const INDUSTRY_DEPARTMENTS: IndustryDepartment[] = [
         name: "Production Designer", 
         primaryUnion: "DGC", 
         departmentCode: "ART",
-        description: "Visionary lead for all visual elements including sets, props, and location transformations. Works directly with the Director."
+        description: "Visionary lead for all visual elements. Works directly with the Director.",
+        requirements: ["DGC/Local Membership", "Architectural Knowledge", "Design Portfolio"]
       },
       { 
         name: "Art Director", 
         primaryUnion: "DGC", 
         departmentCode: "ART",
-        description: "The logistical head of the art department. Manages the budget, draftspersons, and execution of the Designer's vision."
+        description: "The logistical head of the art department, managing budgets and execution.",
+        requirements: ["Budgeting Experience", "DGC Membership", "Drafting Proficiency"]
       }
     ]
   },
   {
-    name: "Production Office",
-    code: "OFF",
-    description: "The administrative and logistical backbone of the production.",
+    name: "Lighting/Electric",
+    code: "ELE",
+    description: "Electrical distribution and lighting equipment management.",
     roles: [
       { 
-        name: "Production Coordinator", 
-        primaryUnion: "IATSE 411", 
-        departmentCode: "OFF",
-        description: "Manages the heavy logistics: travel, housing, shipping, and the distribution of production paperwork."
-      },
-      { 
-        name: "Production Secretary", 
-        primaryUnion: "IATSE 411", 
-        departmentCode: "OFF",
-        description: "Assists the Coordinator with day-to-day administrative tasks, reception, and filing."
-      },
-      { 
-        name: "Office P.A.", 
-        primaryUnion: "IATSE 411", 
-        departmentCode: "OFF",
-        description: "General administrative support, courier runs, and maintaining production office operations."
+        name: "Gaffer / Spark", 
+        primaryUnion: "IATSE 873", 
+        departmentCode: "ELE",
+        description: "Chief of the electrical department, executing the DOP's lighting plan.",
+        requirements: ["Master Electrician (Local Dependent)", "WHMIS", "873/NABET Membership"]
       }
     ]
   },
   {
-    name: "Construction",
-    code: "CON",
-    description: "Fabrication and structural execution of production sets.",
+    name: "Transportation",
+    code: "TRA",
+    description: "Logistics and fleet management for cast, crew, and equipment.",
     roles: [
       { 
-        name: "Construction Coordinator", 
-        primaryUnion: "IATSE 873", 
-        departmentCode: "CON",
-        description: "Managing the set build budget, materials procurement, and the structural build team."
-      },
+        name: "Coordinator / Driver", 
+        primaryUnion: "Teamsters", 
+        departmentCode: "TRA",
+        description: "Responsible for the movement of assets and personnel across locations.",
+        requirements: ["Class 1/3 Driver's License", "Teamsters Membership", "Clean Abstract"]
+      }
+    ]
+  },
+  {
+    name: "Craft Service",
+    code: "CFT",
+    description: "On-set catering and refreshment services.",
+    roles: [
       { 
-        name: "Scenic Artist", 
+        name: "Server", 
         primaryUnion: "IATSE 873", 
-        departmentCode: "CON",
-        description: "Responsible for specialized painting, textures, and aging effects on set structures."
+        departmentCode: "CFT",
+        description: "Providing nutrition and refreshments to cast and crew during production.",
+        requirements: ["Food Handlers Certificate", "WHMIS", "Regional Guild Status"]
+      }
+    ]
+  },
+  {
+    name: "First Aid",
+    code: "FAD",
+    description: "Medical safety and emergency response for the production set.",
+    roles: [
+      { 
+        name: "Attendant", 
+        primaryUnion: "N/A", 
+        departmentCode: "FAD",
+        description: "Ensuring the physical safety of all personnel on set.",
+        requirements: ["OFA Level 3", "CPR Certification", "Medical Equipment Kit"]
       }
     ]
   }

@@ -5,10 +5,10 @@ import { Loader2 } from 'lucide-react';
 
 export const Heading = ({ children, level = 1, className }: { children?: React.ReactNode, level?: 1 | 2 | 3 | 4, className?: string }) => {
   const styles = {
-    1: "heading-huge text-white mb-8",
-    2: "font-serif italic text-4xl md:text-6xl text-white tracking-tighter mb-6 leading-[0.8]",
+    1: "heading-huge text-white mb-6 md:mb-8",
+    2: "font-serif italic text-4xl md:text-6xl text-white tracking-tighter mb-4 md:mb-6 leading-[0.8]",
     3: "font-serif italic text-2xl md:text-4xl text-white tracking-tight leading-none",
-    4: "font-sans font-black uppercase tracking-[0.5em] text-[10px] text-accent italic"
+    4: "font-sans font-black uppercase tracking-[0.4em] text-[9px] md:text-[10px] text-accent italic"
   };
   const Tag = `h${level}` as React.ElementType;
   return <Tag className={clsx(styles[level], className)}>{children}</Tag>;
@@ -19,7 +19,7 @@ export const Text = ({ children, className, variant = "body", uppercase = false 
     body: "text-lg md:text-xl text-white/80 font-light leading-relaxed", 
     subtle: "text-white/60 font-light leading-relaxed", 
     small: "text-[14px] text-white/50 leading-snug", 
-    caption: "text-[11px] font-black tracking-[0.6em] text-accent uppercase italic"
+    caption: "text-[10px] md:text-[11px] font-black tracking-[0.4em] md:tracking-[0.6em] text-accent uppercase italic"
   };
   return <p className={clsx(styles[variant], uppercase && "uppercase", className)}>{children}</p>;
 };
@@ -46,14 +46,14 @@ export const Button = ({ children, variant = 'primary', className, isLoading, di
   return (
     <button 
       className={clsx(
-        "inline-flex items-center justify-center px-10 py-5 text-[11px] font-black uppercase tracking-[0.5em] transition-all duration-500 active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed rounded-none border border-transparent",
+        "inline-flex items-center justify-center px-6 md:px-10 py-4 md:py-5 text-[10px] md:text-[11px] font-black uppercase tracking-[0.4em] md:tracking-[0.5em] transition-all duration-500 active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed rounded-none border border-transparent",
         variants[variant],
         className
       )}
       disabled={isLoading || disabled}
       {...props}
     >
-      {isLoading && <Loader2 className="w-3 h-3 mr-4 animate-spin" />}
+      {isLoading && <Loader2 className="w-3 h-3 mr-3 md:mr-4 animate-spin" />}
       {children}
     </button>
   );
@@ -64,7 +64,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     <input
       ref={ref}
       className={clsx(
-        "w-full px-8 py-5 bg-black/40 border border-white/5 text-white text-lg focus:outline-none focus:border-accent transition-all placeholder:text-white/10 backdrop-blur-3xl rounded-none font-light italic",
+        "w-full px-6 md:px-8 py-4 md:py-5 bg-black/40 border border-white/5 text-white text-base md:text-lg focus:outline-none focus:border-accent transition-all placeholder:text-white/10 backdrop-blur-3xl rounded-none font-light italic",
         className
       )}
       {...props}
@@ -78,15 +78,15 @@ export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttrib
       <select
         ref={ref}
         className={clsx(
-          "w-full px-8 py-5 bg-black/40 border border-white/5 text-white text-lg focus:outline-none focus:border-accent transition-all backdrop-blur-3xl rounded-none font-light italic appearance-none cursor-pointer",
+          "w-full px-6 md:px-8 py-4 md:py-5 bg-black/40 border border-white/5 text-white text-base md:text-lg focus:outline-none focus:border-accent transition-all backdrop-blur-3xl rounded-none font-light italic appearance-none cursor-pointer",
           className
         )}
         {...props}
       >
         {children}
       </select>
-      <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 group-hover:text-accent transition-colors">
-        <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <div className="absolute right-6 md:right-8 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 group-hover:text-accent transition-colors">
+        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       </div>
@@ -99,7 +99,7 @@ export const Card = ({ children, className, onClick }: { children?: React.ReactN
     <div 
       onClick={onClick} 
       className={clsx(
-        "glass-ui p-12 relative overflow-hidden group transition-all duration-700 rounded-none border-white/10", 
+        "glass-ui p-6 md:p-12 relative overflow-hidden group transition-all duration-700 rounded-none border-white/10", 
         className, 
         onClick && "cursor-pointer hover:border-accent/40"
       )}
@@ -117,7 +117,7 @@ export const Badge = ({ children, color = "neutral", className }: { children?: R
     accent: "bg-accent/10 text-accent border-accent/20"
   };
   return (
-    <span className={clsx("inline-flex items-center px-5 py-2 border text-[10px] font-black uppercase tracking-[0.4em] italic", colors[color], className)}>
+    <span className={clsx("inline-flex items-center px-4 md:px-5 py-1.5 md:py-2 border text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] italic", colors[color], className)}>
       {children}
     </span>
   );
