@@ -1,4 +1,5 @@
 import { User, Job, UserUnionTracking, ResidencyDocument } from '../types';
+import { supabase } from './supabase';
 
 const USER_KEY = 'cinearch_user';
 const DATA_PREFIX = 'cinearch_data_';
@@ -20,8 +21,8 @@ const getContextId = (): string => {
   return user?.activeViewId || user?.id || 'anon';
 };
 
-const getKeys = () => {
-  const id = getContextId();
+const getKeys = (targetId?: string) => {
+  const id = targetId || getContextId();
   return {
     JOBS: `${DATA_PREFIX}jobs_${id}`,
     TRACKING: `${DATA_PREFIX}tracking_${id}`,
@@ -75,6 +76,39 @@ export const api = {
       }
     },
 
+    async revokeAgency() {
+      await delay(400);
+      const user = getStorage<User | null>(USER_KEY, null);
+      if (user) {
+        // PRODUCTION CHANGE: Query Supabase to kill RLS access
+        try {
+          const { error } = await supabase
+            .from('jobs')
+            .update({ managing_agency_id: null })
+            .eq('user_id', user.id);
+          
+          if (error) throw error;
+        } catch (e) {
+          console.warn("Supabase RLS update simulated or failed:", e);
+        }
+
+        // Simulates: update jobs set managing_agency_id = null where user_id = auth.uid()
+        const updated = { ...user, hasAgentFee: false, managedByAgencyId: undefined };
+        setStorage(USER_KEY, updated);
+        return updated;
+      }
+      return null;
+    },
+
+    async removeManagedUser(clientId: string) {
+      await delay(300);
+      const agent = getStorage<User | null>(USER_KEY, null);
+      if (agent && agent.accountType === 'AGENT') {
+        const managed = agent.managedUsers?.filter(u => u.id !== clientId) || [];
+        setStorage(USER_KEY, { ...agent, managedUsers: managed });
+      }
+    },
+
     switchClient(clientId: string | null) {
       const user = getStorage<User | null>(USER_KEY, null);
       if (user) {
@@ -92,9 +126,56 @@ export const api = {
     async list(): Promise<Job[]> {
       await delay(100);
       const keys = getKeys();
-      return getStorage<Job[]>(keys.JOBS, []).sort((a, b) => 
+      const user = api.auth.getUser();
+      
+      const rawJobs = getStorage<Job[]>(keys.JOBS, []).sort((a, b) => 
         new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
       );
+
+      // AGENCY VIEW LOGIC (Simulating agency_jobs_view)
+      // If the context is a client being viewed by an agent, strip gross earnings.
+      if (user?.accountType === 'AGENT' && user.activeViewId) {
+        return rawJobs.map(j => ({
+          ...j,
+          grossEarnings: undefined,
+          hourlyRate: undefined,
+          unionDeductions: undefined
+        }));
+      }
+
+      return rawJobs;
+    },
+
+    async listForClient(clientId: string): Promise<Job[]> {
+      const user = api.auth.getUser();
+
+      // PRODUCTION CHANGE: Agencies query the 'agency_jobs_view' instead of the jobs table directly.
+      // This ensures they never even receive the gross_earnings payload at the network level.
+      if (user?.accountType === 'AGENT') {
+        try {
+          const { data, error } = await supabase
+            .from('agency_jobs_view')
+            .select('*')
+            .eq('user_id', clientId);
+          
+          if (error) throw error;
+          if (data) return data as Job[];
+        } catch (e) {
+          console.warn("Supabase View query simulated or failed, falling back to restricted mock:", e);
+        }
+        
+        // Mock fallback for agency-level restricted payload
+        const keys = getKeys(clientId);
+        const rawJobs = getStorage<Job[]>(keys.JOBS, []);
+        return rawJobs.map(j => ({
+          ...j,
+          grossEarnings: undefined,
+          hourlyRate: undefined
+        }));
+      }
+
+      const keys = getKeys(clientId);
+      return getStorage<Job[]>(keys.JOBS, []);
     },
 
     async add(job: Job): Promise<Job> {
@@ -123,8 +204,8 @@ export const api = {
   },
 
   tracking: {
-    get: (): UserUnionTracking[] => {
-      const keys = getKeys();
+    get: (targetId?: string): UserUnionTracking[] => {
+      const keys = getKeys(targetId);
       return getStorage<UserUnionTracking[]>(keys.TRACKING, []);
     },
     save: (trackings: UserUnionTracking[]) => {

@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
 import { Job, User } from '../types';
 import { Heading, Text, Button, Badge, Select } from '../components/ui';
 import { BulkJobUploadEnterprise } from '../components/BulkJobUploadEnterprise';
-import { Shield, UploadCloud, Plus, UserCheck } from 'lucide-react';
+import { Shield, UploadCloud, Plus, UserCheck, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 
@@ -14,12 +13,15 @@ export const JobsEnterprise = () => {
   const [showIngest, setShowIngest] = useState(false);
   const user = api.auth.getUser();
 
-  const refresh = () => {
+  const refresh = async () => {
     const allJobs: {job: Job, clientName: string}[] = [];
-    (user?.managedUsers || []).forEach(client => {
-      const clientJobs = JSON.parse(localStorage.getItem(`cinearch_data_jobs_${client.id}`) || '[]');
+    if (!user?.managedUsers) return;
+
+    for (const client of user.managedUsers) {
+      // Use the restricted client job list (simulates agency_jobs_view)
+      const clientJobs = await api.jobs.listForClient(client.id);
       clientJobs.forEach((j: Job) => allJobs.push({ job: j, clientName: client.name }));
-    });
+    }
     setJobs(allJobs.sort((a,b) => new Date(b.job.startDate).getTime() - new Date(a.job.startDate).getTime()));
   };
 
@@ -58,15 +60,23 @@ export const JobsEnterprise = () => {
                 </div>
              </div>
              <div className="flex items-center gap-12 text-right">
-                <div>
-                   <span className="text-[9px] font-black uppercase tracking-widest text-white/20 italic block mb-1">Scale</span>
-                   <span className="text-xl font-serif italic text-white">${(job.grossEarnings || 0).toLocaleString()}</span>
+                <div className="flex flex-col items-end gap-2">
+                   <span className="text-[9px] font-black uppercase tracking-widest text-white/20 italic block">Yield Magnitude</span>
+                   <div className="flex items-center gap-3 text-white/20">
+                      <Lock size={12} />
+                      <span className="text-xs font-black uppercase tracking-widest">Restricted</span>
+                   </div>
                 </div>
                 <Badge color={job.isUnion ? "accent" : "neutral"}>{job.isUnion ? job.unionName : "Non-Union"}</Badge>
                 <span className="text-[9px] font-black uppercase tracking-widest text-white/20 italic">{job.startDate}</span>
              </div>
           </div>
         ))}
+        {jobs.length === 0 && (
+          <div className="py-40 text-center border border-dashed border-white/5 opacity-30 italic font-black uppercase tracking-[0.4em] text-[11px]">
+            No Production Logs Recorded.
+          </div>
+        )}
       </div>
     </div>
   );

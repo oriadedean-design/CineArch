@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/storage';
 import { Job, User, UserUnionTracking } from '../types';
 import { Heading, Badge, Card, Button } from '../components/ui';
-import { GanttChartSquare, Zap, Users, Briefcase, Plus } from 'lucide-react';
+import { GanttChartSquare, Zap, Users, Briefcase, Plus, ShieldOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 
@@ -19,16 +18,19 @@ export const DashboardEnterprise = () => {
   const user = api.auth.getUser();
 
   useEffect(() => {
-    const data: RosterMember[] = (user?.managedUsers || []).map(client => {
-      const jobsStr = localStorage.getItem(`cinearch_data_jobs_${client.id}`);
-      const tracksStr = localStorage.getItem(`cinearch_data_tracking_${client.id}`);
-      return { 
-        client, 
-        jobs: (jobsStr ? JSON.parse(jobsStr) : []) as Job[],
-        tracks: (tracksStr ? JSON.parse(tracksStr) : []) as UserUnionTracking[]
-      };
-    });
-    setRoster(data);
+    const loadRoster = async () => {
+      if (!user?.managedUsers) return;
+      
+      const data: RosterMember[] = await Promise.all(user.managedUsers.map(async (client) => {
+        // Use the restricted client job list (simulates agency_jobs_view)
+        const jobs = await api.jobs.listForClient(client.id);
+        const tracks = api.tracking.get(client.id);
+        return { client, jobs, tracks };
+      }));
+      setRoster(data);
+    };
+    
+    loadRoster();
   }, [user]);
 
   const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -51,9 +53,14 @@ export const DashboardEnterprise = () => {
       </header>
 
       <section className="space-y-12">
-         <div className="flex items-center gap-6">
-            <GanttChartSquare className="text-accent" size={24} />
-            <h3 className="font-serif italic text-5xl text-white">Tactical Schedule</h3>
+         <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+               <GanttChartSquare className="text-accent" size={24} />
+               <h3 className="font-serif italic text-5xl text-white">Tactical Schedule</h3>
+            </div>
+            <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-widest text-white/20 italic">
+               <ShieldOff size={12} /> Restricted Payload View Active
+            </div>
          </div>
          <Card className="p-0 overflow-hidden border-white/10 bg-transparent overflow-x-auto">
             <div className="min-w-[1000px]">
@@ -98,10 +105,11 @@ export const DashboardEnterprise = () => {
             <h4 className="text-3xl font-serif italic text-white">Management</h4>
             <Button onClick={() => navigate('/roster')} className="w-full h-16 bg-white text-black text-[10px] tracking-widest">Open Roster Terminal</Button>
          </Card>
-         <Card className="p-12 space-y-8">
+         <Card className="p-12 space-y-8 border-white/5 bg-transparent">
             <Briefcase className="text-white/20" size={32} strokeWidth={1} />
-            <h4 className="text-3xl font-serif italic text-white">Bulk Audit</h4>
-            <Button onClick={() => navigate('/settings')} variant="outline" className="w-full h-16 text-[10px] tracking-widest">Organization Logs</Button>
+            <h4 className="text-3xl font-serif italic text-white text-white/40">Bulk Audit</h4>
+            <Button disabled className="w-full h-16 text-[10px] tracking-widest opacity-30">Organization Logs</Button>
+            <p className="text-[9px] text-white/20 font-black uppercase tracking-widest italic text-center">Audit Requires Financial Authorization</p>
          </Card>
          <Card className="p-12 space-y-8">
             <Plus className="text-white/20" size={32} strokeWidth={1} />

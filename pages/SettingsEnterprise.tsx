@@ -1,19 +1,25 @@
-
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
 import { User, EntityType, CanadianProvince } from '../types';
 import { Heading, Text, Button, Input, Select, Card, Badge } from '../components/ui';
-import { Landmark, Users, GraduationCap, Building, FolderSync, Percent, Briefcase } from 'lucide-react';
+import { Landmark, Users, GraduationCap, Building, FolderSync, Percent, Briefcase, UserMinus } from 'lucide-react';
 
 export const SettingsEnterprise = () => {
   const [user, setUser] = useState<User | null>(api.auth.getUser());
   const [profileForm, setProfileForm] = useState<Partial<User>>(user || {});
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (profileForm) {
-      api.auth.updateUser(profileForm);
+      await api.auth.updateUser(profileForm);
       setUser(api.auth.getUser());
       alert("Organization Terminal Calibrated.");
+    }
+  };
+
+  const handleReleaseUser = async (clientId: string) => {
+    if (window.confirm("Release this personnel from your roster? This will disconnect their ledger from your command view.")) {
+      await api.auth.removeManagedUser(clientId);
+      setUser(api.auth.getUser());
     }
   };
 
@@ -35,17 +41,24 @@ export const SettingsEnterprise = () => {
                <p className="text-xs text-white/40 leading-relaxed font-light">Global settings for your roster members. Changes here affect compliance logic across the entire aggregate ledger.</p>
             </Card>
 
-            <Card className="p-10 space-y-6">
-               <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Organization Context</h4>
-               <div className="space-y-2">
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase text-white/20">
-                     <span>Active Roster</span>
-                     <span className="text-white">{user?.managedUsers?.length || 0} Members</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase text-white/20">
-                     <span>Type</span>
-                     <span className="text-white">{user?.entityType}</span>
-                  </div>
+            <Card className="p-10 space-y-6 border-white/5 bg-transparent">
+               <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Active Roster</h4>
+               <div className="space-y-4">
+                  {user?.managedUsers?.map(client => (
+                    <div key={client.id} className="flex justify-between items-center group">
+                       <span className="text-sm font-serif italic text-white/60">{client.name}</span>
+                       <button 
+                         onClick={() => handleReleaseUser(client.id)}
+                         className="p-2 text-white/10 hover:text-red-500 transition-colors"
+                         title="Release Personnel"
+                       >
+                          <UserMinus size={14} />
+                       </button>
+                    </div>
+                  ))}
+                  {(!user?.managedUsers || user.managedUsers.length === 0) && (
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white/20 italic">No Active Roster</p>
+                  )}
                </div>
             </Card>
          </aside>
