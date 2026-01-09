@@ -17,8 +17,14 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
     setLoading(true);
     
     try {
-      // Database Authentication Protocol
-      const user = await api.auth.login(email, password, isAgent);
+      let user;
+      if (isLogin) {
+        // Mode: AUTH_LOGIN
+        user = await api.auth.login(email, password, isAgent);
+      } else {
+        // Mode: AUTH_REGISTER
+        user = await api.auth.register(email, password, isAgent);
+      }
       onLogin(user);
     } catch (err: any) {
       console.error("CineArch Auth Failure:", err);

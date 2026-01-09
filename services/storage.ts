@@ -63,7 +63,7 @@ export const api = {
       };
     },
     
-    // 2. Database Authentication
+    // 2. Database Authentication (Login)
     async login(email: string, password?: string, asAgent: boolean = false): Promise<User> {
         if (!password) throw new Error("SEC_ERR_04: Authentication key required.");
 
@@ -81,6 +81,51 @@ export const api = {
         const user = await api.auth.getUser();
         if (!user) throw new Error("PROFILE_ERR: CineArch profile not found.");
         return user;
+    },
+
+    // 2b. Database Registration (New Personnel)
+    async register(email: string, password?: string, asAgent: boolean = false): Promise<User> {
+      if (!password) throw new Error("SEC_ERR_04: Access key required.");
+      if (password.length < 6) throw new Error("AUTH_ERR: Access key must be at least 6 characters.");
+
+      // 1. Create Auth User
+      const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+              data: { 
+                  full_name: email.split('@')[0],
+                  account_type: asAgent ? 'AGENT' : 'INDIVIDUAL'
+              }
+          }
+      });
+
+      if (error) throw error;
+      if (!data.user) throw new Error("AUTH_ERR: Personnel record creation failed.");
+
+      // 2. Create Profile Row (Fallback for SQL triggers)
+      const { error: profileError } = await supabase.from('profiles').upsert([{
+          id: data.user.id,
+          email: email,
+          role: asAgent ? 'Agent' : 'Member',
+          account_type: asAgent ? 'AGENT' : 'INDIVIDUAL',
+          province: '', 
+          full_name: email.split('@')[0]
+      }]);
+
+      if (profileError && !profileError.message.includes('duplicate')) {
+          console.error("Profile creation warning:", profileError);
+      }
+
+      // 3. Handle Email Confirmation Edge Case
+      if (!data.session) {
+          throw new Error("REG_SUCCESS: Verification required. Please check your digital coordinate (email).");
+      }
+
+      // 4. Return Hydrated User
+      const user = await api.auth.getUser();
+      if (!user) throw new Error("PROFILE_ERR: CineArch profile initialization failed.");
+      return user;
     },
 
     // 3. Update User Profile
@@ -217,6 +262,7 @@ export const api = {
           gross_earnings: job.grossEarnings,
           start_date: job.startDate,
           province: job.province,
+          // Corrected from job.is_union to job.isUnion to match interface
           is_union: job.isUnion,
           union_name: job.unionName,
           status: job.status,
