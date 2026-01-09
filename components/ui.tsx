@@ -37,6 +37,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   className?: string;
   disabled?: boolean;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  // Fix: Explicitly include type to avoid TS errors in Auth.tsx when passed as "submit" | "button" | "reset"
+  type?: 'submit' | 'reset' | 'button';
 }
 
 export const Button = ({ children, variant = 'primary', className, isLoading, disabled, ...props }: ButtonProps) => {

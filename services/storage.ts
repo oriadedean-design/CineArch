@@ -1,3 +1,4 @@
+
 import { supabase } from './supabase';
 import { User, Job, UserUnionTracking, ResidencyDocument } from '../types';
 
@@ -23,6 +24,28 @@ export const api = {
 
       if (error || !profile) return null;
 
+      // If Agent, fetch their roster
+      let managedUsers: User[] = [];
+      if (profile.account_type === 'AGENT') {
+        const { data: roster } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('managing_agency_id', profile.id);
+        
+        if (roster) {
+          managedUsers = roster.map(r => ({
+            id: r.id,
+            name: r.full_name || r.email,
+            email: r.email,
+            role: r.role || 'Member',
+            province: r.province,
+            isOnboarded: true,
+            accountType: 'INDIVIDUAL',
+            selectedRoles: r.selected_roles
+          } as User));
+        }
+      }
+
       return {
         id: profile.id,
         name: profile.full_name || session.user.email,
@@ -33,6 +56,9 @@ export const api = {
         accountType: (profile.account_type as 'INDIVIDUAL' | 'AGENT') || 'INDIVIDUAL',
         isPremium: profile.is_premium,
         managedByAgencyId: profile.managing_agency_id,
+        department: profile.department,
+        selectedRoles: profile.selected_roles,
+        managedUsers,
         activeViewId: undefined 
       };
     },
@@ -47,7 +73,6 @@ export const api = {
         });
 
         if (error) {
-          // If user doesn't exist in demo mode, we might auto-signup, but for CineArch we follow strict protocols
           throw error;
         }
 
@@ -63,13 +88,19 @@ export const api = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      // Map CineArch UI types to DB snake_case
+      // Map CineArch UI types to DB snake_case for PostgreSQL compatibility
       const dbUpdates: any = {};
       if (updates.province) dbUpdates.province = updates.province;
       if (updates.role) dbUpdates.role = updates.role;
       if (updates.name) dbUpdates.full_name = updates.name;
       if (updates.accountType) dbUpdates.account_type = updates.accountType;
       if (updates.isPremium !== undefined) dbUpdates.is_premium = updates.isPremium;
+      
+      // Onboarding specific mappings
+      if (updates.department) dbUpdates.department = updates.department;
+      if (updates.selectedRoles) dbUpdates.selected_roles = updates.selectedRoles;
+      if (updates.hasAgentFee !== undefined) dbUpdates.has_agent_fee = updates.hasAgentFee;
+      if (updates.agentFeePercentage !== undefined) dbUpdates.agent_fee_percentage = updates.agentFeePercentage;
 
       const { error } = await supabase
         .from('profiles')
@@ -81,8 +112,7 @@ export const api = {
     },
 
     async switchClient(clientId: string | null) {
-      // For Supabase, we might use a state management library, but here we update a session-level state
-      // This is primarily for Agent view logic
+      // Logic for session impersonation or context switching for agents
     },
 
     async revokeAgency() {
@@ -108,8 +138,6 @@ export const api = {
     },
 
     async addClient(client: User) {
-      // In production, this would involve sending an invite
-      // For demo: updates the target user's profile to link to this agent
       const { data: { user: agent } } = await supabase.auth.getUser();
       if (!agent) return;
 
@@ -121,7 +149,7 @@ export const api = {
 
     async logout() {
       await supabase.auth.signOut();
-      localStorage.removeItem('cinearch_user'); // Cleanup any legacy keys
+      localStorage.removeItem('cinearch_user'); 
       window.location.reload();
     }
   },
@@ -170,6 +198,8 @@ export const api = {
         isUnion: j.is_union,
         unionName: j.union_name,
         status: j.status,
+        grossEarnings: j.gross_earnings,
+        totalHours: j.hours_worked,
         documentCount: 0
       } as Job));
     },
@@ -225,24 +255,64 @@ export const api = {
   },
 
   tracking: {
-    get: (targetId?: string): UserUnionTracking[] => {
-      // Synchronous return fallback for local UI state - ideally moved to async DB fetch
-      return JSON.parse(localStorage.getItem(`cinearch_tracking_${targetId || 'me'}`) || '[]');
+    get: async (targetId?: string): Promise<UserUnionTracking[]> => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('union_tracking')
+        .select('*')
+        .eq('user_id', targetId || user.id);
+
+      if (error) return [];
+      
+      // Map DB snake_case to TS camelCase
+      return data.map(t => ({
+        id: t.id,
+        userId: t.user_id,
+        unionTypeId: t.union_type_id,
+        unionName: t.union_name,
+        targetType: t.target_type,
+        targetValue: t.target_value,
+        startingValue: t.current_value,
+        tierLabel: t.tier_label || 'Standard' // Default or fetch from DB
+      }));
     },
-    save: (trackings: UserUnionTracking[]) => {
-      localStorage.setItem(`cinearch_tracking_me`, JSON.stringify(trackings));
+
+    save: async (trackings: UserUnionTracking[]) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // We map the array to DB rows
+      const dbRows = trackings.map(t => ({
+        user_id: user.id,
+        union_type_id: t.unionTypeId,
+        union_name: t.unionName,
+        target_type: t.targetType,
+        // Fix: Use targetValue instead of target_value to match UserUnionTracking interface
+        target_value: t.targetValue,
+        current_value: t.startingValue,
+        tier_label: t.tierLabel
+      }));
+
+      const { error } = await supabase
+        .from('union_tracking')
+        .upsert(dbRows, { onConflict: 'user_id, union_type_id' }); // Prevents duplicates
+
+      if (error) console.error("Tracking Save Failed", error);
     },
-    calculateProgress: (trackId: string, jobs: Job[]) => {
-      const trackings = JSON.parse(localStorage.getItem(`cinearch_tracking_me`) || '[]');
-      const track = trackings.find((t: any) => t.id === trackId);
+    
+    // UI Utility: Calculates progress relative to a set of jobs
+    calculateProgress: (track: UserUnionTracking, jobs: Job[]) => {
       if (!track || !Array.isArray(jobs)) return { percent: 0, current: 0, target: 0 };
       
       let current = track.startingValue || 0;
       jobs.forEach(j => {
+        // Intersect jurisdictional marks
         if (j.unionTypeId === track.unionTypeId || j.unionName === track.unionName) {
            if (track.targetType === 'EARNINGS') current += (j.grossEarnings || 0);
            else if (track.targetType === 'HOURS') current += (j.totalHours || 0);
-           else if (track.targetType === 'DAYS') current += 1;
+           else if (track.targetType === 'DAYS') current += 1; 
            else if (track.targetType === 'CREDITS') current += 1;
         }
       });
@@ -288,7 +358,6 @@ export const api = {
          if (uploadError) throw uploadError;
        }
 
-       // Mirror to DB if a vault table exists, otherwise Storage is source of truth
        return doc;
     },
 
@@ -301,7 +370,6 @@ export const api = {
 
   system: {
     async resetData() {
-      // Client-side cleanup
       localStorage.clear();
       await supabase.auth.signOut();
     }

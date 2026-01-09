@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
-import { UserUnionTracking, Job, User, UNIONS } from '../types';
+import { UserUnionTracking, Job, User } from '../types';
 import { Heading, Text, Card, Badge, Button, ProgressBar } from '../components/ui';
-import { ArrowUpRight, Shield, Landmark, Radar, BookOpen, HelpCircle, Info } from 'lucide-react';
+import { ArrowUpRight, Landmark, Radar, BookOpen, HelpCircle, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 
@@ -27,7 +27,9 @@ export const DashboardIndividual = () => {
       const u = await api.auth.getUser();
       setUser(u);
       
-      setTracking(api.tracking.get());
+      const tracks = await api.tracking.get();
+      setTracking(tracks);
+      
       const jobList = await api.jobs.list();
       setJobs(jobList);
       
@@ -40,7 +42,7 @@ export const DashboardIndividual = () => {
   if (!user) return null;
 
   const primaryTrack = tracking[0];
-  const eligibilityPercent = primaryTrack ? api.tracking.calculateProgress(primaryTrack.id, jobs).percent : 0;
+  const eligibilityPercent = primaryTrack ? api.tracking.calculateProgress(primaryTrack, jobs).percent : 0;
   const gstProgress = financeStats ? financeApi.getThresholdProgress(financeStats.grossIncomeYTD) : 0;
 
   return (
@@ -80,7 +82,7 @@ export const DashboardIndividual = () => {
           </div>
           <div className="space-y-10 md:space-y-16">
             {tracking.map(t => {
-              const { percent } = api.tracking.calculateProgress(t.id, jobs);
+              const { percent } = api.tracking.calculateProgress(t, jobs);
               return (
                 <div key={t.id} className="space-y-4 md:space-y-6">
                   <div className="flex justify-between items-end">

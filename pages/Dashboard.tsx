@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
-import { UserUnionTracking, Job, User, UNIONS, FinanceStats } from '../types';
+import { UserUnionTracking, Job, User, FinanceStats } from '../types';
 import { Heading, Text, Card, Badge, Button, ProgressBar } from '../components/ui';
-import { ArrowUpRight, Zap, Calendar, ChevronRight, Clock, Shield, Sparkles, Mail, Phone, Plus, Landmark, Radar, GanttChartSquare, Briefcase } from 'lucide-react';
+import { ArrowUpRight, Zap, Shield, Landmark, Radar, GanttChartSquare, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 
@@ -94,7 +93,7 @@ const IndividualDashboard = ({ jobs, tracking, user, financeStats }: { jobs: Job
   }, []);
 
   const primaryTrack = tracking[0];
-  const eligibilityPercent = primaryTrack ? api.tracking.calculateProgress(primaryTrack.id, jobs).percent : 0;
+  const eligibilityPercent = primaryTrack ? api.tracking.calculateProgress(primaryTrack, jobs).percent : 0;
   const gstProgress = financeStats ? financeApi.getThresholdProgress(financeStats.grossIncomeYTD) : 0;
 
   return (
@@ -150,7 +149,7 @@ const IndividualDashboard = ({ jobs, tracking, user, financeStats }: { jobs: Job
            
            <div className="space-y-20">
               {tracking.length > 0 ? tracking.map(t => {
-                 const { percent } = api.tracking.calculateProgress(t.id, jobs);
+                 const { percent } = api.tracking.calculateProgress(t, jobs);
                  return (
                     <div key={t.id} className="space-y-8 group">
                        <div className="flex justify-between items-end">
@@ -207,16 +206,15 @@ const AgencyDashboard = ({ user }: { user: User }) => {
   const [activeUnionFilter, setActiveUnionFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    const data: RosterMember[] = (user.managedUsers || []).map(client => {
-      const jobsStr = localStorage.getItem(`cinearch_data_jobs_${client.id}`);
-      const tracksStr = localStorage.getItem(`cinearch_data_tracking_${client.id}`);
-      return { 
-        client, 
-        jobs: (jobsStr ? JSON.parse(jobsStr) : []) as Job[],
-        tracks: (tracksStr ? JSON.parse(tracksStr) : []) as UserUnionTracking[]
-      };
-    });
-    setActiveRoster(data);
+    const loadRoster = async () => {
+        const data: RosterMember[] = await Promise.all((user.managedUsers || []).map(async (client) => {
+            const jobs = await api.jobs.listForClient(client.id);
+            const tracks = await api.tracking.get(client.id);
+            return { client, jobs, tracks };
+        }));
+        setActiveRoster(data);
+    };
+    loadRoster();
   }, [user]);
 
   const groupedByUnion = useMemo(() => {
@@ -348,7 +346,7 @@ export const Dashboard = () => {
       const u = await api.auth.getUser();
       setUser(u);
       
-      const ts = api.tracking.get();
+      const ts = await api.tracking.get();
       const js = await api.jobs.list();
       setTracking(ts);
       setJobs(js);

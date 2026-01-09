@@ -1,10 +1,31 @@
-
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
-import { User, UserUnionTracking, ResidencyDocument, RESIDENCY_DOC_TYPES, CanadianProvince, UNIONS } from '../types';
+import { User, UserUnionTracking, ResidencyDocument, RESIDENCY_DOC_TYPES, CanadianProvince, UNIONS, Job } from '../types';
 import { Heading, Text, Button, Input, Select, Badge, Card, ProgressBar } from '../components/ui';
 import { BulkJobUpload } from '../components/BulkJobUpload';
-import { User as UserIcon, Shield, Crown, Phone, Globe, Trash2, Upload, CheckCircle, Briefcase, Users, Plus, FileSpreadsheet, Zap, Landmark, FileText, X, FolderSync } from 'lucide-react';
+import { User as UserIcon, Trash2, Upload, Crown, Users, Plus, Zap, Landmark, FolderSync } from 'lucide-react';
+
+const TrackProgressRow = ({ track }: { track: UserUnionTracking }) => {
+  const [progress, setProgress] = useState({ percent: 0, current: 0, target: 0 });
+  
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const js = await api.jobs.list();
+      setProgress(api.tracking.calculateProgress(track, js));
+    };
+    fetchProgress();
+  }, [track]);
+
+  return (
+    <div className="max-w-md mt-4">
+      <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">
+         <span>Progress: {Math.round(progress.percent)}%</span>
+         <span>{progress.current} / {progress.target} {track.targetType}</span>
+      </div>
+      <ProgressBar progress={progress.percent} />
+    </div>
+  );
+};
 
 export const Settings = () => {
   const [activeTab, setActiveTab] = useState<'ACCOUNT' | 'PLAN' | 'GOALS' | 'VAULT' | 'AGENCY'>('ACCOUNT');
@@ -18,15 +39,14 @@ export const Settings = () => {
   useEffect(() => { refreshData(); }, []);
 
   const refreshData = async () => {
-    // Fix: Await api.auth.getUser() to resolve Promise<User | null>
     const u = await api.auth.getUser();
     setUser(u);
     setProfileForm(u || {});
-    setTrackings(api.tracking.get());
+    const tracks = await api.tracking.get();
+    setTrackings(tracks);
     const dList = await api.vault.list();
     setDocs(dList);
     
-    // Auto-switch to Agency tab if agent
     if (u?.accountType === 'AGENT' && activeTab === 'ACCOUNT') {
        setActiveTab('AGENCY');
     }
@@ -39,7 +59,7 @@ export const Settings = () => {
     }
   };
 
-  const handleAddTrack = () => {
+  const handleAddTrack = async () => {
     const unionMaster = UNIONS.find(u => u.name === newTrack.union);
     if (!unionMaster || !user) return;
     
@@ -55,13 +75,13 @@ export const Settings = () => {
       startingValue: 0
     };
     
-    api.tracking.save([...trackings, track]);
+    await api.tracking.save([...trackings, track]);
     setIsAddTrackOpen(false);
     refreshData();
   };
 
-  const removeTrack = (id: string) => {
-    api.tracking.save(trackings.filter(t => t.id !== id));
+  const removeTrack = async (id: string) => {
+    await api.tracking.save(trackings.filter(t => t.id !== id));
     refreshData();
   };
 
@@ -75,13 +95,11 @@ export const Settings = () => {
       uploadedAt: new Date().toISOString(),
       verified: true
     };
-    // Fix: Await async vault addition
     await api.vault.add(newDoc);
     refreshData();
   };
 
   const deleteDoc = async (id: string) => {
-    // Fix: Await async vault deletion
     await api.vault.delete(id);
     refreshData();
   };
@@ -241,12 +259,6 @@ export const Settings = () => {
 
                   <div className="grid gap-1">
                      {trackings.length > 0 ? trackings.map(t => {
-                        // Fix: Calculate progress from async job list
-                        const [progress, setProgress] = useState({ percent: 0, current: 0, target: 0 });
-                        useEffect(() => {
-                          api.jobs.list().then(js => setProgress(api.tracking.calculateProgress(t.id, js)));
-                        }, [t.id]);
-                        
                         return (
                           <div key={t.id} className="glass-ui p-8 group flex items-center justify-between hover:bg-white/5 transition-all">
                              <div className="flex gap-8 items-center flex-1">
@@ -258,13 +270,7 @@ export const Settings = () => {
                                       <span className="text-xl font-serif italic text-white">{t.unionName}</span>
                                       <Badge color="neutral">{t.tierLabel}</Badge>
                                    </div>
-                                   <div className="max-w-md mt-4">
-                                      <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">
-                                         <span>Progress: {Math.round(progress.percent)}%</span>
-                                         <span>{progress.current} / {progress.target} {t.targetType}</span>
-                                      </div>
-                                      <ProgressBar progress={progress.percent} />
-                                   </div>
+                                   <TrackProgressRow track={t} />
                                 </div>
                              </div>
                              <button onClick={() => removeTrack(t.id)} className="p-3 text-white/20 hover:text-red-500 transition-colors">

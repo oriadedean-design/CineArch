@@ -1,12 +1,11 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, CanadianProvince, UserUnionTracking } from '../types';
-import { INDUSTRY_DEPARTMENTS, IndustryRole } from '../config/industry_roles';
+import { INDUSTRY_DEPARTMENTS } from '../config/industry_roles';
 import { UNION_SPECS } from '../config/unions_data';
 import { resolveUnionsForRole } from '../config/jurisdiction_map';
 import { api } from '../services/storage';
 import { Button, Input, Heading, Text, Select, Badge, Card } from '../components/ui';
-import { ArrowRight, Star, Shield, Zap, Landmark, Sparkles, MapPin, Briefcase, Info, ChevronRight } from 'lucide-react';
+import { ArrowRight, MapPin, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const ProductionCallOverlay = ({ onComplete }: { onComplete: () => void }) => {
@@ -78,7 +77,7 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
     }
   }, [step, suggestedUnionIds]);
 
-  const executeCompletion = () => {
+  const executeCompletion = async () => {
     const updates: Partial<User> = {
       name: `${formData.firstName} ${formData.lastName}`.trim(),
       email: formData.email,
@@ -105,8 +104,8 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
       };
     });
 
-    api.auth.updateUser(updates);
-    api.tracking.save(newTrackings);
+    await api.auth.updateUser(updates);
+    await api.tracking.save(newTrackings);
     onComplete();
   };
 

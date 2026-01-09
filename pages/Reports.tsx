@@ -1,26 +1,29 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 import { Heading, Text, Card, Button, Badge } from '../components/ui';
-import { Download, FileSpreadsheet, FileCheck, Landmark, Target, ShieldCheck, ArrowDownToLine, CheckCircle2 } from 'lucide-react';
+import { Download, FileSpreadsheet, Landmark, Target, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
-import { Job, User } from '../types';
+import { Job, User, UserUnionTracking } from '../types';
 import { clsx } from 'clsx';
 
 export const Reports = () => {
-  // Fix: Handle async jobs list and user profile using state
   const [jobs, setJobs] = useState<Job[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  const [tracking, setTracking] = useState<UserUnionTracking[]>([]);
   const stats = financeApi.getStats();
-  const tracking = api.tracking.get();
 
   useEffect(() => {
-    // Correctly await the async data fetches
-    api.jobs.list().then(setJobs);
-    api.auth.getUser().then(setUser);
+    const fetchData = async () => {
+      const u = await api.auth.getUser();
+      setUser(u);
+      const jobList = await api.jobs.list();
+      setJobs(jobList);
+      const tracks = await api.tracking.get();
+      setTracking(tracks);
+    };
+    fetchData();
   }, []);
 
-  // Logic: Calculate documentation integrity score
   const auditScore = useMemo(() => {
     let score = 40;
     if (jobs.length > 0) score += 20;
@@ -52,7 +55,6 @@ export const Reports = () => {
 
       <div className="grid lg:grid-cols-12 gap-1 gap-y-12">
         <div className="lg:col-span-8 space-y-16">
-           {/* Section 1: Fiscal Integrity */}
            <section className="space-y-10 animate-in slide-in-from-bottom-8 duration-700">
               <div className="flex items-center gap-6">
                  <div className="w-10 h-10 bg-accent/10 border border-accent/20 flex items-center justify-center">
@@ -80,7 +82,6 @@ export const Reports = () => {
               </div>
            </section>
 
-           {/* Section 2: Guild Projections */}
            <section className="space-y-10 animate-in slide-in-from-bottom-12 duration-1000">
               <div className="flex items-center gap-6">
                  <div className="w-10 h-10 bg-accent/10 border border-accent/20 flex items-center justify-center">
@@ -92,8 +93,7 @@ export const Reports = () => {
 
               <div className="space-y-1">
                  {tracking.length > 0 ? tracking.map((t, i) => {
-                   // Fix: calculate progress using stateful jobs list instead of Promise
-                   const { percent, current, target } = api.tracking.calculateProgress(t.id, jobs);
+                   const { percent, current, target } = api.tracking.calculateProgress(t, jobs);
                    return (
                       <div key={t.id} className="p-12 bg-surface/30 border border-white/5 flex items-center justify-between group hover:bg-white/[0.02] transition-colors">
                          <div className="space-y-3">
@@ -117,7 +117,6 @@ export const Reports = () => {
            </section>
         </div>
 
-        {/* Sidebar Status HUD */}
         <aside className="lg:col-span-4 space-y-12">
            <div className="p-12 border border-accent/20 bg-accent/5 space-y-12 relative overflow-hidden group">
               <ShieldCheck size={160} className="absolute -bottom-10 -right-10 text-accent/5 rotate-12 group-hover:rotate-45 transition-transform duration-[3000ms]" />

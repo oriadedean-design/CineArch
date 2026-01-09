@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/storage';
 import { Job, User, UserUnionTracking } from '../types';
@@ -28,7 +27,7 @@ export const DashboardEnterprise = () => {
       const data: RosterMember[] = await Promise.all(u.managedUsers.map(async (client) => {
         // Use the restricted client job list (simulates agency_jobs_view)
         const jobs = await api.jobs.listForClient(client.id);
-        const tracks = api.tracking.get(client.id);
+        const tracks = await api.tracking.get(client.id);
         return { client, jobs, tracks };
       }));
       setRoster(data);
@@ -81,7 +80,7 @@ export const DashboardEnterprise = () => {
                      <div key={client.id} className="grid grid-cols-[250px_1fr] group">
                         <div className="p-8 border-r border-white/5 flex items-center gap-4 group-hover:bg-white/[0.02] transition-colors">
                            <div className="w-8 h-8 bg-accent/10 border border-accent/20 flex items-center justify-center text-[10px] font-black italic text-accent">{client.name.charAt(0)}</div>
-                           <span className="text-sm font-serif italic text-white/60 group-hover:text-white">{client.name}</span>
+                           <span className="text-sm font-serif italic text-white/60 group-hover:text-white transition-colors">{client.name}</span>
                         </div>
                         <div className="grid grid-cols-12 relative h-16 items-center">
                            {jobs.map((job, i) => {
