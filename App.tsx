@@ -25,6 +25,7 @@ import { About } from './pages/About';
 import { Privacy } from './pages/Privacy';
 
 import { api } from './services/storage';
+import { supabase } from './services/supabase';
 import { User } from './types';
 
 const MainApp = () => {
@@ -35,20 +36,36 @@ const MainApp = () => {
   const location = useLocation();
 
   useEffect(() => {
+    // Session Hydration & Real-time Listener
     const hydrateSession = async () => {
-      try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
         const u = await api.auth.getUser();
-        if (u) {
-          setUser(u);
-          setShowWelcome(false);
-        }
-      } catch (e) {
-        console.error("Session hydration failed:", e);
-      } finally {
-        setLoading(false);
+        setUser(u);
+        setShowWelcome(false);
       }
+      setLoading(false);
     };
+
     hydrateSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        const u = await api.auth.getUser();
+        setUser(u);
+        setShowWelcome(false);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setShowWelcome(true);
+      } else if (event === 'USER_UPDATED') {
+        const u = await api.auth.getUser();
+        setUser(u);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogin = (u: User) => {
@@ -58,8 +75,6 @@ const MainApp = () => {
 
   const handleLogout = () => {
     api.auth.logout();
-    setUser(null);
-    setShowWelcome(true);
   };
 
   const handleWelcomeEnter = (asAgent: boolean = false) => {

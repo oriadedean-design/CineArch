@@ -4,7 +4,7 @@ import { Heading, Text, Card, Button, Input, Select, Badge, ProgressBar } from '
 import { Lock, Crown, Plus, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Calculator, PieChart, FileText, Landmark, Wallet } from 'lucide-react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
-import { User, FinanceTransaction, FinanceStats, UNIONS } from '../types';
+import { User, FinanceTransaction, FinanceStats, UNIONS, UserUnionTracking } from '../types';
 import { clsx } from 'clsx';
 
 export const Finance = () => {
@@ -12,7 +12,7 @@ export const Finance = () => {
   const [stats, setStats] = useState<FinanceStats | null>(null);
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [tracking, setTracking] = useState(api.tracking.get());
+  const [tracking, setTracking] = useState<UserUnionTracking[]>([]);
   
   // Local Form State
   const [form, setForm] = useState({
@@ -32,7 +32,9 @@ export const Finance = () => {
       if (u?.isPremium) {
         setTransactions(financeApi.list());
         setStats(financeApi.getStats());
-        setTracking(api.tracking.get());
+        // Fix: Await async tracking retrieval
+        const tracks = await api.tracking.get();
+        setTracking(tracks);
       }
     };
     initFinance();
@@ -40,10 +42,12 @@ export const Finance = () => {
 
   const isPremium = user?.isPremium;
 
-  const refreshData = () => {
+  const refreshData = async () => {
       setTransactions(financeApi.list());
       setStats(financeApi.getStats());
-      setTracking(api.tracking.get());
+      // Fix: Await async tracking retrieval
+      const tracks = await api.tracking.get();
+      setTracking(tracks);
   };
 
   const handleUpgrade = async () => {

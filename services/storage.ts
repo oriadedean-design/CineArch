@@ -64,7 +64,8 @@ export const api = {
     },
     
     // 2. Database Authentication (Login)
-    async login(email: string, password?: string, asAgent: boolean = false): Promise<User> {
+    // Updated signature to accept optional asAgent flag
+    async login(email: string, password?: string, asAgent?: boolean): Promise<User> {
         if (!password) throw new Error("SEC_ERR_04: Authentication key required.");
 
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -72,10 +73,7 @@ export const api = {
             password
         });
 
-        if (error) {
-          throw error;
-        }
-
+        if (error) throw error;
         if (!data.user) throw new Error("AUTH_ERR: Failed to retrieve user session.");
 
         const user = await api.auth.getUser();
@@ -133,15 +131,12 @@ export const api = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      // Map CineArch UI types to DB snake_case for PostgreSQL compatibility
       const dbUpdates: any = {};
       if (updates.province) dbUpdates.province = updates.province;
       if (updates.role) dbUpdates.role = updates.role;
       if (updates.name) dbUpdates.full_name = updates.name;
       if (updates.accountType) dbUpdates.account_type = updates.accountType;
       if (updates.isPremium !== undefined) dbUpdates.is_premium = updates.isPremium;
-      
-      // Onboarding specific mappings
       if (updates.department) dbUpdates.department = updates.department;
       if (updates.selectedRoles) dbUpdates.selected_roles = updates.selectedRoles;
       if (updates.hasAgentFee !== undefined) dbUpdates.has_agent_fee = updates.hasAgentFee;
@@ -156,46 +151,45 @@ export const api = {
       return api.auth.getUser();
     },
 
-    async switchClient(clientId: string | null) {
-      // Logic for session impersonation or context switching for agents
-    },
-
-    async revokeAgency() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ managing_agency_id: null })
-        .eq('id', user.id);
-
-      if (error) throw error;
-      return api.auth.getUser();
-    },
-
-    async removeManagedUser(clientId: string) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ managing_agency_id: null })
-        .eq('id', clientId);
-      
-      if (error) throw error;
-    },
-
-    async addClient(client: User) {
-      const { data: { user: agent } } = await supabase.auth.getUser();
-      if (!agent) return;
-
-      await supabase
-        .from('profiles')
-        .update({ managing_agency_id: agent.id })
-        .eq('email', client.email);
-    },
-
     async logout() {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) console.error("Sign Out Error:", error);
       localStorage.removeItem('cinearch_user'); 
       window.location.reload();
+    },
+
+    // Manage active client context for agents
+    switchClient: async (clientId: string | null): Promise<void> => {
+      if (clientId) localStorage.setItem('cinearch_active_client', clientId);
+      else localStorage.removeItem('cinearch_active_client');
+    },
+
+    // Add managed individual to agent's roster
+    addClient: async (client: User): Promise<void> => {
+       const { data: { user } } = await supabase.auth.getUser();
+       if (!user) return;
+       await supabase.from('profiles').upsert([{
+         id: client.id,
+         email: client.email,
+         full_name: client.name,
+         role: client.role,
+         province: client.province,
+         account_type: 'INDIVIDUAL',
+         managing_agency_id: user.id,
+         is_onboarded: true
+       }]);
+    },
+
+    // Revoke agency access to individual's profile
+    revokeAgency: async (): Promise<void> => {
+       const { data: { user } } = await supabase.auth.getUser();
+       if (!user) return;
+       await supabase.from('profiles').update({ managing_agency_id: null }).eq('id', user.id);
+    },
+
+    // Remove a managed individual from an agent's roster
+    removeManagedUser: async (clientId: string): Promise<void> => {
+       await supabase.from('profiles').update({ managing_agency_id: null }).eq('id', clientId);
     }
   },
 
@@ -262,7 +256,6 @@ export const api = {
           gross_earnings: job.grossEarnings,
           start_date: job.startDate,
           province: job.province,
-          // Corrected from job.is_union to job.isUnion to match interface
           is_union: job.isUnion,
           union_name: job.unionName,
           status: job.status,
@@ -275,6 +268,7 @@ export const api = {
       return { ...job, id: data.id };
     },
 
+    // Update existing job record
     async update(job: Job): Promise<Job> {
       const { error } = await supabase
         .from('jobs')
@@ -283,141 +277,108 @@ export const api = {
           role_name: job.role,
           gross_earnings: job.grossEarnings,
           start_date: job.startDate,
+          province: job.province,
           is_union: job.isUnion,
           union_name: job.unionName,
           status: job.status,
           hours_worked: job.totalHours || 0
         })
         .eq('id', job.id);
-
       if (error) throw error;
       return job;
-    },
-
-    async delete(id: string) {
-      const { error } = await supabase.from('jobs').delete().eq('id', id);
-      if (error) throw error;
     }
   },
 
   tracking: {
-    get: async (targetId?: string): Promise<UserUnionTracking[]> => {
+    // Retrieve union tracking records for a user
+    get: async (userId?: string): Promise<UserUnionTracking[]> => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      const { data, error } = await supabase
-        .from('union_tracking')
-        .select('*')
-        .eq('user_id', targetId || user.id);
-
-      if (error) return [];
-      
-      // Map DB snake_case to TS camelCase
-      return data.map(t => ({
+      const targetId = userId || user?.id;
+      if (!targetId) return [];
+      const { data } = await supabase.from('union_tracking').select('*').eq('user_id', targetId);
+      return (data || []).map(t => ({
         id: t.id,
         userId: t.user_id,
         unionTypeId: t.union_type_id,
         unionName: t.union_name,
+        tierLabel: t.tier_label,
         targetType: t.target_type,
         targetValue: t.target_value,
-        startingValue: t.current_value,
-        tierLabel: t.tier_label || 'Standard' // Default or fetch from DB
+        startingValue: t.starting_value
       }));
     },
-
-    save: async (trackings: UserUnionTracking[]) => {
+    // Persist union tracking records
+    save: async (trackings: UserUnionTracking[]): Promise<void> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      // We map the array to DB rows
-      const dbRows = trackings.map(t => ({
+      const rows = trackings.map(t => ({
+        id: t.id,
         user_id: user.id,
         union_type_id: t.unionTypeId,
         union_name: t.unionName,
-        target_type: t.targetType,
-        // Fix: Use targetValue instead of target_value to match UserUnionTracking interface
-        target_value: t.targetValue,
-        current_value: t.startingValue,
-        tier_label: t.tierLabel
+        tier_label: t.tier_label,
+        target_type: t.target_type,
+        target_value: t.target_value,
+        starting_value: t.startingValue
       }));
-
-      const { error } = await supabase
-        .from('union_tracking')
-        .upsert(dbRows, { onConflict: 'user_id, union_type_id' }); // Prevents duplicates
-
-      if (error) console.error("Tracking Save Failed", error);
+      await supabase.from('union_tracking').upsert(rows);
     },
-    
-    // UI Utility: Calculates progress relative to a set of jobs
+    // Calculate progress towards union tier requirements
     calculateProgress: (track: UserUnionTracking, jobs: Job[]) => {
-      if (!track || !Array.isArray(jobs)) return { percent: 0, current: 0, target: 0 };
-      
+      const relevantJobs = jobs.filter(j => j.unionName === track.unionName);
       let current = track.startingValue || 0;
-      jobs.forEach(j => {
-        // Intersect jurisdictional marks
-        if (j.unionTypeId === track.unionTypeId || j.unionName === track.unionName) {
-           if (track.targetType === 'EARNINGS') current += (j.grossEarnings || 0);
-           else if (track.targetType === 'HOURS') current += (j.totalHours || 0);
-           else if (track.targetType === 'DAYS') current += 1; 
-           else if (track.targetType === 'CREDITS') current += 1;
-        }
-      });
-      
-      return {
-        percent: Math.min(100, (current / track.targetValue) * 100),
-        current,
-        target: track.targetValue
-      };
+      if (track.targetType === 'HOURS') {
+        current += relevantJobs.reduce((acc, job) => acc + (job.totalHours || 0), 0);
+      } else {
+        current += relevantJobs.length;
+      }
+      const percent = Math.min(100, (current / track.targetValue) * 100);
+      return { percent, current, target: track.targetValue };
     }
   },
 
   vault: {
-    async list(): Promise<ResidencyDocument[]> {
+    // List archival documents for current user
+    list: async (): Promise<ResidencyDocument[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
-
-      const { data, error } = await supabase.storage
-        .from('user-documents')
-        .list(`${user.id}/`);
-         
-      if (error) return [];
-       
-      return data.map(f => ({
-        id: f.id,
-        userId: user.id,
-        type: 'Residency',
-        fileName: f.name,
-        uploadedAt: f.created_at,
-        verified: true
+      const { data } = await supabase.from('vault').select('*').eq('user_id', user.id);
+      return (data || []).map(d => ({
+        id: d.id,
+        userId: d.user_id,
+        type: d.type,
+        fileName: d.file_name,
+        uploadedAt: d.uploaded_at,
+        verified: d.verified
       }));
     },
-
-    async add(doc: ResidencyDocument, fileObj?: File) {
-       const { data: { user } } = await supabase.auth.getUser();
-       if (!user) throw new Error("SEC_ERR_05: Session expired.");
-       
-       if (fileObj) {
-         const filePath = `${user.id}/${Date.now()}_${fileObj.name}`;
-         const { error: uploadError } = await supabase.storage
-           .from('user-documents')
-           .upload(filePath, fileObj);
-         if (uploadError) throw uploadError;
-       }
-
-       return doc;
+    // Add document to the vault
+    add: async (doc: ResidencyDocument): Promise<void> => {
+      await supabase.from('vault').insert([{
+        id: doc.id,
+        user_id: doc.userId,
+        type: doc.type,
+        file_name: doc.fileName,
+        uploaded_at: doc.uploadedAt,
+        verified: doc.verified
+      }]);
     },
-
-    async delete(id: string) {
-       const { data: { user } } = await supabase.auth.getUser();
-       if (!user) return;
-       await supabase.storage.from('user-documents').remove([`${user.id}/${id}`]);
+    // Delete document from the vault
+    delete: async (id: string): Promise<void> => {
+      await supabase.from('vault').delete().eq('id', id);
     }
   },
 
   system: {
-    async resetData() {
-      localStorage.clear();
-      await supabase.auth.signOut();
+    // Purge user data (reset protocol)
+    resetData: async (): Promise<void> => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await Promise.all([
+        supabase.from('jobs').delete().eq('user_id', user.id),
+        supabase.from('union_tracking').delete().eq('user_id', user.id),
+        supabase.from('vault').delete().eq('user_id', user.id)
+      ]);
     }
   }
 };
