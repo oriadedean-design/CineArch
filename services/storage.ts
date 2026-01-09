@@ -22,7 +22,21 @@ export const api = {
         .eq('id', session.user.id)
         .single();
 
-      if (error || !profile) return null;
+      // If session exists but profile is missing (OAuth edge case), return a partial user to trigger onboarding
+      if (error || !profile) {
+        return {
+          id: session.user.id,
+          name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Member',
+          email: session.user.email!,
+          role: 'Member',
+          province: '',
+          isOnboarded: false,
+          accountType: 'INDIVIDUAL',
+          isPremium: false,
+          managedUsers: [],
+          activeViewId: undefined
+        };
+      }
 
       // If Agent, fetch their roster
       let managedUsers: User[] = [];
@@ -64,8 +78,7 @@ export const api = {
     },
     
     // 2. Database Authentication (Login)
-    // Updated signature to accept optional asAgent flag
-    async login(email: string, password?: string, asAgent?: boolean): Promise<User> {
+    async login(email: string, password?: string): Promise<User> {
         if (!password) throw new Error("SEC_ERR_04: Authentication key required.");
 
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -124,6 +137,20 @@ export const api = {
       const user = await api.auth.getUser();
       if (!user) throw new Error("PROFILE_ERR: CineArch profile initialization failed.");
       return user;
+    },
+
+    // 2c. Google OAuth Authentication
+    async loginWithGoogle() {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          // This ensures they are redirected back to your site after Google
+          redirectTo: window.location.origin 
+        }
+      });
+
+      if (error) throw error;
+      return data;
     },
 
     // 3. Update User Profile
@@ -316,9 +343,12 @@ export const api = {
         user_id: user.id,
         union_type_id: t.unionTypeId,
         union_name: t.unionName,
-        tier_label: t.tier_label,
-        target_type: t.target_type,
-        target_value: t.target_value,
+        // Fix: tierLabel instead of tier_label to match UserUnionTracking type
+        tier_label: t.tierLabel,
+        // Fix: targetType instead of target_type to match UserUnionTracking type
+        target_type: t.targetType,
+        // Fix: targetValue instead of target_value to match UserUnionTracking type
+        target_value: t.targetValue,
         starting_value: t.startingValue
       }));
       await supabase.from('union_tracking').upsert(rows);
