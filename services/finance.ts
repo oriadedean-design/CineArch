@@ -1,7 +1,6 @@
 
+import { supabase } from './supabase';
 import { FinanceTransaction, FinanceStats, TransactionType } from '../types';
-
-const TRANSACTIONS_KEY = 'cinearch_finance_transactions';
 
 /**
  * MASTER FISCAL PARAMETERS (CANADIAN COMPLIANCE)
@@ -43,67 +42,102 @@ const RULES = {
   }
 };
 
-const getStorage = <T>(key: string, defaultVal: T): T => {
-  const stored = localStorage.getItem(key);
-  if (!stored) return defaultVal;
-  try { return JSON.parse(stored); } catch { return defaultVal; }
+const applyRules = (type: string, category: string, amountBeforeTax: number) => {
+  let deductible = amountBeforeTax;
+  let addBack = 0;
+  let tags: string[] = [];
+
+  if (type === 'EXPENSE') {
+    const mealsRule = RULES.applyMealsLimit(category, amountBeforeTax);
+    const finesRule = RULES.applyFinesLimit(category, amountBeforeTax);
+
+    if (mealsRule) {
+      deductible = mealsRule.deductible;
+      addBack = mealsRule.addBack;
+      tags.push(...mealsRule.tags);
+    } else if (finesRule) {
+      deductible = finesRule.deductible;
+      addBack = finesRule.addBack;
+      tags.push(...finesRule.tags);
+    }
+  } else {
+    deductible = 0;
+    addBack = 0;
+  }
+
+  return { deductible, addBack, tags };
 };
 
-const setStorage = (key: string, val: any) => localStorage.setItem(key, JSON.stringify(val));
+const rowToTransaction = (row: any): FinanceTransaction => ({
+  id: row.id,
+  userId: row.user_id,
+  jobId: row.job_id,
+  type: row.type as TransactionType,
+  category: row.category,
+  amountBeforeTax: row.amount_before_tax,
+  taxAmount: row.tax_amount,
+  totalAmount: row.total_amount,
+  description: row.description,
+  dateIncurred: row.date_incurred,
+  businessUsePercent: row.business_use_percent,
+  deductibleAmount: row.deductible_amount,
+  addBackAmount: row.add_back_amount,
+  ruleTags: row.rule_tags || []
+});
 
 export const financeApi = {
-  list: (): FinanceTransaction[] => getStorage<FinanceTransaction[]>(TRANSACTIONS_KEY, []),
+  list: async (userId: string): Promise<FinanceTransaction[]> => {
+    const { data, error } = await supabase
+      .from('finance_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('date_incurred', { ascending: false });
 
-  add: (tx: Omit<FinanceTransaction, 'id' | 'deductibleAmount' | 'addBackAmount' | 'ruleTags'>) => {
-    const transactions = getStorage<FinanceTransaction[]>(TRANSACTIONS_KEY, []);
-    
-    let deductible = tx.amountBeforeTax;
-    let addBack = 0;
-    let tags: string[] = [];
-
-    if (tx.type === 'EXPENSE') {
-      const mealsRule = RULES.applyMealsLimit(tx.category, tx.amountBeforeTax);
-      const finesRule = RULES.applyFinesLimit(tx.category, tx.amountBeforeTax);
-
-      if (mealsRule) {
-        deductible = mealsRule.deductible;
-        addBack = mealsRule.addBack;
-        tags.push(...mealsRule.tags);
-      } else if (finesRule) {
-        deductible = finesRule.deductible;
-        addBack = finesRule.addBack;
-        tags.push(...finesRule.tags);
-      }
-    } else {
-      deductible = 0;
-      addBack = 0;
-    }
-
-    const newTx: FinanceTransaction = {
-      ...tx,
-      id: `tx_${Date.now()}`,
-      deductibleAmount: deductible,
-      addBackAmount: addBack,
-      ruleTags: tags
-    };
-
-    const updated = [newTx, ...transactions];
-    setStorage(TRANSACTIONS_KEY, updated);
-    return newTx;
+    if (error) throw error;
+    return (data || []).map(rowToTransaction);
   },
 
-  delete: (id: string) => {
-    const list = getStorage<FinanceTransaction[]>(TRANSACTIONS_KEY, []);
-    setStorage(TRANSACTIONS_KEY, list.filter(t => t.id !== id));
+  add: async (
+    tx: Omit<FinanceTransaction, 'id' | 'deductibleAmount' | 'addBackAmount' | 'ruleTags'>
+  ): Promise<FinanceTransaction> => {
+    const { deductible, addBack, tags } = applyRules(tx.type, tx.category, tx.amountBeforeTax);
+
+    const { data, error } = await supabase
+      .from('finance_transactions')
+      .insert([{
+        user_id: tx.userId,
+        job_id: tx.jobId || null,
+        type: tx.type,
+        category: tx.category,
+        amount_before_tax: tx.amountBeforeTax,
+        tax_amount: tx.taxAmount,
+        total_amount: tx.totalAmount,
+        description: tx.description,
+        date_incurred: tx.dateIncurred,
+        business_use_percent: tx.businessUsePercent,
+        deductible_amount: deductible,
+        add_back_amount: addBack,
+        rule_tags: tags
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { ...tx, id: data.id, deductibleAmount: deductible, addBackAmount: addBack, ruleTags: tags };
   },
 
-  getStats: (): FinanceStats & { estCPP: number; estIncomeTax: number } => {
-    const transactions = getStorage<FinanceTransaction[]>(TRANSACTIONS_KEY, []);
-    
+  delete: async (id: string): Promise<void> => {
+    const { error } = await supabase.from('finance_transactions').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  getStats: async (userId: string): Promise<FinanceStats & { estCPP: number; estIncomeTax: number }> => {
+    const transactions = await financeApi.list(userId);
+
     const grossIncome = transactions
       .filter(t => t.type === 'INCOME')
       .reduce((sum, t) => sum + t.amountBeforeTax, 0);
-      
+
     const deductibleExpenses = transactions
       .filter(t => t.type === 'EXPENSE')
       .reduce((sum, t) => sum + (t.deductibleAmount ?? t.amountBeforeTax), 0);
@@ -118,11 +152,8 @@ export const financeApi = {
       .filter(t => t.type === 'EXPENSE')
       .reduce((sum, t) => sum + t.taxAmount, 0);
 
-    // CPP Projection Logic
-    let pensionable = Math.max(0, netIncome - CA_FISCAL_CONFIG.CPP_EXEMPTION);
+    const pensionable = Math.max(0, netIncome - CA_FISCAL_CONFIG.CPP_EXEMPTION);
     const estCPP = pensionable * CA_FISCAL_CONFIG.SELF_EMPLOYED_CPP_RATE;
-
-    // Blended Tax Projection
     const estIncomeTax = netIncome * CA_FISCAL_CONFIG.PROJECTED_INCOME_TAX_RATE;
 
     return {
@@ -139,7 +170,6 @@ export const financeApi = {
     };
   },
 
-  // Added missing helper to check if income exceeds GST threshold
   checkGstThreshold: (grossIncome: number) => {
     return grossIncome >= CA_FISCAL_CONFIG.SMALL_SUPPLIER_THRESHOLD;
   },
