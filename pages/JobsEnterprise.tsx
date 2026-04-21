@@ -92,7 +92,7 @@ export const JobsEnterprise = () => {
               <Layers size={18} />
               <span className="text-[10px] font-black uppercase tracking-[0.4em]">Active Mark Registry</span>
            </div>
-           <div className="flex items-center gap-3 text-[9px] font-black uppercase text-white/20 italic">
+           <div className="flex items-center gap-3 text-xs font-black uppercase text-white/20 italic">
               <Lock size={12} /> Restricted Personnel Access Protocol
            </div>
         </div>
@@ -107,11 +107,11 @@ export const JobsEnterprise = () => {
                  <Badge color={job.isUnion ? "accent" : "neutral"}>
                    {job.isUnion ? job.unionName : 'Non-Union'}
                  </Badge>
-                 <span className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">{job.startDate}</span>
+                 <span className="text-xs font-black text-white/20 uppercase tracking-widest italic">{job.startDate}</span>
               </div>
               
               <div className="space-y-2">
-                 <p className="text-[9px] font-black text-accent uppercase tracking-widest italic">{clientName}</p>
+                 <p className="text-xs font-black text-accent uppercase tracking-widest italic">{clientName}</p>
                  <h3 className="text-3xl font-serif italic text-white leading-tight min-h-[2em] group-hover:text-accent transition-colors">
                    {job.productionName}
                  </h3>
@@ -119,13 +119,13 @@ export const JobsEnterprise = () => {
 
               <div className="pt-8 border-t border-white/5 flex justify-between items-end">
                  <div>
-                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">{job.role}</p>
+                    <p className="text-xs font-black text-white/40 uppercase tracking-widest">{job.role}</p>
                     <p className="text-xl font-serif italic text-white mt-1">Personnel Mark</p>
                  </div>
                  <Button 
                    variant="ghost" 
                    onClick={() => navigate(`/jobs/${job.id}`)}
-                   className="h-10 px-4 min-h-0 text-[8px] border-white/10 hover:border-white/30"
+                   className="h-10 px-4 min-h-0 text-xs border-white/10 hover:border-white/30"
                  >
                    Review Mark
                  </Button>

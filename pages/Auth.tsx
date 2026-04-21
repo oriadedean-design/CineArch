@@ -93,7 +93,7 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
 
             <div className="flex items-center gap-6 opacity-20">
               <div className="h-px bg-white flex-1" />
-              <span className="text-[9px] uppercase font-black tracking-[0.5em] text-white">OR USE ACCESS KEY</span>
+              <span className="text-xs uppercase font-black tracking-[0.5em] text-white">OR USE ACCESS KEY</span>
               <div className="h-px bg-white flex-1" />
             </div>
           </div>
@@ -140,7 +140,7 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
               <button 
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 hover:text-white transition-colors"
+                className="text-xs font-black uppercase tracking-[0.4em] text-white/30 hover:text-white transition-colors"
               >
                 {isLogin ? "New Personnel? Register" : "Existing Member? Authenticate"}
               </button>
@@ -149,7 +149,7 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
                   type="button"
                   onClick={() => setIsAgent(!isAgent)}
                   className={clsx(
-                    "text-[9px] font-black uppercase tracking-[0.4em] transition-all px-8 py-3 border",
+                    "text-xs font-black uppercase tracking-[0.4em] transition-all px-8 py-3 border",
                     isAgent ? "border-accent text-accent bg-accent/5" : "border-white/10 text-white/40 hover:text-white hover:border-white/30"
                   )}
                 >

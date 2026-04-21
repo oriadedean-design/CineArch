@@ -202,7 +202,7 @@ export const OnboardingEnterprise = ({ user, onComplete }: { user: User, onCompl
                     <item.icon size={32} strokeWidth={1} />
                     <div className="space-y-2">
                       <span className="text-[11px] font-black uppercase tracking-widest block">{item.label}</span>
-                      <span className="text-[9px] uppercase tracking-wider opacity-60 leading-relaxed">{item.desc}</span>
+                      <span className="text-xs uppercase tracking-wider opacity-60 leading-relaxed">{item.desc}</span>
                     </div>
                   </button>
                 ))}
@@ -283,7 +283,7 @@ export const OnboardingEnterprise = ({ user, onComplete }: { user: User, onCompl
                       {formData.managedUsers.map((u, i) => (
                         <div key={i} className="p-6 glass-ui border-white/5 space-y-4">
                            <div className="flex justify-between items-center">
-                              <span className="text-[9px] font-black uppercase text-accent italic">Entry {i+1}</span>
+                              <span className="text-xs font-black uppercase text-accent italic">Entry {i+1}</span>
                               <button onClick={() => setFormData({...formData, managedUsers: formData.managedUsers.filter((_, idx) => idx !== i)})}><X size={14} className="text-white/20" /></button>
                            </div>
                            <Input placeholder="Talent Name" value={u.name} onChange={e => updateTempUser(i, 'name', e.target.value)} className="h-12 text-sm" />
@@ -292,7 +292,7 @@ export const OnboardingEnterprise = ({ user, onComplete }: { user: User, onCompl
                       ))}
                       <button 
                         onClick={handleAddTempUser}
-                        className="w-full py-8 border border-dashed border-white/10 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-4"
+                        className="w-full py-8 border border-dashed border-white/10 text-xs font-black uppercase tracking-widest text-white/40 hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-4"
                       >
                          <Plus size={14} /> Add Personnel
                       </button>

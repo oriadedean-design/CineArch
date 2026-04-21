@@ -133,7 +133,7 @@ export const Settings = () => {
           <div className="pt-20">
              <button 
                onClick={async () => { if(confirm('Checking the gate: Purge all drive data?')) await api.system.resetData(); window.location.reload(); }}
-               className="text-[9px] font-black uppercase tracking-widest text-red-500/40 hover:text-red-500 transition-colors p-6"
+               className="text-xs font-black uppercase tracking-widest text-red-500/40 hover:text-red-500 transition-colors p-6"
              >
                Purge Drive
              </button>
@@ -302,7 +302,7 @@ export const Settings = () => {
                          className="glass-ui p-8 flex flex-col items-center gap-6 group hover:border-accent transition-all text-center h-48 justify-center"
                        >
                          <Upload size={24} className="text-white/20 group-hover:text-accent transition-colors" />
-                         <span className="text-[9px] font-black uppercase tracking-widest text-white/60 group-hover:text-white transition-colors">{label}</span>
+                         <span className="text-xs font-black uppercase tracking-widest text-white/60 group-hover:text-white transition-colors">{label}</span>
                        </button>
                      ))}
                   </div>

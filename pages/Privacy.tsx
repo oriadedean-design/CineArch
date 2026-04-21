@@ -7,7 +7,7 @@ export const Privacy = () => {
   const navigate = useNavigate();
   return (
     <div className="space-y-24 animate-in fade-in duration-700 max-w-5xl mx-auto">
-      <button onClick={() => navigate('/resources')} className="mb-12 flex items-center gap-3 text-[9px] font-black uppercase tracking-widest text-textTertiary hover:text-white transition-colors">
+      <button onClick={() => navigate('/resources')} className="mb-12 flex items-center gap-3 text-xs font-black uppercase tracking-widest text-textTertiary hover:text-white transition-colors">
           <ArrowLeft size={14} /> Back to Library
       </button>
 
@@ -62,7 +62,7 @@ export const Privacy = () => {
             <Badge color="accent">PIPEDA COMPLIANT</Badge>
             <Badge color="accent">SOC2 ENCRYPTION</Badge>
          </div>
-         <p className="text-[9px] text-textTertiary font-black uppercase tracking-[0.3em] mt-8">Last Updated: October 2024 // v 0.5 BUILD</p>
+         <p className="text-xs text-textTertiary font-black uppercase tracking-[0.3em] mt-8">Last Updated: October 2024 // v 0.5 BUILD</p>
       </Card>
     </div>
   );

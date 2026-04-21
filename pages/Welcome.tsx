@@ -49,10 +49,10 @@ export const Welcome = ({ onEnter }: { onEnter: (asAgent?: boolean) => void }) =
                   <div key={u.id} className="p-10 glass-ui flex flex-col justify-between gap-12 group hover:border-accent/30 transition-all min-h-[280px]">
                      <div className="space-y-4">
                         <span className="text-[10px] font-black uppercase text-accent tracking-[0.2em]">{u.name}</span>
-                        <span className="text-[8px] font-black uppercase text-white/20 tracking-widest leading-relaxed block">{u.description}</span>
+                        <span className="text-xs font-black uppercase text-white/20 tracking-widest leading-relaxed block">{u.description}</span>
                      </div>
                      <div className="space-y-1">
-                        <p className="text-[8px] font-black uppercase text-white/10 tracking-widest">Entry Protocol</p>
+                        <p className="text-xs font-black uppercase text-white/10 tracking-widest">Entry Protocol</p>
                         <p className="text-xs text-white/40 font-serif italic">${u.applicationFee || 0} Initiation</p>
                      </div>
                   </div>
@@ -87,7 +87,7 @@ export const Welcome = ({ onEnter }: { onEnter: (asAgent?: boolean) => void }) =
                  <h3 className="text-2xl font-serif italic text-white mb-2">{plan.label}</h3>
                  <div className="mb-12">
                     <div className="text-7xl font-serif text-white italic tracking-tighter">{plan.price}<span className="text-xs font-sans text-textTertiary ml-2">/mo</span></div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-textTertiary mt-4">{plan.desc}</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-textTertiary mt-4">{plan.desc}</p>
                  </div>
                  <ul className="space-y-6 mb-20 flex-1 border-t border-white/10 pt-12">
                     {plan.benefits.map((benefit, j) => (

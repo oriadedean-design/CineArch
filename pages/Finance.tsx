@@ -183,7 +183,7 @@ export const Finance = () => {
                     <span>{t.unionName} Application</span>
                     <span className="text-white">${master.applicationFee}</span>
                   </div>
-                  <p className="text-[9px] text-white/20 leading-relaxed italic">Estimated initiation for {t.tierLabel}.</p>
+                  <p className="text-xs text-white/20 leading-relaxed italic">Estimated initiation for {t.tierLabel}.</p>
                 </div>
               );
             }) : (
@@ -199,7 +199,7 @@ export const Finance = () => {
         <div className="overflow-x-auto border border-white/5">
           <table className="w-full text-left text-sm font-sans">
             <thead className="bg-white/[0.02] border-b border-white/5">
-              <tr className="text-[9px] font-black uppercase tracking-widest text-white/40">
+              <tr className="text-xs font-black uppercase tracking-widest text-white/40">
                 <th className="p-6">Date</th>
                 <th className="p-6">Context</th>
                 <th className="p-6">Sector</th>
@@ -221,7 +221,7 @@ export const Finance = () => {
                   </td>
                   <td className="p-6 text-center">
                     {tx.ruleTags && tx.ruleTags.length > 0 && (
-                      <Badge color="accent" className="text-[8px]">{tx.ruleTags[0].replace('MEALS_50_LIMIT', '50% Rule')}</Badge>
+                      <Badge color="accent" className="text-xs">{tx.ruleTags[0].replace('MEALS_50_LIMIT', '50% Rule')}</Badge>
                     )}
                   </td>
                 </tr>

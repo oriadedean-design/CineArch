@@ -46,11 +46,11 @@ export const JobsIndividual = () => {
           <div key={job.id} onClick={() => navigate(`/jobs/${job.id}`)} className="glass-ui p-6 md:p-12 hover:border-accent/40 transition-all cursor-pointer space-y-6 md:space-y-8">
             <div className="flex justify-between items-start">
                <Badge color={job.isUnion ? "accent" : "neutral"}>{job.isUnion ? job.unionName : 'Non-Union'}</Badge>
-               <span className="text-[8px] md:text-[9px] font-black text-white/20 uppercase tracking-widest italic">{job.startDate}</span>
+               <span className="text-xs md:text-xs font-black text-white/20 uppercase tracking-widest italic">{job.startDate}</span>
             </div>
             <h3 className="text-3xl md:text-4xl font-serif italic text-white leading-tight min-h-[2.5em]">{job.productionName}</h3>
             <div className="pt-6 md:pt-8 border-t border-white/5">
-               <p className="text-[9px] md:text-[10px] font-black text-white/40 uppercase tracking-widest">{job.role}</p>
+               <p className="text-xs md:text-[10px] font-black text-white/40 uppercase tracking-widest">{job.role}</p>
                <p className="text-xl md:text-2xl font-serif italic text-white mt-1 md:mt-2">${(job.grossEarnings || 0).toLocaleString()}</p>
             </div>
           </div>

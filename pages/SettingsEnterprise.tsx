@@ -69,7 +69,7 @@ export const SettingsEnterprise = () => {
                     </div>
                   ))}
                   {(!user?.managedUsers || user.managedUsers.length === 0) && (
-                    <p className="text-[9px] font-black uppercase tracking-widest text-white/20 italic">No Active Roster</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-white/20 italic">No Active Roster</p>
                   )}
                </div>
             </Card>

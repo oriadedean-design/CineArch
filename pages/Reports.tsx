@@ -182,14 +182,14 @@ export const Reports = () => {
                 <Text variant="caption" className="opacity-50 group-hover:opacity-100 transition-opacity">GST/HST Net Remittance</Text>
                 <div className="space-y-2">
                   <h4 className="text-5xl font-serif italic text-white">${(stats?.gstNetRemittance ?? 0).toLocaleString()}</h4>
-                  <p className="text-[9px] text-white/30 uppercase font-black tracking-widest italic">Delta: Output - Input Credits</p>
+                  <p className="text-xs text-white/30 uppercase font-black tracking-widest italic">Delta: Output - Input Credits</p>
                 </div>
               </div>
               <div className="p-12 bg-surface/50 border border-white/5 space-y-8 group hover:border-accent/20 transition-all">
                 <Text variant="caption" className="opacity-50 group-hover:opacity-100 transition-opacity">YTD Taxable Base</Text>
                 <div className="space-y-2">
                   <h4 className="text-5xl font-serif italic text-white">${(stats?.taxableIncomeProjected ?? 0).toLocaleString()}</h4>
-                  <p className="text-[9px] text-white/30 uppercase font-black tracking-widest italic">Adjusted for 50% Rule (SP-010)</p>
+                  <p className="text-xs text-white/30 uppercase font-black tracking-widest italic">Adjusted for 50% Rule (SP-010)</p>
                 </div>
               </div>
             </div>
@@ -212,8 +212,8 @@ export const Reports = () => {
                     <div className="space-y-3">
                       <p className="text-3xl font-serif italic text-white group-hover:text-accent transition-colors">{t.unionName} // {t.tierLabel}</p>
                       <div className="flex items-center gap-4">
-                        <Badge color="neutral" className="text-[8px] opacity-40">{t.targetType}</Badge>
-                        <p className="text-[9px] text-white/20 uppercase font-black tracking-[0.3em] italic">{current} of {target} secured</p>
+                        <Badge color="neutral" className="text-xs opacity-40">{t.targetType}</Badge>
+                        <p className="text-xs text-white/20 uppercase font-black tracking-[0.3em] italic">{current} of {target} secured</p>
                       </div>
                     </div>
                     <div className="text-right">

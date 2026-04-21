@@ -61,7 +61,7 @@ export const DashboardEnterprise = () => {
                <GanttChartSquare className="text-accent" size={24} />
                <h3 className="font-serif italic text-5xl text-white">Tactical Schedule</h3>
             </div>
-            <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-widest text-white/20 italic">
+            <div className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-white/20 italic">
                <ShieldOff size={12} /> Restricted Payload View Active
             </div>
          </div>
@@ -71,7 +71,7 @@ export const DashboardEnterprise = () => {
                   <div className="p-6 border-r border-white/5 text-[10px] font-black uppercase tracking-widest text-white/20 italic">Personnel</div>
                   <div className="grid grid-cols-12">
                      {months.map(m => (
-                        <div key={m} className="p-6 text-center text-[9px] font-black text-white/20 tracking-widest border-r border-white/5 last:border-none">{m}</div>
+                        <div key={m} className="p-6 text-center text-xs font-black text-white/20 tracking-widest border-r border-white/5 last:border-none">{m}</div>
                      ))}
                   </div>
                </div>
@@ -112,7 +112,7 @@ export const DashboardEnterprise = () => {
             <Briefcase className="text-white/20" size={32} strokeWidth={1} />
             <h4 className="text-3xl font-serif italic text-white text-white/40">Bulk Audit</h4>
             <Button disabled className="w-full h-16 text-[10px] tracking-widest opacity-30">Organization Logs</Button>
-            <p className="text-[9px] text-white/20 font-black uppercase tracking-widest italic text-center">Audit Requires Financial Authorization</p>
+            <p className="text-xs text-white/20 font-black uppercase tracking-widest italic text-center">Audit Requires Financial Authorization</p>
          </Card>
          <Card className="p-12 space-y-8">
             <Plus className="text-white/20" size={32} strokeWidth={1} />

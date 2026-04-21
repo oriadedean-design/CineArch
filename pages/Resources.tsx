@@ -74,7 +74,7 @@ export const Resources = () => {
                 <div className="absolute inset-0 bg-black/40" />
              </div>
              <div className="p-10 space-y-4">
-                <span className="text-[9px] font-black text-accent uppercase tracking-widest">{a.category}</span>
+                <span className="text-xs font-black text-accent uppercase tracking-widest">{a.category}</span>
                 <h3 className="text-3xl font-serif italic text-white leading-tight">{a.title}</h3>
                 <p className="text-xs text-white/40 italic line-clamp-3">{a.subtitle}</p>
              </div>

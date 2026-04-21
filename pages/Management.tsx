@@ -118,13 +118,13 @@ export const Management = () => {
                   <Button
                     variant="outline"
                     onClick={() => setShowIngest(showIngest === client.id ? null : client.id)}
-                    className={clsx("h-14 px-8 text-[9px] border-white/5", showIngest === client.id && "bg-accent text-black")}
+                    className={clsx("h-14 px-8 text-xs border-white/5", showIngest === client.id && "bg-accent text-black")}
                   >
                     <UploadCloud size={14} className="mr-3" /> Mark Slate
                   </Button>
                   <Button
                     onClick={() => handleImpersonate(client.id)}
-                    className="h-14 px-10 text-[9px] bg-white text-black hover:bg-accent"
+                    className="h-14 px-10 text-xs bg-white text-black hover:bg-accent"
                   >
                     View Drive <ArrowUpRight size={14} className="ml-3" />
                   </Button>

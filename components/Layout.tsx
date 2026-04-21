@@ -9,8 +9,7 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
-  const [showNotifications, setShowNotifications] = useState(false);
-  
+
   useEffect(() => {
     const refreshUser = async () => {
       const u = await api.auth.getUser();
@@ -19,12 +18,21 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
     refreshUser();
   }, [location]);
 
+  const handleExitClientView = async () => {
+    await api.auth.switchClient(null);
+    const u = await api.auth.getUser();
+    setUser(u);
+    navigate('/');
+  };
+
   const isDashboardMode = user && user.isOnboarded;
   const isAuthPage = location.pathname === '/auth';
+  const isViewingClient = !!user?.activeViewId;
 
   const navItems = user?.accountType === 'AGENT' ? [
     { icon: LayoutDashboard, path: '/', label: 'Your Wrap' },
     { icon: Users, path: '/roster', label: 'Your Roster' },
+    { icon: Layers, path: '/jobs', label: 'Your Aggregate' },
     { icon: WalletCards, path: '/finance', label: 'Your Wallet' },
     { icon: FileText, path: '/reports', label: 'Your Ledger' },
     { icon: Settings, path: '/settings', label: 'Your Config' },
@@ -38,41 +46,59 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* Impersonation Banner */}
+      {isViewingClient && (
+        <div className="fixed top-0 left-0 right-0 z-[200] bg-accent text-black flex items-center justify-between px-6 py-2">
+          <span className="text-xs font-black uppercase tracking-widest">
+            Viewing as {user.name}
+          </span>
+          <button
+            onClick={handleExitClientView}
+            className="flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:opacity-70 transition-opacity"
+          >
+            <X size={14} /> Exit View
+          </button>
+        </div>
+      )}
+
       {/* THE HUD: Singular Global Header */}
       {!isAuthPage && (
-        <header className="fixed top-0 left-0 right-0 z-[100] h-16 md:h-24 px-6 md:px-12 flex items-center justify-between pointer-events-none safe-top">
+        <header className={clsx(
+          "fixed left-0 right-0 z-[100] h-16 md:h-24 px-6 md:px-12 flex items-center justify-between pointer-events-none safe-top",
+          isViewingClient ? "top-8" : "top-0"
+        )}>
           <div className="pointer-events-auto flex items-center gap-6">
             <div className="cursor-pointer group flex items-center gap-3" onClick={() => navigate('/')}>
               <span className="font-serif italic text-3xl md:text-4xl text-white">Ca</span>
               <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white">CineArch</span>
-                <span className="text-[7px] font-black uppercase tracking-[0.2em] text-white/30 italic">Registry // v0.5</span>
+                <span className="text-xs font-black uppercase tracking-[0.4em] text-white">CineArch</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-white/30 italic">Registry // v0.5</span>
               </div>
             </div>
-            
+
             <div className="hidden lg:flex items-center gap-10 ml-10 border-l border-white/10 pl-10">
-               <button onClick={() => navigate('/manual')} className={clsx("text-[10px] font-black uppercase tracking-[0.4em] transition-colors flex items-center gap-3", location.pathname === '/manual' ? "text-accent" : "text-white/30 hover:text-white")}>
-                 <BookOpen size={14}/> Your Manual
-               </button>
-               <button onClick={() => navigate('/resources')} className={clsx("text-[10px] font-black uppercase tracking-[0.4em] transition-colors", location.pathname === '/resources' ? "text-accent" : "text-white/30 hover:text-white")}>
-                 Your Archive
-               </button>
+              <button onClick={() => navigate('/manual')} className={clsx("text-xs font-black uppercase tracking-[0.4em] transition-colors flex items-center gap-3", location.pathname === '/manual' ? "text-accent" : "text-white/30 hover:text-white")}>
+                <BookOpen size={14}/> Your Manual
+              </button>
+              <button onClick={() => navigate('/resources')} className={clsx("text-xs font-black uppercase tracking-[0.4em] transition-colors", location.pathname === '/resources' ? "text-accent" : "text-white/30 hover:text-white")}>
+                Your Archive
+              </button>
             </div>
           </div>
 
           <div className="pointer-events-auto flex items-center gap-6">
             {user ? (
               <div className="flex items-center gap-4 bg-white/5 border border-white/10 px-5 py-2 hover:bg-white/10 transition-all cursor-pointer group" onClick={() => navigate('/settings')}>
-                <div className="w-6 h-6 bg-white text-black font-black flex items-center justify-center text-[8px]">
+                <div className="w-6 h-6 bg-white text-black font-black flex items-center justify-center text-xs">
                   {user.name?.charAt(0)}
                 </div>
                 <div className="flex flex-col">
-                   <span className="text-[8px] font-black uppercase tracking-widest text-white/40 group-hover:text-white transition-colors leading-none">{user.name}</span>
-                   <button onClick={(e) => { e.stopPropagation(); onLogout(); }} className="text-[7px] font-black uppercase tracking-widest text-accent mt-1 text-left">Exit Protocol</button>
+                  <span className="text-xs font-black uppercase tracking-widest text-white/40 group-hover:text-white transition-colors leading-none">{user.name}</span>
+                  <button onClick={(e) => { e.stopPropagation(); onLogout(); }} className="text-xs font-black uppercase tracking-widest text-accent mt-1 text-left">Exit Protocol</button>
                 </div>
               </div>
             ) : (
-              <button onClick={() => navigate('/')} className="text-[10px] font-black uppercase tracking-[0.4em] bg-white text-black px-10 py-4 shadow-glow hover:bg-accent transition-all">Verify Your Identity</button>
+              <button onClick={() => navigate('/')} className="text-xs font-black uppercase tracking-[0.4em] bg-white text-black px-10 py-4 shadow-glow hover:bg-accent transition-all">Verify Your Identity</button>
             )}
           </div>
         </header>
@@ -93,7 +119,7 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
                 title={item.label}
               >
                 <item.icon size={18} strokeWidth={location.pathname === item.path ? 3 : 2} />
-                <span className="text-[6px] font-black uppercase tracking-widest mt-1">{item.label.split(' ')[1]}</span>
+                <span className="text-xs font-black uppercase tracking-widest mt-1">{item.label.split(' ')[1]}</span>
               </button>
             ))}
             <div className="w-px h-8 bg-white/10 mx-2"></div>
@@ -107,7 +133,11 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
         </nav>
       )}
 
-      <main className={clsx("mobile-wrapper flex-1 pt-32 pb-48", isDashboardMode ? "md:pt-40" : "md:pt-32")}>
+      <main className={clsx(
+        "mobile-wrapper flex-1 pt-32 pb-48",
+        isDashboardMode ? "md:pt-40" : "md:pt-32",
+        isViewingClient && "pt-40 md:pt-48"
+      )}>
         {children}
       </main>
     </div>

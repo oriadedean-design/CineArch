@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(git init *)",
-      "Bash(git remote *)"
+      "Bash(git remote *)",
+      "Bash(npm run *)",
+      "Bash(git push *)",
+      "Bash(xargs sed *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

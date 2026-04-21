@@ -15,6 +15,33 @@ export const api = {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return null;
 
+      // If agent is impersonating a client, return that client's profile
+      const activeClientId = localStorage.getItem('cinearch_active_client');
+      if (activeClientId) {
+        const { data: clientProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', activeClientId)
+          .single();
+        if (clientProfile) {
+          return {
+            id: clientProfile.id,
+            name: clientProfile.full_name || clientProfile.email,
+            email: clientProfile.email,
+            role: clientProfile.role || 'Member',
+            province: clientProfile.province,
+            isOnboarded: !!clientProfile.province,
+            accountType: 'INDIVIDUAL' as const,
+            isPremium: clientProfile.is_premium,
+            managedByAgencyId: clientProfile.managing_agency_id,
+            department: clientProfile.department,
+            selectedRoles: clientProfile.selected_roles,
+            managedUsers: [],
+            activeViewId: activeClientId
+          };
+        }
+      }
+
       // Fetch the "Profile" row which contains CineArch-specific metadata
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -293,6 +320,38 @@ export const api = {
 
       if (error) throw error;
       return { ...job, id: data.id };
+    },
+
+    async get(id: string): Promise<Job | null> {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error || !data) return null;
+      return {
+        id: data.id,
+        userId: data.user_id,
+        productionName: data.production_name,
+        companyName: data.company_name || '',
+        role: data.role_name,
+        grossEarnings: data.gross_earnings,
+        startDate: data.start_date,
+        isUnion: data.is_union,
+        unionName: data.union_name,
+        unionTypeId: data.union_type_id,
+        status: data.status,
+        province: data.province,
+        department: data.department,
+        totalHours: data.hours_worked || 0,
+        documentCount: 0,
+        createdAt: data.created_at
+      } as Job;
+    },
+
+    async delete(id: string): Promise<void> {
+      const { error } = await supabase.from('jobs').delete().eq('id', id);
+      if (error) throw error;
     },
 
     // Update existing job record

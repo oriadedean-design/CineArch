@@ -79,7 +79,7 @@ export const Manual = () => {
                     </button>
                  ))}
               </div>
-              <p className="text-[9px] text-white/20 font-black uppercase tracking-[0.3em] leading-relaxed italic">
+              <p className="text-xs text-white/20 font-black uppercase tracking-[0.3em] leading-relaxed italic">
                 Your selected jurisdiction drives the real-time union resolution matrix.
               </p>
            </Card>
@@ -109,7 +109,7 @@ export const Manual = () => {
                                      
                                      {role.requirements && (
                                        <div className="pt-6 space-y-4">
-                                          <span className="text-[9px] font-black uppercase tracking-widest text-accent italic">Personnel Requirements</span>
+                                          <span className="text-xs font-black uppercase tracking-widest text-accent italic">Personnel Requirements</span>
                                           <div className="flex flex-wrap gap-2">
                                              {role.requirements.map(req => (
                                                <Badge key={req} color="neutral" className="opacity-60">{req}</Badge>
@@ -132,7 +132,7 @@ export const Manual = () => {
                                      {guilds.length > 1 && (
                                        <div className="flex items-center gap-3 text-accent/60">
                                           <AlertCircle size={12} />
-                                          <span className="text-[9px] font-black uppercase tracking-widest italic">Overlapping Jurisdiction Detected</span>
+                                          <span className="text-xs font-black uppercase tracking-widest italic">Overlapping Jurisdiction Detected</span>
                                        </div>
                                      )}
                                   </div>
@@ -165,7 +165,7 @@ export const Manual = () => {
                              <p className="text-[11px] font-black uppercase text-white/20 tracking-[0.5em] italic">Entrance Magnitude</p>
                              <p className="text-6xl font-serif italic text-white leading-none tracking-tighter">${u.applicationFee || 0}</p>
                              {u.residencyRule && (
-                               <p className="text-[9px] font-black uppercase text-white/30 tracking-widest italic">{u.residencyRule}</p>
+                               <p className="text-xs font-black uppercase text-white/30 tracking-widest italic">{u.residencyRule}</p>
                              )}
                           </div>
                        </div>
