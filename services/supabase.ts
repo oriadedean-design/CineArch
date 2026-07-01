@@ -1,50 +1,31 @@
 import { createClient } from '@supabase/supabase-js';
 
-/**
- * CINEARCH DATABASE CONNECTION
- * Robust environment variable resolver for CineArch.
- * Detects variables across standard Vite and Node/Vercel process environments.
- */
-
-const getCineEnv = (key: string): string | undefined => {
-  // Check Vite's import.meta.env first
-  try {
-    const metaEnv = (import.meta as any).env;
-    if (metaEnv && metaEnv[key]) return metaEnv[key];
-  } catch (e) {
-    // import.meta.env not available in this context
-  }
-
-  // Fallback to process.env (Node/Vercel standard)
-  try {
-    if (typeof process !== 'undefined' && process.env && process.env[key]) {
-      return process.env[key];
-    }
-  } catch (e) {
-    // process.env not available in this context
-  }
-
-  return undefined;
-};
-
-const supabaseUrl = getCineEnv('VITE_SUPABASE_URL');
-const supabaseAnonKey = getCineEnv('VITE_SUPABASE_ANON_KEY');
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  // Detailed diagnostic for the production logs
-  console.warn(
-    'CineArch Configuration Warning: Missing Supabase Credentials.\n' +
-    'Targeting: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY.\n' +
-    'System will use placeholder credentials to prevent build-time crashes.'
-  );
+  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Check your .env.local file.');
 }
 
-/**
- * Initialize Supabase Client
- * Uses placeholders if environment variables are missing to avoid "supabaseUrl is required" error.
- * Actual functionality requires valid environment variables to be set in the host (Vercel).
- */
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder-instance.supabase.co',
-  supabaseAnonKey || 'placeholder-anon-key'
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Persist session in localStorage so the user stays logged in across tabs/refreshes
+    persistSession: true,
+    // Auto-refresh the JWT before it expires
+    autoRefreshToken: true,
+    // Detect session from URL hash (needed for OAuth redirects and magic links)
+    detectSessionInUrl: true,
+    // Storage key scoped to this app
+    storageKey: 'cinearch-auth',
+  },
+  // Realtime: only subscribe to channels the user explicitly joins
+  realtime: {
+    params: { eventsPerSecond: 10 },
+  },
+  // Global request headers
+  global: {
+    headers: { 'x-app-version': '0.5.1' },
+  },
+});
+
+export type SupabaseClient = typeof supabase;
