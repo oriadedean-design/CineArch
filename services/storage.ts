@@ -1,6 +1,7 @@
 
 import { supabase } from './supabase';
 import { User, Job, UserUnionTracking, ResidencyDocument } from '../types';
+import { isDemoMode, DEMO_USER, DEMO_JOBS, DEMO_TRACKING } from './demo';
 
 /**
  * CINEARCH DATA BRIDGE (SUPABASE VERSION)
@@ -12,6 +13,7 @@ export const api = {
   auth: {
     // 1. Get Current Session & Profile
     getUser: async (): Promise<User | null> => {
+      if (isDemoMode()) return DEMO_USER;
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return null;
 
@@ -249,6 +251,7 @@ export const api = {
 
   jobs: {
     async list(): Promise<Job[]> {
+      if (isDemoMode()) return DEMO_JOBS;
       const { data, error } = await supabase
         .from('jobs')
         .select('*')
@@ -378,6 +381,7 @@ export const api = {
   tracking: {
     // Retrieve union tracking records for a user
     get: async (userId?: string): Promise<UserUnionTracking[]> => {
+      if (isDemoMode()) return DEMO_TRACKING;
       const { data: { user } } = await supabase.auth.getUser();
       const targetId = userId || user?.id;
       if (!targetId) return [];

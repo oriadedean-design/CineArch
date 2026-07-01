@@ -1,6 +1,7 @@
 
 import { supabase } from './supabase';
 import { FinanceTransaction, FinanceStats, TransactionType } from '../types';
+import { isDemoMode, DEMO_TRANSACTIONS, DEMO_STATS } from './demo';
 
 /**
  * MASTER FISCAL PARAMETERS (CANADIAN COMPLIANCE)
@@ -87,6 +88,7 @@ const rowToTransaction = (row: any): FinanceTransaction => ({
 
 export const financeApi = {
   list: async (userId: string): Promise<FinanceTransaction[]> => {
+    if (isDemoMode()) return DEMO_TRANSACTIONS;
     const { data, error } = await supabase
       .from('finance_transactions')
       .select('*')
@@ -132,6 +134,7 @@ export const financeApi = {
   },
 
   getStats: async (userId: string): Promise<FinanceStats & { estCPP: number; estIncomeTax: number }> => {
+    if (isDemoMode()) return DEMO_STATS;
     const transactions = await financeApi.list(userId);
 
     const grossIncome = transactions

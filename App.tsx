@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-d
 import { Layout } from './components/Layout';
 import { api } from './services/storage';
 import { supabase } from './services/supabase';
+import { isDemoMode, DEMO_USER } from './services/demo';
 import { User } from './types';
 
 // Critical path — loaded eagerly (needed before any route resolves)
@@ -76,6 +77,25 @@ const MainApp = () => {
   const handleLogout       = () => api.auth.logout();
   const handleWelcomeEnter = (asAgent = false) => { setAuthAgentMode(asAgent); setShowWelcome(false); };
   const handleAuthBack     = () => setShowWelcome(true);
+
+  // Demo mode: bypass all auth and use mock user
+  if (isDemoMode() && !user) {
+    return (
+      <Layout onLogout={() => { sessionStorage.removeItem('cinearch_demo'); window.location.href = '/'; }}>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/"        element={<DashboardIndividual />} />
+            <Route path="/jobs"    element={<JobsIndividual />} />
+            <Route path="/jobs/:id" element={<JobDetail />} />
+            <Route path="/finance" element={<Finance />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/settings" element={<SettingsIndividual />} />
+            <Route path="*"        element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </Layout>
+    );
+  }
 
   if (loading) return <PageLoader />;
 

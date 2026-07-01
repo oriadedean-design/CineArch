@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Layers, FileText, Settings, Plus, WalletCards, Bell, X, Users, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Layers, FileText, Settings, Plus, WalletCards, X, Users, BookOpen, Eye } from 'lucide-react';
 import { api } from '../services/storage';
 import { User, CineNotification } from '../types';
 import { clsx } from 'clsx';
+import { isDemoMode, exitDemoMode } from '../services/demo';
 
 export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onLogout: () => void }) => {
   const navigate = useNavigate();
@@ -46,6 +47,22 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* Demo Mode Banner */}
+      {isDemoMode() && (
+        <div className="fixed top-0 left-0 right-0 z-[300] bg-accent text-black flex items-center justify-between px-4 md:px-6 py-2">
+          <div className="flex items-center gap-2">
+            <Eye size={12} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Preview Mode — No data is saved</span>
+          </div>
+          <button
+            onClick={exitDemoMode}
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:opacity-70 transition-opacity"
+          >
+            <X size={12} /> Exit Preview
+          </button>
+        </div>
+      )}
+
       {/* Impersonation Banner */}
       {isViewingClient && (
         <div className="fixed top-0 left-0 right-0 z-[200] bg-accent text-black flex items-center justify-between px-6 py-2">
@@ -65,7 +82,7 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
       {!isAuthPage && (
         <header className={clsx(
           "fixed left-0 right-0 z-[100] h-14 md:h-20 px-4 md:px-12 flex items-center justify-between pointer-events-none safe-top",
-          isViewingClient ? "top-8" : "top-0"
+          isDemoMode() ? "top-8" : isViewingClient ? "top-8" : "top-0"
         )}>
           <div className="pointer-events-auto flex items-center gap-4">
             <div className="cursor-pointer group flex items-center gap-2 md:gap-3" onClick={() => navigate('/')}>
