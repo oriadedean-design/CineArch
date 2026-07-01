@@ -1,3 +1,6 @@
+# Claude Code local settings (may contain tokens)
+.claude/settings.local.json
+
 # Logs
 logs
 *.log
@@ -22,3 +25,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env*

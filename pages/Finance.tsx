@@ -195,8 +195,31 @@ export const Finance = () => {
 
       {/* Transaction List */}
       <div className="space-y-10">
-        <h3 className="font-serif italic text-4xl text-white">Production Ledger</h3>
-        <div className="overflow-x-auto border border-white/5">
+        <h3 className="font-serif italic text-3xl md:text-4xl text-white">Production Ledger</h3>
+
+        {/* Mobile: card list */}
+        <div className="md:hidden space-y-2">
+          {transactions.length === 0 && (
+            <p className="py-16 text-center text-white/20 italic uppercase font-black tracking-widest text-sm">Slate Clear</p>
+          )}
+          {transactions.map(tx => (
+            <div key={tx.id} className="glass-ui p-5 flex justify-between items-start gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="font-serif italic text-base text-white truncate">{tx.description}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">{tx.category.replace(/_/g, ' ')} · {tx.dateIncurred}</p>
+                {tx.ruleTags && tx.ruleTags.length > 0 && (
+                  <Badge color="accent" className="text-[9px] mt-2">{tx.ruleTags[0].replace('MEALS_50_LIMIT', '50% Rule')}</Badge>
+                )}
+              </div>
+              <span className={clsx("font-serif italic text-lg shrink-0", tx.type === 'INCOME' ? "text-accent" : "text-white")}>
+                {tx.type === 'INCOME' ? '+' : '-'}${tx.totalAmount.toFixed(2)}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: full table */}
+        <div className="hidden md:block overflow-x-auto border border-white/5">
           <table className="w-full text-left text-sm font-sans">
             <thead className="bg-white/[0.02] border-b border-white/5">
               <tr className="text-xs font-black uppercase tracking-widest text-white/40">
@@ -240,17 +263,17 @@ export const Finance = () => {
               <button onClick={() => setIsAddModalOpen(false)} className="text-white/20 hover:text-white transition-colors">DISCARD</button>
             </div>
             <div className="space-y-8">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Entry Type</label>
-                  <Select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="h-16 text-sm font-serif italic">
+                  <Select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="h-14 text-sm font-serif italic">
                     <option value="EXPENSE" className="bg-black">Expense</option>
                     <option value="INCOME" className="bg-black">Income</option>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Date</label>
-                  <Input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="h-16 text-sm" />
+                  <Input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="h-14 text-sm" />
                 </div>
               </div>
 
@@ -279,14 +302,14 @@ export const Finance = () => {
                 <Input value={form.desc} onChange={e => setForm({...form, desc: e.target.value})} placeholder="e.g. Local 634 App Fee" className="h-16 text-lg italic" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Subtotal ($)</label>
-                  <Input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="h-16 text-lg font-mono" />
+                  <Input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="h-14 text-lg font-mono" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">GST/HST ($)</label>
-                  <Input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} className="h-16 text-lg font-mono" />
+                  <Input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} className="h-14 text-lg font-mono" />
                 </div>
               </div>
 

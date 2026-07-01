@@ -1,45 +1,87 @@
-
 <!DOCTYPE html>
-<html lang="en" class="text-[20px]">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- viewport-fit=cover lets the app extend under the notch; safe-area-inset-* compensate -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <title>CineArch | v 0.5</title>
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#000000" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CineArch" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+    <!-- SEO / Social -->
+    <meta name="description" content="Career Operating System for Canadian Film & TV Workers. Track guild progress, log jobs, and manage your fiscal record — offline-first." />
+    <meta property="og:title" content="CineArch" />
+    <meta property="og:description" content="Career OS for Canadian film crew." />
+    <meta property="og:type" content="website" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind via CDN (JIT) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-    
+
     <style>
+      /* ── Responsive root font scale (mobile-first) ──────────────── */
+      html {
+        font-size: 14px;           /* small phones */
+      }
+      @media (min-width: 375px) {
+        html { font-size: 15px; }  /* standard phones */
+      }
+      @media (min-width: 768px) {
+        html { font-size: 17px; }  /* tablets */
+      }
+      @media (min-width: 1024px) {
+        html { font-size: 18px; }  /* laptops */
+      }
+      @media (min-width: 1280px) {
+        html { font-size: 20px; }  /* desktop */
+      }
+
+      /* ── Design tokens ───────────────────────────────────────────── */
       :root {
-        --background: #000000; 
+        --background: #000000;
         --surface: #0a0a0a;
         --border: rgba(255, 255, 255, 0.08);
-        --text-primary: #FFFFFF; 
-        --text-secondary: #E5E5E5; 
-        --text-tertiary: #A3A3A3;  
-        --accent: #FACC15; 
+        --text-primary: #FFFFFF;
+        --text-secondary: #E5E5E5;
+        --text-tertiary: #A3A3A3;
+        --accent: #FACC15;
       }
 
       body {
         background-color: var(--background);
         color: var(--text-primary);
         -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
         overflow-x: hidden;
+        /* Respect the notch/home bar on iOS */
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
         padding-left: env(safe-area-inset-left);
         padding-right: env(safe-area-inset-right);
       }
 
+      /* ── Typography ──────────────────────────────────────────────── */
       .heading-huge {
         font-family: 'Instrument Serif', serif;
-        font-size: clamp(2.5rem, 12vw, 7.5rem);
-        line-height: 0.8;
-        letter-spacing: -0.05em;
+        font-size: clamp(2.2rem, 11vw, 7.5rem);
+        line-height: 0.85;
+        letter-spacing: -0.04em;
         font-style: italic;
       }
 
+      /* ── Cinematic background ────────────────────────────────────── */
       .bg-cinematic-universal {
         position: fixed;
         inset: 0;
@@ -50,7 +92,7 @@
         opacity: 0.1;
         filter: grayscale(1) contrast(1.3) blur(80px);
       }
-      
+
       .bg-vignette-universal {
         position: fixed;
         inset: 0;
@@ -59,6 +101,7 @@
         pointer-events: none;
       }
 
+      /* ── Glassmorphism ───────────────────────────────────────────── */
       .glass-ui {
         background: rgba(15, 15, 15, 0.45);
         backdrop-filter: blur(40px) saturate(180%);
@@ -66,22 +109,22 @@
         border: 1px solid rgba(255, 255, 255, 0.12);
       }
 
+      /* ── Snap clapperboard animation ─────────────────────────────── */
       @keyframes snap {
-        0% { transform: rotate(-30deg); }
-        40% { transform: rotate(0deg); }
-        70% { transform: rotate(-10deg); }
+        0%   { transform: rotate(-30deg); }
+        40%  { transform: rotate(0deg); }
+        70%  { transform: rotate(-10deg); }
         100% { transform: rotate(0deg); }
       }
-      .animate-snap {
-        animation: snap 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-      }
+      .animate-snap { animation: snap 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
 
+      /* ── Layout wrapper ──────────────────────────────────────────── */
       .mobile-wrapper {
         width: 100%;
         max-width: 1440px;
         margin: 0 auto;
-        padding-left: 1.25rem;
-        padding-right: 1.25rem;
+        padding-left: max(1.25rem, env(safe-area-inset-left));
+        padding-right: max(1.25rem, env(safe-area-inset-right));
       }
       @media (min-width: 768px) {
         .mobile-wrapper {
@@ -90,16 +133,19 @@
         }
       }
 
-      /* Touch-optimized scrollbars */
-      ::-webkit-scrollbar { width: 0px; height: 0px; }
-      
-      .hide-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+      /* ── Prevent iOS input zoom (inputs must be >= 16px rendered) ── */
+      input, select, textarea {
+        font-size: max(16px, 1em);
       }
-      .hide-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
+
+      /* ── Touch-optimized: hide scrollbars ────────────────────────── */
+      ::-webkit-scrollbar { width: 0; height: 0; }
+      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+      /* ── Safe-area bottom spacing for bottom nav ─────────────────── */
+      .safe-bottom { padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
+      .safe-top    { padding-top: max(0px, env(safe-area-inset-top)); }
     </style>
 
     <script>
@@ -110,18 +156,19 @@
               background: 'var(--background)',
               surface: 'var(--surface)',
               accent: 'var(--accent)',
-              textPrimary: 'var(--text-primary)', 
+              textPrimary: 'var(--text-primary)',
               textSecondary: 'var(--text-secondary)',
               textTertiary: 'var(--text-tertiary)',
             },
             fontFamily: {
               sans: ['Spline Sans', 'sans-serif'],
               serif: ['Instrument Serif', 'serif'],
-            }
+            },
           }
         }
       }
     </script>
+
     <script type="importmap">
 {
   "imports": {
@@ -137,12 +184,21 @@
     "vite": "https://esm.sh/vite@^7.3.1"
   }
 }
-</script>
+    </script>
   </head>
   <body class="dark bg-background text-textPrimary selection:bg-accent selection:text-black">
     <div class="bg-cinematic-universal"></div>
     <div class="bg-vignette-universal"></div>
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
+
+    <!-- Register service worker for offline-first support -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>

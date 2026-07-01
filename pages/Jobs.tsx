@@ -150,12 +150,12 @@ export const JobDetail = () => {
           <Input
             value={form.productionName}
             onChange={e => setForm({...form, productionName: e.target.value})}
-            className="text-6xl md:text-9xl font-serif italic bg-transparent border-none px-0 text-white leading-none tracking-tighter placeholder:text-white/5"
+            className="text-3xl sm:text-5xl md:text-9xl font-serif italic bg-transparent border-none px-0 text-white leading-none tracking-tighter placeholder:text-white/5"
             placeholder="Untitled Project"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-24">
           <div className="space-y-12">
             <div className="space-y-6">
               <label className="text-xs font-black uppercase tracking-widest text-white/40 italic">Your Regional Hub</label>
@@ -215,14 +215,14 @@ export const JobDetail = () => {
           </div>
 
           <div className="space-y-12">
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
               <div className="space-y-4">
                 <label className="text-xs font-black uppercase tracking-widest text-white/40 italic">Your Start Date</label>
-                <Input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} className="h-20 font-mono text-base" />
+                <Input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} className="h-16 md:h-20 font-mono text-base" />
               </div>
               <div className="space-y-4">
                 <label className="text-xs font-black uppercase tracking-widest text-white/40 italic">Your Gross Scale ($)</label>
-                <Input type="number" value={form.grossEarnings} onChange={e => setForm({...form, grossEarnings: Number(e.target.value)})} className="h-20 font-mono text-2xl" />
+                <Input type="number" value={form.grossEarnings} onChange={e => setForm({...form, grossEarnings: Number(e.target.value)})} className="h-16 md:h-20 font-mono text-2xl" />
               </div>
             </div>
 

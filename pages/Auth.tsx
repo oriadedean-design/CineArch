@@ -46,18 +46,20 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 relative bg-black overflow-hidden font-sans">
+    <div className="min-h-screen flex flex-col relative bg-black font-sans overflow-y-auto">
       <div className="absolute inset-0 bg-cinematic-universal opacity-20 pointer-events-none"></div>
       <div className="bg-vignette-universal"></div>
 
-      <div 
-        className="absolute top-12 left-12 cursor-pointer z-50 flex items-center gap-4 group" 
+      {/* Back button — respects notch via safe-area padding */}
+      <div
+        className="sticky top-0 z-50 px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-4 flex items-center gap-3 cursor-pointer group"
         onClick={onBack}
       >
-         <ArrowLeft className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
-         <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 group-hover:text-white transition-colors">Back to Ones</span>
+        <ArrowLeft className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
+        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 group-hover:text-white transition-colors">Back to Ones</span>
       </div>
 
+      <div className="flex-1 flex items-center justify-center p-6 pb-16">
       <div className="w-full max-w-xl relative z-10">
         <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-8 duration-1000">
           <div className="flex justify-center mb-8">
@@ -159,6 +161,7 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
             </div>
           </form>
         </div>
+      </div>
       </div>
     </div>
   );
