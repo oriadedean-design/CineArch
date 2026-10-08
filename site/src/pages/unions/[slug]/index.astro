@@ -1,6 +1,6 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import { UNIONS, coverageForUnion, formatTier, formatPercent, rateScheduleFor } from '../../../lib/guide';
+import { UNIONS, coverageForUnion, formatTier, formatPercent, ratesFor } from '../../../lib/guide';
 import type { GuideUnion } from '../../../lib/guide';
 
 export function getStaticPaths() {
@@ -12,7 +12,7 @@ const coverage = coverageForUnion(union);
 const provinceNames = coverage.map(c => c.province.name);
 const firstTier = union.tiers[0];
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
-const rates = rateScheduleFor(union.id);
+const rates = ratesFor(union.id);
 const offices = union.jurisdictions.filter(j => j.notes || j.contactEmail || j.contactPhone);
 
 const description = [
@@ -108,8 +108,8 @@ const description = [
     <>
       <h2>Wage rates</h2>
       <p>
-        <a href={`/unions/${union.slug}/rates/`}>{union.name} rate schedule</a> — minimum rates for every department by
-        production budget tier, from the {rates.title}.
+        <a href={`/unions/${union.slug}/rates/`}>{union.name} minimum rates</a> — the minimum for every position
+        {rates.schedules.length > 1 ? `, for ${rates.schedules.length} production types` : ''}{rates.payRule ? ', and when overtime starts' : ''}.
       </p>
     </>
   )}

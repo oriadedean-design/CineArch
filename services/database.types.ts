@@ -143,25 +143,31 @@ export type Database = {
           created_at: string
           credit_type: string | null
           department: string | null
+          days_worked: number
           document_ids: string[] | null
           end_date: string | null
           genre: string | null
           gross_earnings: number | null
           hourly_rate: number | null
+          hours_per_day: number | null
           id: string
           image_url: string | null
           is_union: boolean
           is_upgrade: boolean | null
+          meal_break_minutes: number
           notes: string | null
+          overtime_hours: number
           production_name: string
           production_tier: string | null
           province: string | null
+          rate_position: string | null
           role: string
           start_date: string
           status: string
           synced_at: string | null
           total_hours: number
           union_deductions: number | null
+          union_minimum_rate: number | null
           union_name: string | null
           union_type_id: string | null
           updated_at: string
@@ -173,25 +179,31 @@ export type Database = {
           created_at?: string
           credit_type?: string | null
           department?: string | null
+          days_worked?: number
           document_ids?: string[] | null
           end_date?: string | null
           genre?: string | null
           gross_earnings?: number | null
           hourly_rate?: number | null
+          hours_per_day?: number | null
           id?: string
           image_url?: string | null
           is_union?: boolean
           is_upgrade?: boolean | null
+          meal_break_minutes?: number
           notes?: string | null
+          overtime_hours?: number
           production_name: string
           production_tier?: string | null
           province?: string | null
+          rate_position?: string | null
           role: string
           start_date: string
           status?: string
           synced_at?: string | null
           total_hours?: number
           union_deductions?: number | null
+          union_minimum_rate?: number | null
           union_name?: string | null
           union_type_id?: string | null
           updated_at?: string
@@ -203,25 +215,31 @@ export type Database = {
           created_at?: string
           credit_type?: string | null
           department?: string | null
+          days_worked?: number
           document_ids?: string[] | null
           end_date?: string | null
           genre?: string | null
           gross_earnings?: number | null
           hourly_rate?: number | null
+          hours_per_day?: number | null
           id?: string
           image_url?: string | null
           is_union?: boolean
           is_upgrade?: boolean | null
+          meal_break_minutes?: number
           notes?: string | null
+          overtime_hours?: number
           production_name?: string
           production_tier?: string | null
           province?: string | null
+          rate_position?: string | null
           role?: string
           start_date?: string
           status?: string
           synced_at?: string | null
           total_hours?: number
           union_deductions?: number | null
+          union_minimum_rate?: number | null
           union_name?: string | null
           union_type_id?: string | null
           updated_at?: string
@@ -548,6 +566,7 @@ export type Database = {
         }[]
       }
       is_agent: { Args: never; Returns: boolean }
+      rate_schedule_lines: { Args: { p_schedule_ids: string[] }; Returns: Json }
       union_engine_snapshot: { Args: never; Returns: Json }
       union_engine_version: { Args: never; Returns: number }
       is_agent_of: { Args: { p_client: string }; Returns: boolean }

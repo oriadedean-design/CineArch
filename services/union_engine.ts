@@ -1,11 +1,13 @@
 import { CanadianProvince, type OntarioRegion, type UnionType, type UnionTier } from '../types';
+import type { PayRuleInput } from './pay';
 
 // The union engine. Its data lives in Supabase (unions, union_jurisdictions,
 // union_tiers, union_requirements, union_departments, departments, roles,
-// role_coverage, department_coverage, rate_schedules, rate_lines) and is
-// edited there. This module holds the latest snapshot in memory and answers
-// lookups synchronously. The app loads it via services/engine_loader.ts,
-// the public guide at build time.
+// role_coverage, department_coverage, rate_schedules, rate_lines, pay_rules)
+// and is edited there. This module holds the latest snapshot in memory and
+// answers lookups synchronously. The app loads it via services/engine_loader.ts,
+// the public guide at build time. Rate lines are loaded per schedule
+// (setRateLines) because there are thousands of them.
 
 // ── Snapshot shape (union_engine_snapshot()) ────────────────
 
@@ -70,18 +72,34 @@ export interface IndustryDepartment {
   roles: IndustryRole[];
 }
 
-export interface RateRow { title: string; rates: (number | null)[] }
+export interface RateRow { title: string; rates: (number | null)[]; roleId?: string }
 export interface RateSection { department: string; note?: string; rows: RateRow[] }
 export interface RateSchedule {
   id: string;
   unionId: string;
   title: string;
+  productionType?: string;
   effectiveFrom: string;
-  effectiveTo: string;
+  effectiveTo?: string;      // omitted = open-ended
   columns: string[];
+  hourlyColumn?: string;
+  dailyColumn?: string;
   rateUnit: string;
   sourceUrl?: string;
-  sections: RateSection[];
+  notes?: string;
+  roleIds: string[];         // roles with a minimum in this schedule
+}
+export interface RateLine { department: string; departmentNote: string | null; position: string; rates: (number | null)[]; roleId: string | null }
+
+export interface PayRule extends PayRuleInput {
+  id: string;
+  unionId: string;
+  title: string;
+  departmentId: string | null;
+  mealBreakNotes: string | null;
+  notes: string | null;
+  needsVerification: string[];
+  sourceUrl: string | null;
 }
 
 export interface EngineSnapshot {
@@ -90,8 +108,9 @@ export interface EngineSnapshot {
   departments: { id: string; name: string; code: string | null; description: string | null; roles: { id: string; name: string; code: string | null; description: string | null; requirements: string[]; aliases: string[]; isTrainee: boolean }[] }[];
   roleCoverage: CoverageTuple[];
   departmentCoverage: CoverageTuple[];
-  rateSchedules: { id: string; unionId: string; title: string; effectiveFrom: string; effectiveTo: string | null; columns: string[]; rateUnit: string; sourceUrl: string | null; notes: string | null;
-    lines: { department: string; departmentNote: string | null; position: string; rates: (number | null)[] }[] }[];
+  rateSchedules: { id: string; unionId: string; title: string; productionType: string | null; effectiveFrom: string; effectiveTo: string | null;
+    columns: string[]; hourlyColumn: string | null; dailyColumn: string | null; rateUnit: string; sourceUrl: string | null; notes: string | null; roleIds: string[] }[];
+  payRules: PayRule[];
 }
 
 export interface EngineUnion extends UnionType {
@@ -176,19 +195,12 @@ const build = (s: EngineSnapshot) => {
   for (const d of departments) for (const r of d.roles) {
     for (const n of [r.name, ...(r.aliases ?? [])]) if (!roleByName.has(normalize(n))) roleByName.set(normalize(n), r);
   }
-  const rateSchedules: RateSchedule[] = s.rateSchedules.map(rs => {
-    const sections: RateSection[] = [];
-    for (const l of rs.lines) {
-      let section = sections[sections.length - 1];
-      if (!section || section.department !== l.department) {
-        section = { department: l.department, note: opt(l.departmentNote), rows: [] };
-        sections.push(section);
-      }
-      section.rows.push({ title: l.position, rates: l.rates });
-    }
-    return { id: rs.id, unionId: rs.unionId, title: rs.title, effectiveFrom: rs.effectiveFrom, effectiveTo: rs.effectiveTo ?? rs.effectiveFrom,
-      columns: rs.columns, rateUnit: rs.rateUnit, sourceUrl: opt(rs.sourceUrl), sections };
-  });
+  const rateSchedules: RateSchedule[] = s.rateSchedules.map(rs => ({
+    id: rs.id, unionId: rs.unionId, title: rs.title, productionType: opt(rs.productionType),
+    effectiveFrom: rs.effectiveFrom, effectiveTo: opt(rs.effectiveTo), columns: rs.columns,
+    hourlyColumn: opt(rs.hourlyColumn), dailyColumn: opt(rs.dailyColumn), rateUnit: rs.rateUnit,
+    sourceUrl: opt(rs.sourceUrl), notes: opt(rs.notes), roleIds: rs.roleIds ?? [],
+  }));
   return {
     version: s.version,
     unions,
@@ -199,13 +211,24 @@ const build = (s: EngineSnapshot) => {
     roleCoverage: indexCoverage(s.roleCoverage),
     departmentCoverage: indexCoverage(s.departmentCoverage),
     rateSchedules,
+    payRules: s.payRules ?? [],
   };
 };
 
-const EMPTY: EngineSnapshot = { version: 0, unions: [], departments: [], roleCoverage: [], departmentCoverage: [], rateSchedules: [] };
+const EMPTY: EngineSnapshot = { version: 0, unions: [], departments: [], roleCoverage: [], departmentCoverage: [], rateSchedules: [], payRules: [] };
 let engine = build(EMPTY);
+// Rate lines by schedule id, loaded on demand. Dropped when the engine
+// version changes, since an edited line bumps it.
+const rateLines = new Map<string, RateLine[]>();
 
-export const setEngineSnapshot = (snapshot: EngineSnapshot) => { engine = build(snapshot); };
+export const setEngineSnapshot = (snapshot: EngineSnapshot) => {
+  if (snapshot.version !== engine.version) rateLines.clear();
+  engine = build(snapshot);
+};
+export const setRateLines = (lines: Record<string, RateLine[]>) => {
+  for (const [id, list] of Object.entries(lines)) rateLines.set(id, list);
+};
+export const getRateLines = (scheduleId: string): RateLine[] | undefined => rateLines.get(scheduleId);
 export const getEngineVersion = () => engine.version;
 export const isEngineLoaded = () => engine.version > 0;
 
@@ -222,6 +245,12 @@ const operatesIn = (unionId: string, province: string, region?: OntarioRegion) =
 };
 
 export const findRole = (name: string) => engine.roleByName.get(normalize(name)) ?? null;
+
+// The catalog department of a role (by name or alias).
+export const findRoleDepartment = (name: string): string | undefined => {
+  const role = findRole(name);
+  return role ? engine.departments.find(d => d.roles.includes(role))?.name : undefined;
+};
 
 /**
  * Which unions cover a role where it's worked. Catalog roles use
@@ -255,7 +284,89 @@ export const resolveGuildForRole = (province: string, role: string, department: 
 export const getUnionSpec = (id: string): EngineUnion | null => engine.unionById.get(id) ?? null;
 export const getAllUnions = (): EngineUnion[] => engine.unions;
 export const getDepartments = (): IndustryDepartment[] => engine.departments;
-export const getRateSchedule = (unionId: string): RateSchedule | undefined => engine.rateSchedules.find(s => s.unionId === unionId);
+export const getRateSchedules = (unionId: string): RateSchedule[] => engine.rateSchedules.filter(s => s.unionId === unionId);
+
+// ── Pay ─────────────────────────────────────────────────────
+
+const inEffect = (s: RateSchedule, date: string) => s.effectiveFrom <= date && (!s.effectiveTo || date <= s.effectiveTo);
+
+export const getPayRules = (unionId: string): PayRule[] => engine.payRules.filter(r => r.unionId === unionId);
+
+// The pay rule for a union, or its department-specific rule (e.g. 873 Transportation).
+export const getPayRule = (unionId: string, department?: string): PayRule | undefined => {
+  const deptId = department ? engine.deptByName.get(normalize(department))?.id : undefined;
+  const rules = getPayRules(unionId);
+  return rules.find(r => deptId && r.departmentId === deptId) ?? rules.find(r => r.departmentId === null);
+};
+
+// Production types with a rate schedule in effect on the date (null = the schedule covers every production).
+export const getProductionTypes = (unionId: string, date: string): (string | null)[] =>
+  [...new Set(getRateSchedules(unionId).filter(s => inEffect(s, date)).map(s => s.productionType ?? null))];
+
+// The schedule in effect on the date for the production type (the only one, when the union has no types).
+export const findRateSchedule = (unionId: string, date: string, productionType?: string | null): RateSchedule | undefined => {
+  const current = getRateSchedules(unionId).filter(s => inEffect(s, date));
+  return current.find(s => (s.productionType ?? null) === (productionType ?? null)) ?? (current.length === 1 ? current[0] : undefined);
+};
+
+// Schedules in effect today for each production type (the guide's rate pages).
+export const getCurrentRateSchedules = (unionId: string, date: string): RateSchedule[] => {
+  const schedules = getRateSchedules(unionId);
+  const current = schedules.filter(s => inEffect(s, date));
+  if (current.length > 0) return current;
+  // Nothing in effect: show the most recent schedule(s).
+  const latest = schedules.reduce((max, s) => (s.effectiveFrom > max ? s.effectiveFrom : max), '');
+  return schedules.filter(s => s.effectiveFrom === latest);
+};
+
+export interface MinimumRate {
+  schedule: RateSchedule;
+  position: string;
+  department: string;
+  hourly: number | null;   // null = negotiable
+  daily: number | null;
+}
+
+const column = (schedule: RateSchedule, line: RateLine, name?: string) => {
+  const i = name ? schedule.columns.indexOf(name) : -1;
+  return i >= 0 ? line.rates[i] ?? null : null;
+};
+
+// Every position in a loaded schedule with its hourly / daily minimum.
+export const getRatePositions = (schedule: RateSchedule): MinimumRate[] =>
+  (rateLines.get(schedule.id) ?? []).map(l => ({
+    schedule, position: l.position, department: l.department,
+    hourly: column(schedule, l, schedule.hourlyColumn), daily: column(schedule, l, schedule.dailyColumn),
+  }));
+
+/**
+ * The minimum for a position (by rate-sheet name) or, failing that, the first
+ * position linked to the catalog role. Needs the schedule's lines loaded.
+ */
+export const findMinimumRate = (schedule: RateSchedule, opts: { position?: string; role?: string }): MinimumRate | undefined => {
+  const lines = rateLines.get(schedule.id);
+  if (!lines) return undefined;
+  const roleId = opts.role ? findRole(opts.role)?.id : undefined;
+  const line = (opts.position ? lines.find(l => l.position === opts.position) : undefined)
+    ?? (roleId ? lines.find(l => l.roleId === roleId) : undefined);
+  if (!line) return undefined;
+  return { schedule, position: line.position, department: line.department,
+           hourly: column(schedule, line, schedule.hourlyColumn), daily: column(schedule, line, schedule.dailyColumn) };
+};
+
+// Schedule sections for display (the guide's rate tables).
+export const getRateSections = (schedule: RateSchedule): RateSection[] => {
+  const sections: RateSection[] = [];
+  for (const l of rateLines.get(schedule.id) ?? []) {
+    let section = sections[sections.length - 1];
+    if (!section || section.department !== l.department) {
+      section = { department: l.department, note: opt(l.departmentNote), rows: [] };
+      sections.push(section);
+    }
+    section.rows.push({ title: l.position, rates: l.rates, roleId: opt(l.roleId) });
+  }
+  return sections;
+};
 
 // Unions that operate in a province (and Ontario region, when known).
 export const getUnionsForProvince = (province: string, region?: string) =>

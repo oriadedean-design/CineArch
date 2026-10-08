@@ -117,6 +117,12 @@ const toJob = (j: JobRow): Job => ({
   endDate: j.end_date ?? undefined,
   totalHours: j.total_hours ?? 0,
   hourlyRate: j.hourly_rate ?? undefined,
+  daysWorked: j.days_worked,
+  hoursPerDay: j.hours_per_day ?? undefined,
+  mealBreakMinutes: j.meal_break_minutes,
+  overtimeHours: j.overtime_hours,
+  unionMinimumRate: j.union_minimum_rate ?? undefined,
+  ratePosition: j.rate_position ?? undefined,
   grossEarnings: j.gross_earnings ?? undefined,
   unionDeductions: j.union_deductions ?? undefined,
   notes: j.notes ?? undefined,
@@ -154,6 +160,12 @@ const toJobRow = (job: Job) => ({
   end_date: toDate(job.endDate),
   total_hours: job.totalHours || 0,
   hourly_rate: job.hourlyRate ?? null,
+  days_worked: job.daysWorked ?? 1,
+  hours_per_day: job.hoursPerDay ?? null,
+  meal_break_minutes: job.mealBreakMinutes ?? 0,
+  overtime_hours: job.overtimeHours ?? 0,
+  union_minimum_rate: job.unionMinimumRate ?? null,
+  rate_position: job.ratePosition ?? null,
   gross_earnings: job.grossEarnings ?? null,
   union_deductions: job.unionDeductions ?? null,
   notes: job.notes ?? null,
@@ -162,8 +174,10 @@ const toJobRow = (job: Job) => ({
   province: job.province ?? null,
 });
 
-// Inclusive day span of a job; single-day when there's no end date.
+// Days worked: the logged day count, else the inclusive date span
+// (single day when there's no end date).
 const workedDays = (job: Job): number => {
+  if (job.daysWorked && job.daysWorked > 1) return job.daysWorked;
   if (!job.endDate) return 1;
   const ms = Date.parse(job.endDate) - Date.parse(job.startDate);
   return isNaN(ms) || ms < 0 ? 1 : Math.round(ms / 86_400_000) + 1;
