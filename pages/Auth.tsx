@@ -33,6 +33,23 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      alert("Enter your production email first, then tap Forgot Access Key.");
+      return;
+    }
+    try {
+      setLoading(true);
+      await api.auth.requestPasswordReset(email);
+      alert("If an account exists for " + email + ", a reset link is on its way. Open it on this device.");
+    } catch (err: any) {
+      console.error("Password reset request failed:", err);
+      alert("Reset Failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleAuth = async () => {
     try {
       setLoading(true);
@@ -125,6 +142,16 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
                   onChange={e => setPassword(e.target.value)}
                   className="h-20 text-xl font-serif italic"
                 />
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={loading}
+                    className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 hover:text-accent transition-colors disabled:opacity-30"
+                  >
+                    Forgot Access Key?
+                  </button>
+                )}
               </div>
             </div>
             
