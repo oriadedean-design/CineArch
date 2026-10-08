@@ -41,6 +41,8 @@ export interface User {
   accountType: 'INDIVIDUAL' | 'AGENT';
   managedUsers?: User[]; 
   activeViewId?: string; 
+  inviteStatus?: 'PENDING';        // roster entry that hasn't accepted yet
+  pendingInvites?: AgencyInvite[]; // invites addressed to this individual
   primaryIndustry?: string;
   // Track which agency is managing this individual
   managedByAgencyId?: string;
@@ -249,11 +251,19 @@ export const PLANS: Record<string, Plan> = {
   }
 };
 
+export interface AgencyInvite {
+  id: string;
+  agencyId: string;
+  agencyName: string;
+  createdAt: string;
+}
+
 export interface ResidencyDocument {
   id: string;
   userId: string;
   type: string;
   fileName: string;
+  storagePath?: string;
   uploadedAt: string;
   verified: boolean;
 }

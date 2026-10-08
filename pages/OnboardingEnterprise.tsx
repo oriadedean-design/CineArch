@@ -89,23 +89,9 @@ export const OnboardingEnterprise = ({ user, onComplete }: { user: User, onCompl
     setIsPreparing(true);
   };
 
-  const executeCompletion = () => {
-    const clients: User[] = formData.managedUsers
-      .filter(u => u.name && u.email)
-      .map(u => ({
-        id: `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        name: u.name,
-        email: u.email,
-        role: u.role || 'Talent',
-        province: formData.province,
-        isOnboarded: true,
-        accountType: 'INDIVIDUAL',
-        isPremium: true
-      }));
-
+  const executeCompletion = async () => {
     const updates: Partial<User> = {
       name: formData.name,
-      email: formData.email,
       phone: formData.phone,
       province: formData.province,
       entityType: formData.entityType,
@@ -115,12 +101,21 @@ export const OnboardingEnterprise = ({ user, onComplete }: { user: User, onCompl
       agentFeePercentage: formData.agentFeePercentage,
       cohortYear: formData.cohortYear,
       programName: formData.programName,
-      managedUsers: clients,
       isOnboarded: true
     };
 
-    api.auth.updateUser(updates);
-    onComplete();
+    try {
+      await api.auth.updateUser(updates);
+      // Personnel entered during setup get email invites; they join the roster on accepting.
+      const invites = formData.managedUsers.filter(u => u.name && u.email);
+      await Promise.all(invites.map(u =>
+        api.auth.addClient({ name: u.name, email: u.email, province: formData.province })
+      ));
+      onComplete();
+    } catch (e: any) {
+      setIsPreparing(false);
+      alert(`Setup could not be saved: ${e.message}`);
+    }
   };
 
   if (isPreparing) return <ProductionCallOverlay onComplete={executeCompletion} />;

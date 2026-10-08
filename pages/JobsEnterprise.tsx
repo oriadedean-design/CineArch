@@ -25,20 +25,11 @@ export const JobsEnterprise = () => {
         return;
       }
 
-      const allJobs: {job: Job, clientName: string}[] = [];
-      
-      // Aggregate jobs across all managed users
-      await Promise.all(u.managedUsers.map(async (client) => {
-        const clientJobs = await api.jobs.listForClient(client.id);
-        clientJobs.forEach((j: Job) => {
-          allJobs.push({ job: j, clientName: client.name });
-        });
-      }));
-
-      // Sort by start date descending
-      setJobs(allJobs.sort((a, b) => 
-        new Date(b.job.startDate).getTime() - new Date(a.job.startDate).getTime()
-      ));
+      // Aggregate jobs across all managed users in one query (already sorted by start date)
+      const clients = u.managedUsers.filter(c => !c.inviteStatus);
+      const names = new Map(clients.map(c => [c.id, c.name]));
+      const clientJobs = await api.jobs.listForClients(clients.map(c => c.id));
+      setJobs(clientJobs.map(job => ({ job, clientName: names.get(job.userId) || '' })));
     } catch (err) {
       console.error("Aggregation Failure:", err);
     } finally {

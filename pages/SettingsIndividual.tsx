@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
-import { supabase } from '../services/supabase';
 import { User, CanadianProvince } from '../types';
 import { Heading, Text, Button, Input, Select, Card, Badge } from '../components/ui';
 import { Shield, User as UserIcon, Lock, Landmark, FileText, Trash2, Users, XCircle } from 'lucide-react';
@@ -18,12 +17,8 @@ export const SettingsIndividual = () => {
       setProfileForm(u || {});
 
       if (u?.managedByAgencyId) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', u.managedByAgencyId)
-          .single();
-        if (data?.full_name) setAgencyName(data.full_name);
+        const agency = await api.auth.getAgency().catch(() => null);
+        if (agency) setAgencyName(agency.name);
       }
     };
     init();
@@ -31,10 +26,37 @@ export const SettingsIndividual = () => {
 
   const handleSave = async () => {
     if (profileForm) {
-      await api.auth.updateUser(profileForm);
+      try {
+        const u = await api.auth.updateUser(profileForm);
+        setUser(u);
+        alert("Profile Canonical Synchronized.");
+      } catch (e: any) {
+        alert(`Save failed: ${e.message}`);
+      }
+    }
+  };
+
+  const handleInvite = async (inviteId: string, accept: boolean) => {
+    try {
+      await api.auth.respondToInvite(inviteId, accept);
       const u = await api.auth.getUser();
       setUser(u);
-      alert("Profile Canonical Synchronized.");
+      if (accept && u?.managedByAgencyId) {
+        const agency = await api.auth.getAgency().catch(() => null);
+        setAgencyName(agency?.name ?? null);
+      }
+    } catch (e: any) {
+      alert(`Could not update invite: ${e.message}`);
+    }
+  };
+
+  const handlePurge = async () => {
+    if (!confirm('Purge Drive?')) return;
+    try {
+      await api.system.resetData();
+      window.location.reload();
+    } catch (e: any) {
+      alert(`Purge failed: ${e.message}`);
     }
   };
 
@@ -76,6 +98,17 @@ export const SettingsIndividual = () => {
                   ? agencyName ? `Linked to ${agencyName}` : "Linked to Agency Terminal"
                   : "No Active Agency Link"}
               </p>
+              {user?.pendingInvites?.map(invite => (
+                <div key={invite.id} className="space-y-3 pt-4 border-t border-white/5">
+                  <p className="text-xs text-white/60 leading-relaxed">
+                    <span className="text-white">{invite.agencyName}</span> wants to manage your jobs and union tracking. Your finances and documents stay private.
+                  </p>
+                  <div className="flex gap-4">
+                    <button onClick={() => handleInvite(invite.id, true)} className="text-xs font-black uppercase tracking-widest text-accent hover:text-white transition-colors">Accept</button>
+                    <button onClick={() => handleInvite(invite.id, false)} className="text-xs font-black uppercase tracking-widest text-white/40 hover:text-red-500 transition-colors">Decline</button>
+                  </div>
+                </div>
+              ))}
               {isLinked && (
                 <button
                   onClick={handleRevokeAgency}
@@ -107,7 +140,7 @@ export const SettingsIndividual = () => {
               <Input value={profileForm.email || ''} disabled className="h-20 opacity-30 cursor-not-allowed font-serif italic" />
             </div>
             <div className="pt-12 border-t border-white/5 flex justify-between items-center">
-              <button onClick={() => { if(confirm('Purge Drive?')) api.system.resetData(); window.location.reload(); }} className="text-xs font-black uppercase tracking-widest text-red-500/40 hover:text-red-500 transition-colors">Purge Data</button>
+              <button onClick={handlePurge} className="text-xs font-black uppercase tracking-widest text-red-500/40 hover:text-red-500 transition-colors">Purge Data</button>
               <Button onClick={handleSave} className="h-16 px-12">Print Updates</Button>
             </div>
           </div>

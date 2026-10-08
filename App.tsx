@@ -46,7 +46,7 @@ const MainApp = () => {
   useEffect(() => {
     const hydrateSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      if (session && await api.auth.verifySession()) {
         const u = await api.auth.getUser();
         setUser(u);
         setShowWelcome(false);
@@ -57,7 +57,10 @@ const MainApp = () => {
     hydrateSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        // Defer out of the auth callback: awaiting Supabase calls inside it deadlocks the client.
+        await new Promise(r => setTimeout(r, 0));
+        if (!(await api.auth.verifySession())) return;
         const u = await api.auth.getUser();
         setUser(u);
         setShowWelcome(false);

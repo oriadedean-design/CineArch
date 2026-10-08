@@ -1,64 +1,58 @@
-// CineArch Service Worker — Offline-first for the set
-const CACHE = 'cinearch-v1';
-
-// App shell assets to cache on install
-const PRECACHE = [
-  '/',
-  '/index.html',
-];
+// CineArch Service Worker — keeps the app shell available offline.
+//
+// Strategy:
+//  - Page navigations (index.html): network first, cached copy only when
+//    offline. A new deploy is picked up on the next load, never stuck.
+//  - /assets/*: cache first. Vite fingerprints these filenames, so a
+//    cached file can never be stale — new builds use new names.
+//  - Everything else (Supabase API, other origins): not intercepted.
+//    Data is never cached here; it must come fresh from the database.
+const CACHE = 'cinearch-shell-v2';
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(PRECACHE))
-  );
+  event.waitUntil(caches.open(CACHE).then(cache => cache.add('/index.html')));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
   const { request } = event;
+  if (request.method !== 'GET') return;
+
   const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
 
-  // Don't intercept Supabase API or external requests
-  if (!url.origin.includes(self.location.origin)) return;
-
-  // Supabase auth/data: network first, fall back to cache
-  if (url.pathname.startsWith('/rest/') || url.pathname.startsWith('/auth/')) {
+  if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE).then(cache => cache.put(request, clone));
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then(cache => cache.put('/index.html', copy));
+          }
           return res;
         })
-        .catch(() => caches.match(request))
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
 
-  // Static assets: cache first
-  event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(res => {
-        // Cache JS/CSS/fonts
-        if (
-          res.ok &&
-          (request.url.includes('/assets/') || request.url.includes('fonts.g'))
-        ) {
-          const clone = res.clone();
-          caches.open(CACHE).then(cache => cache.put(request, clone));
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.match(request).then(cached => cached || fetch(request).then(res => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then(cache => cache.put(request, copy));
         }
         return res;
-      });
-    }).catch(() => caches.match('/index.html'))
-  );
+      }))
+    );
+  }
 });

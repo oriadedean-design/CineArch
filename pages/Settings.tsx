@@ -81,22 +81,19 @@ export const Settings = () => {
   };
 
   const removeTrack = async (id: string) => {
-    await api.tracking.save(trackings.filter(t => t.id !== id));
+    const track = trackings.find(t => t.id === id);
+    if (track) await api.tracking.remove(track.unionTypeId);
     refreshData();
   };
 
-  const handleUploadSim = async (type: keyof typeof RESIDENCY_DOC_TYPES) => {
-    if (!user) return;
-    const newDoc: ResidencyDocument = {
-      id: `doc_${Date.now()}`,
-      userId: user.id,
-      type,
-      fileName: `${type.toLowerCase()}_archive_2024.pdf`,
-      uploadedAt: new Date().toISOString(),
-      verified: true
-    };
-    await api.vault.add(newDoc);
-    refreshData();
+  const handleUpload = async (type: keyof typeof RESIDENCY_DOC_TYPES, file?: File) => {
+    if (!user || !file) return;
+    try {
+      await api.vault.upload(file, type);
+      refreshData();
+    } catch (e: any) {
+      alert(`Upload failed: ${e.message}`);
+    }
   };
 
   const deleteDoc = async (id: string) => {
@@ -296,14 +293,19 @@ export const Settings = () => {
 
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                      {Object.entries(RESIDENCY_DOC_TYPES).map(([key, label]) => (
-                       <button 
+                       <label 
                          key={key} 
-                         onClick={() => handleUploadSim(key as any)}
-                         className="glass-ui p-8 flex flex-col items-center gap-6 group hover:border-accent transition-all text-center h-48 justify-center"
+                         className="glass-ui p-8 flex flex-col items-center gap-6 group hover:border-accent transition-all text-center h-48 justify-center cursor-pointer"
                        >
+                         <input
+                           type="file"
+                           accept="application/pdf,image/jpeg,image/png,image/webp"
+                           className="hidden"
+                           onChange={e => { handleUpload(key as keyof typeof RESIDENCY_DOC_TYPES, e.target.files?.[0]); e.target.value = ''; }}
+                         />
                          <Upload size={24} className="text-white/20 group-hover:text-accent transition-colors" />
                          <span className="text-xs font-black uppercase tracking-widest text-white/60 group-hover:text-white transition-colors">{label}</span>
-                       </button>
+                       </label>
                      ))}
                   </div>
               </div>

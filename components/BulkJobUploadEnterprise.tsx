@@ -26,7 +26,7 @@ export const BulkJobUploadEnterprise = ({ userId, onComplete }: { userId: string
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: async (results) => {
         try {
           const rows = results.data as any[];
           const jobsToInsert = rows.map((row) => {
@@ -45,15 +45,11 @@ export const BulkJobUploadEnterprise = ({ userId, onComplete }: { userId: string
             } as Job;
           });
 
-          // In Enterprise mode, we switch context to target user, add jobs, then switch back
-          const originalActiveId = agent?.activeViewId;
-          api.auth.switchClient(targetUserId);
-          jobsToInsert.forEach(job => api.jobs.add(job));
-          api.auth.switchClient(originalActiveId || null);
-
+          // RLS allows agents to write jobs for clients on their roster
+          await api.jobs.addMany(jobsToInsert, targetUserId);
           onComplete();
         } catch (err: any) {
-          setError("Bulk process interrupted");
+          setError(err.message || "Bulk process interrupted");
         } finally {
           setUploading(false);
         }
@@ -75,7 +71,7 @@ export const BulkJobUploadEnterprise = ({ userId, onComplete }: { userId: string
         <label className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Select Target Personnel</label>
         <Select value={targetUserId} onChange={e => setTargetUserId(e.target.value)} className="h-16 border-white/5 bg-black">
           <option value={userId}>Self (Organization Record)</option>
-          {agent?.managedUsers?.map(u => (
+          {agent?.managedUsers?.filter(u => !u.inviteStatus).map(u => (
             <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
           ))}
         </Select>

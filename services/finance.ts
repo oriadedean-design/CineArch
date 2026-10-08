@@ -2,6 +2,7 @@
 import { supabase } from './supabase';
 import { FinanceTransaction, FinanceStats, TransactionType } from '../types';
 import { isDemoMode, DEMO_TRANSACTIONS, DEMO_STATS } from './demo';
+import type { Tables } from './database.types';
 
 /**
  * MASTER FISCAL PARAMETERS (CANADIAN COMPLIANCE)
@@ -69,7 +70,7 @@ const applyRules = (type: string, category: string, amountBeforeTax: number) => 
   return { deductible, addBack, tags };
 };
 
-const rowToTransaction = (row: any): FinanceTransaction => ({
+const rowToTransaction = (row: Tables<'finance_transactions'>): FinanceTransaction => ({
   id: row.id,
   userId: row.user_id,
   jobId: row.job_id,
@@ -87,13 +88,15 @@ const rowToTransaction = (row: any): FinanceTransaction => ({
 });
 
 export const financeApi = {
-  list: async (userId: string): Promise<FinanceTransaction[]> => {
+  // Most recent transactions first, paged (totals come from getStats, not this list)
+  list: async (userId: string, { limit = 200, offset = 0 } = {}): Promise<FinanceTransaction[]> => {
     if (isDemoMode()) return DEMO_TRANSACTIONS;
     const { data, error } = await supabase
       .from('finance_transactions')
       .select('*')
       .eq('user_id', userId)
-      .order('date_incurred', { ascending: false });
+      .order('date_incurred', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) throw error;
     return (data || []).map(rowToTransaction);
@@ -133,35 +136,26 @@ export const financeApi = {
     if (error) throw error;
   },
 
-  getStats: async (userId: string): Promise<FinanceStats & { estCPP: number; estIncomeTax: number }> => {
+  // Year-to-date totals, aggregated in Postgres (see finance_stats RPC)
+  getStats: async (userId: string, year?: number): Promise<FinanceStats & { estCPP: number; estIncomeTax: number }> => {
     if (isDemoMode()) return DEMO_STATS;
-    const transactions = await financeApi.list(userId);
+    const { data, error } = await supabase.rpc('finance_stats', { p_user_id: userId, p_year: year });
+    if (error) throw error;
+    const t = data?.[0];
 
-    const grossIncome = transactions
-      .filter(t => t.type === 'INCOME')
-      .reduce((sum, t) => sum + t.amountBeforeTax, 0);
-
-    const deductibleExpenses = transactions
-      .filter(t => t.type === 'EXPENSE')
-      .reduce((sum, t) => sum + (t.deductibleAmount ?? t.amountBeforeTax), 0);
-
+    const grossIncome = Number(t?.gross_income ?? 0);
+    const deductibleExpenses = Number(t?.deductible_expenses ?? 0);
+    const gstCollected = Number(t?.gst_collected ?? 0);
+    const gstPaid = Number(t?.gst_paid ?? 0);
     const netIncome = grossIncome - deductibleExpenses;
-
-    const gstCollected = transactions
-      .filter(t => t.type === 'INCOME')
-      .reduce((sum, t) => sum + t.taxAmount, 0);
-
-    const gstPaid = transactions
-      .filter(t => t.type === 'EXPENSE')
-      .reduce((sum, t) => sum + t.taxAmount, 0);
 
     const pensionable = Math.max(0, netIncome - CA_FISCAL_CONFIG.CPP_EXEMPTION);
     const estCPP = pensionable * CA_FISCAL_CONFIG.SELF_EMPLOYED_CPP_RATE;
-    const estIncomeTax = netIncome * CA_FISCAL_CONFIG.PROJECTED_INCOME_TAX_RATE;
+    const estIncomeTax = Math.max(0, netIncome) * CA_FISCAL_CONFIG.PROJECTED_INCOME_TAX_RATE;
 
     return {
       grossIncomeYTD: grossIncome,
-      totalExpensesYTD: transactions.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.amountBeforeTax, 0),
+      totalExpensesYTD: Number(t?.total_expenses ?? 0),
       deductibleExpensesYTD: deductibleExpenses,
       netIncomeYTD: netIncome,
       gstCollected,

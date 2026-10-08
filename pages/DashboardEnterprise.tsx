@@ -24,13 +24,14 @@ export const DashboardEnterprise = () => {
       setUser(u);
       if (!u?.managedUsers) return;
       
-      const data: RosterMember[] = await Promise.all(u.managedUsers.map(async (client) => {
-        // Use the restricted client job list (simulates agency_jobs_view)
-        const jobs = await api.jobs.listForClient(client.id);
-        const tracks = await api.tracking.get(client.id);
-        return { client, jobs, tracks };
-      }));
-      setRoster(data);
+      const clients = u.managedUsers.filter(c => !c.inviteStatus);
+      const ids = clients.map(c => c.id);
+      const [jobs, tracks] = await Promise.all([api.jobs.listForClients(ids), api.tracking.getForClients(ids)]);
+      setRoster(clients.map(client => ({
+        client,
+        jobs: jobs.filter(j => j.userId === client.id),
+        tracks: tracks.filter(t => t.userId === client.id),
+      })));
     };
     
     loadRoster();
