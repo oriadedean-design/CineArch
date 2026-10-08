@@ -14,7 +14,6 @@ interface Props {
 const { title, description, crumbs = [], jsonLd = [], noindex = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
-const gscToken = import.meta.env.PUBLIC_GSC_VERIFICATION;
 const fullTitle = title === 'CineArch' ? title : `${title} | CineArch`;
 
 const structured = [
@@ -42,7 +41,6 @@ const structured = [
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex" />}
-    {gscToken && <meta name="google-site-verification" content={gscToken} />}
     <meta name="theme-color" content="#000000" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
