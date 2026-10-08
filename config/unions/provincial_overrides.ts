@@ -1,15 +1,18 @@
 
-import { CanadianProvince } from '../../types';
+import { CanadianProvince, type OntarioRegion } from '../../types';
 
-interface OverrideRule {
+export interface OverrideRule {
   roles?: string[];
   departments?: string[];
   assignedUnionId: string;
+  // A match settles the role: no other rules or overlap injectors apply.
+  // For titles that contain another department's keyword ("Compliance Driver").
+  exclusive?: boolean;
 }
 
 export const PROVINCIAL_OVERRIDES: Partial<Record<CanadianProvince, OverrideRule[]>> = {
   [CanadianProvince.BC]: [
-    { roles: ['Actor', 'Stunt', 'Background'], assignedUnionId: 'u-ubcp' },
+    { roles: ['Actor', 'Stunt', 'Background Performer'], assignedUnionId: 'u-ubcp' },
     { roles: ['Script Supervisor', 'Coordinator', 'Grip', 'Electric', 'Sound', 'Props', 'Set Dec', 'Costume', 'Wardrobe', 'Construction', 'Paint', 'Hair', 'Makeup', 'Craft', 'First Aid'], assignedUnionId: 'u-891' },
     { roles: ['DOP / Operator', 'DOP', 'Assistant (1st/2nd)', 'Assistant Camera', 'Still Photographer'], assignedUnionId: 'u-669' },
     { roles: ['Driver', 'Transportation', 'Coordinator / Driver', 'Catering', 'Security'], assignedUnionId: 'u-t155' },
@@ -30,6 +33,9 @@ export const PROVINCIAL_OVERRIDES: Partial<Record<CanadianProvince, OverrideRule
     { departments: ['First Aid', 'Craft', 'Art Dept', 'Construction', 'Costume', 'Greens', 'Grip', 'Hair', 'Electric', 'Lighting', 'Makeup', 'Paint', 'Props', 'Set Dec', 'Production Sound', 'Special Effects', 'Transportation', 'Script'], assignedUnionId: 'u-856' }
   ],
   [CanadianProvince.ON]: [
+    { roles: ['Compliance Driver', 'Honeywagon'], assignedUnionId: 'u-411', exclusive: true },
+    // DGC Ontario covers Picture Editing and Sound Editing; keeps "Sound Editor" out of the sound-crew rules.
+    { roles: ['Editor'], assignedUnionId: 'u-dgc', exclusive: true },
     { roles: ['DOP / Operator', 'DOP', 'Assistant (1st/2nd)', 'Assistant Camera', 'Still Photographer', 'Publicity'], assignedUnionId: 'u-667' },
     { roles: ['Coordinator', 'Coordinator / Driver', 'Server', 'Craft Service'], assignedUnionId: 'u-411' },
     { roles: ['Script Supervisor'], assignedUnionId: 'u-873' },
@@ -58,3 +64,16 @@ PROVINCIAL_OVERRIDES[CanadianProvince.NU] = WESTERN_CAMERA;
 PROVINCIAL_OVERRIDES[CanadianProvince.NB] = PROVINCIAL_OVERRIDES[CanadianProvince.NS];
 PROVINCIAL_OVERRIDES[CanadianProvince.PE] = PROVINCIAL_OVERRIDES[CanadianProvince.NS];
 PROVINCIAL_OVERRIDES[CanadianProvince.NL] = PROVINCIAL_OVERRIDES[CanadianProvince.NS];
+
+// Ontario regions with their own technical local. Checked before the
+// province-wide rules; a match replaces the Toronto-area locals (873, and
+// the NABET / Teamsters overlap) but leaves Ontario-wide locals (411, 667) alone.
+const IATSE_634_DEPARTMENTS = ['Construction', 'Costume', 'Wardrobe', 'Electric', 'Lighting', 'Greens', 'Grip', 'Hair', 'Makeup', 'Picture Vehicle', 'Script', 'Set Dec', 'Production Sound', 'Special Effects', 'Transportation'];
+
+export const ONTARIO_REGIONAL_OVERRIDES: Partial<Record<OntarioRegion, OverrideRule[]>> = {
+  NORTHERN_ON: [
+    { roles: ['Script Supervisor', 'Driver', 'Transportation'], assignedUnionId: 'u-634' },
+    { departments: IATSE_634_DEPARTMENTS, assignedUnionId: 'u-634' }
+  ]
+};
+ONTARIO_REGIONAL_OVERRIDES.OTTAWA = ONTARIO_REGIONAL_OVERRIDES.NORTHERN_ON;

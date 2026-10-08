@@ -1,6 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { ROLES, PROVINCES, unionsFor } from '../../lib/guide';
+import { ROLES, PROVINCES, areasFor, unionsFor } from '../../lib/guide';
 import type { GuideRole } from '../../lib/guide';
 
 export function getStaticPaths() {
@@ -8,7 +8,8 @@ export function getStaticPaths() {
 }
 
 const { role } = Astro.props as { role: GuideRole };
-const byProvince = PROVINCES.map(province => ({ province, unions: unionsFor(province, role) }));
+const byProvince = PROVINCES.flatMap(province =>
+  areasFor(province).map(area => ({ province, area, unions: unionsFor(province, role, area) })));
 const covered = byProvince.filter(p => p.unions.length > 0);
 const sample = covered.slice(0, 3).map(p => `${p.unions[0].name} in ${p.province.name}`).join(', ');
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
@@ -25,14 +26,14 @@ const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
     '@context': 'https://schema.org',
     '@type': 'Occupation',
     name: role.name,
-    description: role.description,
+    ...(role.description ? { description: role.description } : {}),
     occupationalCategory: role.department,
     occupationLocation: { '@type': 'Country', name: 'Canada' },
   }]}
 >
   <p class="eyebrow">{role.department}</p>
   <h1>{role.name}</h1>
-  <p class="lede">{role.description}</p>
+  <p class="lede">{role.description || <span class="muted">Description coming soon.</span>}</p>
 
   {role.requirements.length > 0 && (
     <>
@@ -46,9 +47,12 @@ const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
     <table>
       <thead><tr><th scope="col">Province / territory</th><th scope="col">Union</th></tr></thead>
       <tbody>
-        {byProvince.map(({ province, unions }) => (
+        {byProvince.map(({ province, area, unions }) => (
           <tr>
-            <td><a href={`/provinces/${province.slug}/`}>{province.name}</a></td>
+            <td>
+              <a href={`/provinces/${province.slug}/`}>{province.name}</a>{area.label && <span class="muted"> · {area.label}</span>}
+              {area.note && <span class="muted"> (unconfirmed)</span>}
+            </td>
             <td>
               {unions.length === 0 ? <span class="muted">Varies</span> : unions.map((u, i) => (
                 <>{i > 0 && <span class="alt"> or </span>}<a href={`/unions/${u.slug}/`}>{u.name}</a></>

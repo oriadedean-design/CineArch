@@ -163,7 +163,7 @@ export const Manual = () => {
                           </div>
                           <div className="text-left md:text-right space-y-6 border-l md:border-l-0 md:border-r border-white/5 pl-8 md:pr-8">
                              <p className="text-[11px] font-black uppercase text-white/20 tracking-[0.5em] italic">Entrance Magnitude</p>
-                             <p className="text-6xl font-serif italic text-white leading-none tracking-tighter">${u.applicationFee || 0}</p>
+                             <p className="text-6xl font-serif italic text-white leading-none tracking-tighter">{u.applicationFee != null ? `$${u.applicationFee}` : <span className="text-xl">Application cost not yet added</span>}</p>
                              {u.residencyRule && (
                                <p className="text-xs font-black uppercase text-white/30 tracking-widest italic">{u.residencyRule}</p>
                              )}

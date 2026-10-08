@@ -3,7 +3,8 @@ import React from 'react';
 import { Heading, Text, Button, Card, Badge } from '../components/ui';
 import { ArrowRight, Shield, Target, FileText, ChevronRight, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PLANS, UNIONS } from '../types';
+import { PLANS } from '../types';
+import { getAllUnions } from '../services/union_engine';
 import { clsx } from 'clsx';
 import { enterDemoMode } from '../services/demo';
 
@@ -55,7 +56,7 @@ export const Welcome = ({ onEnter }: { onEnter: (asAgent?: boolean) => void }) =
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1">
-               {UNIONS.map(u => (
+               {getAllUnions().map(u => (
                   <div key={u.id} className="p-6 md:p-8 glass-ui flex flex-col justify-between gap-8 group hover:border-accent/30 transition-all min-h-[200px] md:min-h-[240px]">
                      <div className="space-y-3">
                         <span className="text-[10px] font-black uppercase text-accent tracking-[0.2em]">{u.name}</span>
@@ -63,7 +64,7 @@ export const Welcome = ({ onEnter }: { onEnter: (asAgent?: boolean) => void }) =
                      </div>
                      <div className="space-y-1">
                         <p className="text-[9px] font-black uppercase text-white/10 tracking-widest">Entry Protocol</p>
-                        <p className="text-xs text-white/40 font-serif italic">${u.applicationFee || 0} Initiation</p>
+                        <p className="text-xs text-white/40 font-serif italic">{u.applicationFee != null ? `$${u.applicationFee} Initiation` : 'Application cost not yet added'}</p>
                      </div>
                   </div>
                ))}

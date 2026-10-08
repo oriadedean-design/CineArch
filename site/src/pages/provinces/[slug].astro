@@ -1,6 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { PROVINCES, DEPARTMENTS, unionsFor, unionsInProvince } from '../../lib/guide';
+import { PROVINCES, DEPARTMENTS, areasFor, unionsFor, unionsInProvince } from '../../lib/guide';
 import type { GuideProvince } from '../../lib/guide';
 
 export function getStaticPaths() {
@@ -9,11 +9,13 @@ export function getStaticPaths() {
 
 const { province } = Astro.props as { province: GuideProvince };
 const active = unionsInProvince(province);
+const areas = areasFor(province);
 const departments = DEPARTMENTS.map(d => ({
   ...d,
-  rows: d.roles.map(role => ({ role, unions: unionsFor(province, role) })),
+  rows: d.roles.map(role => ({ role, byArea: areas.map(area => unionsFor(province, role, area)) })),
 }));
-const overlaps = departments.flatMap(d => d.rows).filter(r => r.unions.length > 1);
+const overlaps = departments.flatMap(d => d.rows).filter(r => r.byArea.some(u => u.length > 1));
+const notes = areas.flatMap(a => a.note ? [a.note] : []);
 const topNames = active.slice(0, 4).map(a => a.union.name).join(', ');
 ---
 <Base
@@ -39,17 +41,19 @@ const topNames = active.slice(0, 4).map(a => a.union.name).join(', ');
   </div>
 
   <h2>By department</h2>
+  {areas.length > 1 && <p class="muted">{province.name} has different technical locals by region: {areas.map(a => a.label).join(', ')}.</p>}
+  {notes.map(n => <p class="note">{n}</p>)}
   {departments.map(d => (
     <section>
       <h3 id={d.slug}>{d.name}</h3>
       <div class="table-wrap">
         <table>
-          <thead><tr><th scope="col">Role</th><th scope="col">Union</th></tr></thead>
+          <thead><tr><th scope="col">Role</th>{areas.map(a => <th scope="col">{a.label ?? 'Union'}</th>)}</tr></thead>
           <tbody>
-            {d.rows.map(({ role, unions }) => (
+            {d.rows.map(({ role, byArea }) => (
               <tr>
                 <td><a href={`/roles/${role.slug}/`}>{role.name}</a></td>
-                <td>
+                {byArea.map(unions => <td>
                   {unions.length === 0 ? <span class="muted">Non-union / varies</span> : (
                     <>
                       <a href={`/unions/${unions[0].slug}/`}>{unions[0].name}</a>
@@ -60,7 +64,7 @@ const topNames = active.slice(0, 4).map(a => a.union.name).join(', ');
                       )}
                     </>
                   )}
-                </td>
+                </td>)}
               </tr>
             ))}
           </tbody>

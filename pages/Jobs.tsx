@@ -53,14 +53,15 @@ export const JobDetail = () => {
 
   useEffect(() => {
     if (form.province && form.department && form.role) {
-      const suggestions = resolveGuildsForRole(form.province, form.role, form.department);
+      const region = form.province === user?.province ? user?.region : undefined;
+      const suggestions = resolveGuildsForRole(form.province, form.role, form.department, { region });
       setResolvedUnionIds(suggestions);
 
       if (isNew && !form.unionTypeId && form.isUnion && suggestions.length > 0) {
         setForm(prev => ({ ...prev, unionTypeId: suggestions[0] }));
       }
     }
-  }, [form.province, form.department, form.role, isNew, form.isUnion]);
+  }, [form.province, form.department, form.role, isNew, form.isUnion, user?.province, user?.region]);
 
   const handleSave = async () => {
     if (!form.productionName) return alert('System Check: Production Name is required.');

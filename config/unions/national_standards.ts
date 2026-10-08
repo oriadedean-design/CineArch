@@ -52,7 +52,7 @@ export const NATIONAL_ROLE_MAPPING: Record<string, string> = {
   // Performers
   'Actor': 'u-actra',
   'Stunt': 'u-actra',
-  'Background': 'u-actra',
+  'Background Performer': 'u-actra',
 
   // Logistics (Fallbacks)
   'Driver': 'u-t938',
@@ -82,3 +82,11 @@ export const NATIONAL_DEPT_MAPPING: Record<string, string> = {
   'Sound Editing': 'u-dgc',
   'Post Production': 'u-dgc'
 };
+
+// Performer categories ACTRA represents (UBCP/ACTRA in BC). Resolved before
+// any crew rule so titles like "Stunt Coordinator" never reach a crew local.
+export const PERFORMER_ROLES = ['Actor', 'Background Performer', 'Choreographer', 'Dancer', 'Singer', 'Puppeteer', 'Stunt'];
+
+// Writing staff WGC represents. Resolved before crew rules so "Story Editor"
+// isn't read as a picture or sound editor.
+export const WRITER_ROLES = ['Writer', 'Story Editor', 'Story Consultant'];

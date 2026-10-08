@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
-import { User, UserUnionTracking, ResidencyDocument, RESIDENCY_DOC_TYPES, CanadianProvince, UNIONS, Job } from '../types';
+import { User, UserUnionTracking, ResidencyDocument, RESIDENCY_DOC_TYPES, CanadianProvince, Job } from '../types';
+import { findUnion } from '../services/union_engine';
 import { Heading, Text, Button, Input, Select, Badge, Card, ProgressBar } from '../components/ui';
 import { BulkJobUpload } from '../components/BulkJobUpload';
 import { User as UserIcon, Trash2, Upload, Crown, Users, Plus, Zap, Landmark, FolderSync } from 'lucide-react';
@@ -60,7 +61,7 @@ export const Settings = () => {
   };
 
   const handleAddTrack = async () => {
-    const unionMaster = UNIONS.find(u => u.name === newTrack.union);
+    const unionMaster = findUnion(newTrack.union);
     if (!unionMaster || !user) return;
     
     const tier = unionMaster.tiers[newTrack.tierIdx];

@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { api } from '../services/storage';
-import { Job, UNIONS, User } from '../types';
+import { Job, User } from '../types';
+import { findUnion } from '../services/union_engine';
 import { UploadCloud, Users, AlertCircle, FileJson } from 'lucide-react';
 import { Button, Select, Badge } from './ui';
 
@@ -31,6 +32,7 @@ export const BulkJobUploadEnterprise = ({ userId, onComplete }: { userId: string
           const rows = results.data as any[];
           const jobsToInsert = rows.map((row) => {
             const isUnion = row['Is Union?']?.toString().toUpperCase() === 'TRUE';
+            const unionObj = isUnion ? findUnion(row['Union / Guild']) : null;
             return {
               id: `job_ent_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
               userId: targetUserId,
@@ -38,7 +40,8 @@ export const BulkJobUploadEnterprise = ({ userId, onComplete }: { userId: string
               productionName: row['Production Name'] || 'Untitled',
               startDate: row['Start Date'] || new Date().toISOString(),
               isUnion,
-              unionName: isUnion ? row['Union / Guild'] : undefined,
+              unionName: isUnion ? (unionObj?.name ?? row['Union / Guild']) : undefined,
+              unionTypeId: unionObj?.id,
               grossEarnings: parseFloat(row['Gross Earnings']?.replace(/[$,]/g, '') || '0'),
               status: 'CONFIRMED',
               createdAt: new Date().toISOString()

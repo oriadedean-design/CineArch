@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import Papa from 'papaparse';
 import { api } from '../services/storage';
-import { Job, UNIONS } from '../types';
+import { Job } from '../types';
+import { findUnion } from '../services/union_engine';
 import { Upload, AlertCircle, FileSpreadsheet, CheckCircle2 } from 'lucide-react';
 import { Button, Text, Badge } from './ui';
 
@@ -27,7 +28,7 @@ export const BulkJobUploadIndividual = ({ userId, onComplete }: { userId: string
           const jobsToInsert: Job[] = rows.map((row) => {
             const isUnion = row['Is Union?']?.toString().toUpperCase() === 'TRUE';
             const unionName = isUnion ? row['Union / Guild'] : undefined;
-            const unionObj = UNIONS.find(u => u.name === unionName);
+            const unionObj = findUnion(unionName);
 
             return {
               id: `job_indiv_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,

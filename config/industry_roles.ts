@@ -10,7 +10,7 @@ export interface JurisdictionOverride {
 export interface IndustryRole {
   name: string;
   primaryUnion: string;
-  description: string;
+  description?: string;   // omitted = not sourced yet; shown as "Description coming soon"
   departmentCode: string;
   requirements?: string[];
   jurisdictionOverrides?: JurisdictionOverride[];
@@ -72,6 +72,26 @@ export const INDUSTRY_DEPARTMENTS: IndustryDepartment[] = [
         primaryUnion: "IATSE 411",
         departmentCode: "PRO",
         description: "Manages office operations, travel, insurance, and vendor relations.",
+      },
+      {
+        name: "1st Assistant Production Coordinator (1st APC)",
+        primaryUnion: "IATSE 411",
+        departmentCode: "PRO",
+      },
+      {
+        name: "2nd Assistant Production Coordinator (2nd APC)",
+        primaryUnion: "IATSE 411",
+        departmentCode: "PRO",
+      },
+      {
+        name: "Travel Coordinator",
+        primaryUnion: "IATSE 411",
+        departmentCode: "PRO",
+      },
+      {
+        name: "Script Coordinator",
+        primaryUnion: "IATSE 411",
+        departmentCode: "PRO",
       }
     ]
   },
@@ -471,6 +491,11 @@ export const INDUSTRY_DEPARTMENTS: IndustryDepartment[] = [
         primaryUnion: "Teamsters", 
         departmentCode: "TRA",
         description: "Responsible for movement of assets and personnel across locations.",
+      },
+      {
+        name: "Honeywagon Operator",
+        primaryUnion: "IATSE 411",
+        departmentCode: "TRA",
       }
     ]
   },
@@ -496,6 +521,31 @@ export const INDUSTRY_DEPARTMENTS: IndustryDepartment[] = [
         primaryUnion: "ACTRA / UBCP",
         departmentCode: "PERF",
         description: "Appears on camera in non-speaking roles to populate scenes.",
+      },
+      {
+        name: "Stunt Coordinator",
+        primaryUnion: "ACTRA / UBCP",
+        departmentCode: "PERF",
+      },
+      {
+        name: "Choreographer",
+        primaryUnion: "ACTRA / UBCP",
+        departmentCode: "PERF",
+      },
+      {
+        name: "Dancer",
+        primaryUnion: "ACTRA / UBCP",
+        departmentCode: "PERF",
+      },
+      {
+        name: "Singer",
+        primaryUnion: "ACTRA / UBCP",
+        departmentCode: "PERF",
+      },
+      {
+        name: "Puppeteer",
+        primaryUnion: "ACTRA / UBCP",
+        departmentCode: "PERF",
       }
     ]
   },
@@ -515,6 +565,31 @@ export const INDUSTRY_DEPARTMENTS: IndustryDepartment[] = [
         primaryUnion: "WGC",
         departmentCode: "WRI",
         description: "Works with the writing team to develop, shape and revise scripts across a series.",
+      },
+      {
+        name: "Story Consultant",
+        primaryUnion: "WGC",
+        departmentCode: "WRI",
+      },
+      {
+        name: "Program Writer",
+        primaryUnion: "WGC",
+        departmentCode: "WRI",
+      },
+      {
+        name: "Continuity Writer",
+        primaryUnion: "WGC",
+        departmentCode: "WRI",
+      },
+      {
+        name: "Contributing Writer",
+        primaryUnion: "WGC",
+        departmentCode: "WRI",
+      },
+      {
+        name: "Show Writer",
+        primaryUnion: "WGC",
+        departmentCode: "WRI",
       }
     ]
   },
@@ -616,6 +691,21 @@ export const INDUSTRY_DEPARTMENTS: IndustryDepartment[] = [
         primaryUnion: "IATSE",
         departmentCode: "FACS",
         description: "Provides on-set first aid and medical coverage; requires current first aid certification.",
+      },
+      {
+        name: "Assistant Craft Service",
+        primaryUnion: "IATSE 411",
+        departmentCode: "FACS",
+      },
+      {
+        name: "Background Craft Service",
+        primaryUnion: "IATSE 411",
+        departmentCode: "FACS",
+      },
+      {
+        name: "Craftservice Compliance Driver",
+        primaryUnion: "IATSE 411",
+        departmentCode: "FACS",
       }
     ]
   }

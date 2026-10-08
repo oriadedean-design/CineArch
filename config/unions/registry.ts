@@ -10,7 +10,8 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
     defaultDuesRate: 0.0225,
     applicationFee: 75,
     memberBenefits: ['Health Insurance', 'Retirement Plan', 'Collective Bargaining'],
-    tiers: [{ name: 'Full Member', targetType: 'CREDITS', targetValue: 3, description: '3 Qualified Credits.' }]
+    tiers: [{ name: 'Full Member', targetType: 'CREDITS', targetValue: 3, description: '3 Qualified Credits.' }],
+    departments: ['Actors', 'Background Performers', 'Choreographers', 'Dancers', 'Singers', 'Puppeteers', 'Stunt Coordinators', 'Stunt Performers']
   },
   'u-ubcp': {
     id: 'u-ubcp',
@@ -27,8 +28,10 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
     name: 'DGC',
     description: 'Directors Guild of Canada. Creative authority for Directors, ADs, PMs, Locations, and Editors.',
     defaultDuesRate: 0.02,
-    applicationFee: 500,
     memberBenefits: ['National Pension', 'Health & Welfare'],
+    departments: ['Directors', 'Production', 'Assistant Directors', 'Locations', 'Art', 'Picture Editing', 'Sound Editing', 'Post Production', 'Accounting'],
+    contactEmail: 'membership@dgcontario.ca',
+    jurisdictionalNotes: 'DGC works through district councils. The membership contact listed here is DGC Ontario; other councils have their own.',
     tiers: [{ name: 'Member', targetType: 'DAYS', targetValue: 300, description: 'National standard.' }]
   },
   'u-wgc': {
@@ -37,16 +40,43 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
     description: 'Writers Guild of Canada. Authority for screenwriters and story editors.',
     defaultDuesRate: 0.02,
     applicationFee: 350,
-    tiers: [{ name: 'Full Member', targetType: 'CREDITS', targetValue: 1, description: 'Produced Credit.' }]
+    tiers: [{ name: 'Full Member', targetType: 'CREDITS', targetValue: 1, description: 'Produced Credit.' }],
+    departments: ['Writers', 'Story Editors', 'Story Consultants', 'Program Writers', 'Continuity Writers', 'Contributing Writers', 'Show Writers']
   },
   'u-873': {
     id: 'u-873',
     regions: [P.ON],
+    ontarioRegions: ['TORONTO'],
     name: 'IATSE 873',
-    description: 'Toronto technical local. Jurisdiction for Script Supervisors and primary Tech Depts in the GTA.',
+    description: 'Toronto area technical local. Jurisdiction for Script Supervisors and primary Tech Depts in the GTA.',
     defaultDuesRate: 0.045,
     applicationFee: 200,
-    tiers: [{ name: 'Member', targetType: 'DAYS', targetValue: 90, description: 'Toronto Tech Standard.' }]
+    tiers: [{ name: 'Member', targetType: 'DAYS', targetValue: 90, description: 'Toronto Tech Standard.' }],
+    departments: ['Construction', 'Costume', 'Craftservice', 'Grip', 'Hair', 'Lighting', 'Makeup', 'Props / Set Dec / Greens', 'Scenic', 'Script Supervisor', 'Sound / Boom', 'SPFX', 'Transportation']
+  },
+  'u-634': {
+    id: 'u-634',
+    regions: [P.ON],
+    ontarioRegions: ['NORTHERN_ON', 'OTTAWA'],
+    name: 'IATSE 634',
+    description: 'Northern Ontario technical local, covering technicians in Northern Ontario and Ottawa.',
+    applicationFee: 300,
+    applicationFeeNotes: '$100 international fee (non-refundable) plus $200 local fee (refunded if the application is denied).',
+    residencyRule: '18 months of residency in the jurisdiction.',
+    tiers: [{ name: 'Member', targetType: 'DAYS', targetValue: 90, description: 'As an accepted permittee: 90 days or 720 hours in one department under a collective agreement.' }],
+    joiningRequirements: [
+      '18 months of residency in the jurisdiction',
+      'Accepted as a permittee',
+      '90 days or 720 hours in one department under a collective agreement',
+      '3 reference letters from IATSE members',
+      'Resume and photo',
+      'Proof of residency',
+      'Relevant licences and certifications',
+      'Transport: AZ or DZ licence and a driver\'s abstract',
+      'Hair: hairstyling licence'
+    ],
+    departments: ['Construction', 'Costume', 'Electric', 'Greens', 'Grip', 'Hair', 'Makeup', 'Picture Vehicle', 'Script', 'Set Decorating', 'Sound', 'SPFX', 'Transport'],
+    needsVerification: ['Ottawa jurisdiction']
   },
   'u-nabet': {
     id: 'u-nabet',
@@ -163,9 +193,23 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
     id: 'u-411',
     regions: [P.ON],
     name: 'IATSE 411',
-    description: 'Ontario specialized local for Coordinators and Craft Service.',
+    description: 'Ontario-wide local for the Production Office and Craftservice caucuses and Honeywagon Operators.',
     defaultDuesRate: 0.035,
-    applicationFee: 150,
-    tiers: [{ name: 'Member', targetType: 'DAYS', targetValue: 120, description: 'Ontario Standard.' }]
+    tiers: [{ name: 'Member', targetType: 'DAYS', targetValue: 120, description: 'Ontario Standard.' }],
+    departments: [
+      'Production Office: Production Coordinator, 1st Assistant Production Coordinator, 2nd Assistant Production Coordinator, Travel Coordinator, Script Coordinator, other coordinator positions',
+      'Craftservice: Key, Assistant, Background (14hr / 6hr), Compliance Driver (6hr)',
+      'Honeywagon Operator'
+    ],
+    joiningRequirements: [
+      'All caucuses: proof of eligibility to work in Canada',
+      'Craftservice: Food Handler certificate',
+      'Craftservice: WHMIS certificate',
+      'Craftservice: Worker Health and Safety Awareness certificate',
+      'Craftservice: orientation',
+      'Craftservice: resume with a letter of intent',
+      'Craftservice: 3 references',
+      'Craftservice: Callsheet / Paperwork seminar before full membership'
+    ]
   }
 };

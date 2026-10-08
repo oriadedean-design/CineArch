@@ -40,8 +40,8 @@ const description = [
     {union.tiers.map(t => (
       <div><dt>{t.name}</dt><dd>{formatTier(t)}</dd></div>
     ))}
-    {union.applicationFee != null && <div><dt>Application fee</dt><dd>${union.applicationFee.toLocaleString('en-CA')}</dd></div>}
-    <div><dt>Typical dues</dt><dd>{formatPercent(union.defaultDuesRate)} of earnings</dd></div>
+    <div><dt>Application fee</dt><dd>{union.applicationFee != null ? `$${union.applicationFee.toLocaleString('en-CA')}` : 'Not yet added'}</dd></div>
+    {union.defaultDuesRate != null && <div><dt>Typical dues</dt><dd>{formatPercent(union.defaultDuesRate)} of earnings</dd></div>}
     <div><dt>Operates in</dt><dd>{union.regions ? (union.regions.length > 3 ? `${union.regions.length} provinces & territories` : union.regions.join(', ')) : 'Across Canada'}</dd></div>
   </dl>
 
@@ -57,7 +57,11 @@ const description = [
       <ul>{union.joiningRequirements.map(req => <li>{req}</li>)}</ul>
     </>
   )}
+  {union.applicationFeeNotes && <p class="note"><strong>Application fee:</strong> {union.applicationFeeNotes}</p>}
   {union.residencyRule && <p class="note"><strong>Residency:</strong> {union.residencyRule}</p>}
+  {union.needsVerification && union.needsVerification.length > 0 && (
+    <p class="note"><strong>Awaiting confirmation:</strong> {union.needsVerification.join('; ')}. Check with the union before relying on it.</p>
+  )}
   {union.jurisdictionalNotes && <p class="note">{union.jurisdictionalNotes}</p>}
 
   {union.applicationProcess && union.applicationProcess.length > 0 && (
@@ -108,9 +112,9 @@ const description = [
   {coverage.length > 0 && (
     <>
       <h2>Where {union.name} has jurisdiction</h2>
-      {coverage.map(({ province, roles }) => (
+      {coverage.map(({ province, areas, roles }) => (
         <>
-          <h3><a href={`/provinces/${province.slug}/`}>{province.name}</a></h3>
+          <h3><a href={`/provinces/${province.slug}/`}>{province.name}</a>{areas.length > 0 && areas.length < 3 && <span class="muted"> · {areas.join(', ')}</span>}</h3>
           <ul class="chips">
             {roles.map(r => <li><a href={`/roles/${r.slug}/`}>{r.name}</a></li>)}
           </ul>
