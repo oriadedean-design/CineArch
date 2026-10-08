@@ -548,6 +548,8 @@ export type Database = {
         }[]
       }
       is_agent: { Args: never; Returns: boolean }
+      union_engine_snapshot: { Args: never; Returns: Json }
+      union_engine_version: { Args: never; Returns: number }
       is_agent_of: { Args: { p_client: string }; Returns: boolean }
       leave_agency: { Args: never; Returns: undefined }
       my_agency: {

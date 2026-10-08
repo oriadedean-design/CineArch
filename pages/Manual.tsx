@@ -2,8 +2,7 @@
 import { useState, useMemo } from 'react';
 import { Heading, Badge, Input, Card, Text, Button } from '../components/ui';
 import { CanadianProvince } from '../types';
-import { getAllUnions, resolveGuildsForRole } from '../services/union_engine';
-import { INDUSTRY_DEPARTMENTS } from '../config/industry_roles';
+import { getAllUnions, resolveGuildsForRole, getDepartments } from '../services/union_engine';
 import { Search, Shield, ChevronRight, Mail, Landmark, Info, MapPin, Briefcase, LayoutGrid, BookOpen, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -20,8 +19,8 @@ export const Manual = () => {
   }, [search]);
 
   const filteredDepartments = useMemo(() => {
-    if (!search) return INDUSTRY_DEPARTMENTS;
-    return INDUSTRY_DEPARTMENTS.map(dept => ({
+    if (!search) return getDepartments();
+    return getDepartments().map(dept => ({
       ...dept,
       roles: dept.roles.filter(role => 
         role.name.toLowerCase().includes(search.toLowerCase()) || 

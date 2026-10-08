@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
 import { Job, User } from '../types';
-import { resolveGuildsForRole, getUnionSpec, getAllUnions } from '../services/union_engine';
-import { INDUSTRY_DEPARTMENTS } from '../config/industry_roles';
+import { resolveGuildsForRole, getUnionSpec, getAllUnions, getDepartments } from '../services/union_engine';
 import { Heading, Text, Button, Input, Select, Badge, Card } from '../components/ui';
 import { ArrowLeft, ShieldCheck, Zap, Layers, Trash2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -94,7 +93,7 @@ export const JobDetail = () => {
     }
   };
 
-  const allRoles = INDUSTRY_DEPARTMENTS.flatMap(d => d.roles.map(r => ({ ...r, dept: d.name })));
+  const allRoles = getDepartments().flatMap(d => d.roles.map(r => ({ ...r, dept: d.name })));
 
   return (
     <div className="max-w-4xl mx-auto space-y-12 md:space-y-24 animate-in fade-in duration-700">
@@ -172,7 +171,7 @@ export const JobDetail = () => {
                 const roleObj = allRoles.find(r => r.name === roleName);
                 setForm({...form, role: roleName, department: roleObj?.dept || form.department});
               }} className="h-20 text-xl font-serif italic">
-                {INDUSTRY_DEPARTMENTS.map(dept => (
+                {getDepartments().map(dept => (
                   <optgroup key={dept.name} label={dept.name} className="bg-black text-accent uppercase tracking-widest font-black py-4">
                     {dept.roles.map(r => <option key={r.name} value={r.name} className="bg-black text-white">{r.name}</option>)}
                   </optgroup>

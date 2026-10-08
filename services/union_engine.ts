@@ -1,156 +1,265 @@
-import { CanadianProvince, type OntarioRegion } from '../types';
-import { NATIONAL_ROLE_MAPPING, NATIONAL_DEPT_MAPPING, PERFORMER_ROLES, WRITER_ROLES } from '../config/unions/national_standards';
-import { PROVINCIAL_OVERRIDES, ONTARIO_REGIONAL_OVERRIDES, type OverrideRule } from '../config/unions/provincial_overrides';
-import { UNION_REGISTRY } from '../config/unions/registry';
+import { CanadianProvince, type OntarioRegion, type UnionType, type UnionTier } from '../types';
 
-// The single union resolver. The app (onboarding, job logging, field manual)
-// and the public guide both go through here.
+// The union engine. Its data lives in Supabase (unions, union_jurisdictions,
+// union_tiers, union_requirements, union_departments, departments, roles,
+// role_coverage, department_coverage, rate_schedules, rate_lines) and is
+// edited there. This module holds the latest snapshot in memory and answers
+// lookups synchronously. The app loads it via services/engine_loader.ts,
+// the public guide at build time.
 
-export interface ResolveOptions {
-  // The app always wants a suggestion; the public guide must not publish a guess.
-  fallback?: boolean;
-  // Ontario sub-region. Northern Ontario and Ottawa have their own technical local.
-  region?: string;
+// ── Snapshot shape (union_engine_snapshot()) ────────────────
+
+// [role_or_department_id, province, region, union_id, relationship, notes]
+type CoverageTuple = [string, string, string | null, string, 'primary' | 'shared', string | null];
+
+interface SnapshotUnion {
+  id: string;
+  name: string;
+  scope: string | null;
+  description: string;
+  website: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  applicationFee: number | null;
+  applicationFeeNotes: string | null;
+  duesRate: number | null;
+  duesNotes: string | null;
+  residencyRule: string | null;
+  jurisdictionalNotes: string | null;
+  memberBenefits: string[];
+  needsVerification: string[];
+  sourceUrls: string[];
+  lastVerified: string | null;
+  jurisdictions: UnionJurisdiction[];
+  tiers: UnionTier[];
+  requirements: UnionRequirement[];
+  departments: string[];
 }
 
-const FALLBACK_UNION = 'u-873';
+export interface UnionJurisdiction {
+  province: string;
+  region: OntarioRegion | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  notes: string | null;
+  needsVerification: boolean;
+}
 
-const matchesRole = (rule: OverrideRule, r: string) => !!rule.roles?.some(t => r.includes(t.toLowerCase()));
-const matchesDept = (rule: OverrideRule, d: string) => !!rule.departments?.some(t => d.includes(t.toLowerCase()));
+export interface UnionRequirement {
+  kind: 'requirement' | 'application_step';
+  province: string | null;
+  caucus: string | null;
+  text: string;
+}
 
-// Applies role rules, then (only if none matched) department rules.
-const applyRules = (rules: OverrideRule[], r: string, d: string): string[] => {
-  const byRole = rules.filter(rule => matchesRole(rule, r));
-  const matched = byRole.length > 0 ? byRole : rules.filter(rule => matchesDept(rule, d));
-  return matched.map(rule => rule.assignedUnionId);
+export interface IndustryRole {
+  id: string;
+  name: string;
+  code?: string;
+  description?: string;   // omitted = "Description coming soon"
+  requirements?: string[];
+  aliases?: string[];
+  isTrainee?: boolean;
+}
+
+export interface IndustryDepartment {
+  id: string;
+  name: string;
+  code?: string;
+  description: string;
+  roles: IndustryRole[];
+}
+
+export interface RateRow { title: string; rates: (number | null)[] }
+export interface RateSection { department: string; note?: string; rows: RateRow[] }
+export interface RateSchedule {
+  id: string;
+  unionId: string;
+  title: string;
+  effectiveFrom: string;
+  effectiveTo: string;
+  columns: string[];
+  rateUnit: string;
+  sourceUrl?: string;
+  sections: RateSection[];
+}
+
+export interface EngineSnapshot {
+  version: number;
+  unions: SnapshotUnion[];
+  departments: { id: string; name: string; code: string | null; description: string | null; roles: { id: string; name: string; code: string | null; description: string | null; requirements: string[]; aliases: string[]; isTrainee: boolean }[] }[];
+  roleCoverage: CoverageTuple[];
+  departmentCoverage: CoverageTuple[];
+  rateSchedules: { id: string; unionId: string; title: string; effectiveFrom: string; effectiveTo: string | null; columns: string[]; rateUnit: string; sourceUrl: string | null; notes: string | null;
+    lines: { department: string; departmentNote: string | null; position: string; rates: (number | null)[] }[] }[];
+}
+
+export interface EngineUnion extends UnionType {
+  scope?: string;
+  website?: string;
+  duesNotes?: string;
+  sourceUrls: string[];
+  lastVerified?: string;
+  jurisdictions: UnionJurisdiction[];
+  requirements: UnionRequirement[];
+}
+
+export interface Coverage {
+  unionId: string;
+  relationship: 'primary' | 'shared';
+  notes: string | null;
+}
+
+// ── State ───────────────────────────────────────────────────
+
+const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+const opt = <T,>(v: T | null | undefined): T | undefined => v ?? undefined;
+
+const requirementLabel = (q: UnionRequirement) =>
+  [q.province, q.caucus].filter(Boolean).join(', ') ? `${[q.province, q.caucus].filter(Boolean).join(', ')}: ${q.text}` : q.text;
+
+const toUnion = (u: SnapshotUnion): EngineUnion => {
+  const provinces = [...new Set(u.jurisdictions.map(j => j.province))] as CanadianProvince[];
+  const ontarioRegions = u.jurisdictions.filter(j => j.province === CanadianProvince.ON && j.region).map(j => j.region as OntarioRegion);
+  return {
+    id: u.id,
+    name: u.name,
+    description: u.description,
+    defaultDuesRate: opt(u.duesRate),
+    tiers: u.tiers.map(t => ({ ...t, description: t.description ?? '' })),
+    joiningRequirements: u.requirements.filter(q => q.kind === 'requirement').map(requirementLabel),
+    applicationProcess: u.requirements.filter(q => q.kind === 'application_step').map(requirementLabel),
+    memberBenefits: u.memberBenefits,
+    residencyRule: opt(u.residencyRule),
+    applicationFee: opt(u.applicationFee),
+    applicationFeeNotes: opt(u.applicationFeeNotes),
+    contactEmail: opt(u.contactEmail),
+    contactPhone: opt(u.contactPhone),
+    jurisdictionalNotes: opt(u.jurisdictionalNotes),
+    regions: provinces,
+    ontarioRegions: ontarioRegions.length > 0 ? ontarioRegions : undefined,
+    departments: u.departments,
+    needsVerification: u.needsVerification,
+    scope: opt(u.scope),
+    website: opt(u.website),
+    duesNotes: opt(u.duesNotes),
+    sourceUrls: u.sourceUrls,
+    lastVerified: opt(u.lastVerified),
+    jurisdictions: u.jurisdictions,
+    requirements: u.requirements,
+  };
 };
 
-const operatesIn = (unionId: string, prov: CanadianProvince, region?: OntarioRegion) => {
-  const spec = UNION_REGISTRY[unionId];
-  if (!spec) return false;
-  if (spec.regions && !spec.regions.includes(prov)) return false;
-  // Only filter by sub-region when we know it; "elsewhere in Ontario" stays unfiltered.
-  if (prov === CanadianProvince.ON && region && region !== 'OTHER' && spec.ontarioRegions) {
-    return spec.ontarioRegions.includes(region);
+const indexCoverage = (rows: CoverageTuple[]) => {
+  const byKey = new Map<string, CoverageTuple[]>();
+  for (const row of rows) {
+    const list = byKey.get(row[0]) ?? [];
+    list.push(row);
+    byKey.set(row[0], list);
   }
-  return true;
+  return byKey;
 };
+
+const build = (s: EngineSnapshot) => {
+  const unions = s.unions.map(toUnion);
+  const departments: IndustryDepartment[] = s.departments.map(d => ({
+    id: d.id,
+    name: d.name,
+    code: opt(d.code),
+    description: d.description ?? '',
+    roles: d.roles.map(r => ({
+      id: r.id, name: r.name, code: opt(r.code), description: opt(r.description),
+      requirements: r.requirements, aliases: r.aliases, isTrainee: r.isTrainee,
+    })),
+  }));
+  const roleByName = new Map<string, IndustryRole>();
+  for (const d of departments) for (const r of d.roles) {
+    for (const n of [r.name, ...(r.aliases ?? [])]) if (!roleByName.has(normalize(n))) roleByName.set(normalize(n), r);
+  }
+  const rateSchedules: RateSchedule[] = s.rateSchedules.map(rs => {
+    const sections: RateSection[] = [];
+    for (const l of rs.lines) {
+      let section = sections[sections.length - 1];
+      if (!section || section.department !== l.department) {
+        section = { department: l.department, note: opt(l.departmentNote), rows: [] };
+        sections.push(section);
+      }
+      section.rows.push({ title: l.position, rates: l.rates });
+    }
+    return { id: rs.id, unionId: rs.unionId, title: rs.title, effectiveFrom: rs.effectiveFrom, effectiveTo: rs.effectiveTo ?? rs.effectiveFrom,
+      columns: rs.columns, rateUnit: rs.rateUnit, sourceUrl: opt(rs.sourceUrl), sections };
+  });
+  return {
+    version: s.version,
+    unions,
+    unionById: new Map(unions.map(u => [u.id, u])),
+    departments,
+    deptByName: new Map(departments.map(d => [normalize(d.name), d])),
+    roleByName,
+    roleCoverage: indexCoverage(s.roleCoverage),
+    departmentCoverage: indexCoverage(s.departmentCoverage),
+    rateSchedules,
+  };
+};
+
+const EMPTY: EngineSnapshot = { version: 0, unions: [], departments: [], roleCoverage: [], departmentCoverage: [], rateSchedules: [] };
+let engine = build(EMPTY);
+
+export const setEngineSnapshot = (snapshot: EngineSnapshot) => { engine = build(snapshot); };
+export const getEngineVersion = () => engine.version;
+export const isEngineLoaded = () => engine.version > 0;
+
+// ── Lookups ─────────────────────────────────────────────────
+
+// Sub-regions only narrow things when we know them; "elsewhere in Ontario" stays unfiltered.
+const knownRegion = (province: string, region?: string): OntarioRegion | undefined =>
+  province === CanadianProvince.ON && region && region !== 'OTHER' ? region as OntarioRegion : undefined;
+
+const operatesIn = (unionId: string, province: string, region?: OntarioRegion) => {
+  const u = engine.unionById.get(unionId);
+  if (!u) return false;
+  return u.jurisdictions.some(j => j.province === province && (!region || !j.region || j.region === region));
+};
+
+export const findRole = (name: string) => engine.roleByName.get(normalize(name)) ?? null;
 
 /**
- * Order of operation:
- * 1. Performers → ACTRA (UBCP/ACTRA in BC); writing staff → WGC
- * 2. Exclusive provincial rules (a match settles the role)
- * 3. Ontario regional rules (Northern Ontario / Ottawa → IATSE 634)
- * 4. Provincial role rules, then provincial department rules
- * 5. National standards
- * 6. Competition & overlap injectors (the "OR" logic from the matrix)
- * 7. Drop locals that don't operate in this province / region
+ * Which unions cover a role where it's worked. Catalog roles use
+ * role_coverage; other titles fall back to their department's coverage.
+ * Region rows (Northern Ontario, Ottawa) replace the province rows.
  */
-export const resolveGuildsForRole = (
-  province: string,
-  role: string,
-  department: string,
-  { fallback = true, region }: ResolveOptions = {}
-): string[] => {
-  const prov = province as CanadianProvince;
-  const ontarioRegion = prov === CanadianProvince.ON ? region as OntarioRegion | undefined : undefined;
-  const overrides = PROVINCIAL_OVERRIDES[prov] || [];
+export const getCoverage = (province: string, role: string, department: string, { region }: { region?: string } = {}): Coverage[] => {
+  const catalogRole = findRole(role);
+  const dept = engine.deptByName.get(normalize(department));
+  const rows = catalogRole
+    ? engine.roleCoverage.get(catalogRole.id) ?? []
+    : dept ? engine.departmentCoverage.get(dept.id) ?? [] : [];
 
-  // "Director of Photography" is camera, not direction: normalize it so
-  // rules targeting "Director" don't capture it.
-  const r = role.toLowerCase().replace('director of photography', 'dop');
-  const d = department.toLowerCase();
+  const reg = knownRegion(province, region);
+  const inProvince = rows.filter(c => c[1] === province);
+  const regional = reg ? inProvince.filter(c => c[2] === reg) : [];
+  const chosen = regional.length > 0 ? regional : inProvince.filter(c => c[2] === null);
 
-  const finish = (ids: Iterable<string>) => {
-    const out = [...new Set(ids)].filter(id => operatesIn(id, prov, ontarioRegion));
-    if (out.length === 0 && fallback && operatesIn(FALLBACK_UNION, prov, ontarioRegion)) out.push(FALLBACK_UNION);
-    return out;
-  };
-
-  // 1. Performers
-  if (d.includes('performer') || PERFORMER_ROLES.some(t => r.includes(t.toLowerCase()))) {
-    return finish([prov === CanadianProvince.BC ? 'u-ubcp' : 'u-actra']);
-  }
-
-  if (d.includes('writing') || WRITER_ROLES.some(t => r.includes(t.toLowerCase()))) {
-    return finish(['u-wgc']);
-  }
-
-  // 2. Exclusive provincial rules
-  const exclusive = overrides.filter(rule => rule.exclusive && (matchesRole(rule, r) || matchesDept(rule, d)));
-  if (exclusive.length > 0) return finish(exclusive.map(rule => rule.assignedUnionId));
-
-  // 3. Ontario regional rules
-  const regional = ontarioRegion ? ONTARIO_REGIONAL_OVERRIDES[ontarioRegion] : undefined;
-  if (regional) {
-    const ids = applyRules(regional, r, d);
-    if (ids.length > 0) return finish(ids);
-  }
-
-  // 4. Provincial rules
-  const results = new Set<string>(applyRules(overrides.filter(rule => !rule.exclusive), r, d));
-
-  // 5. National standards
-  if (results.size === 0) {
-    const nationalRole = Object.entries(NATIONAL_ROLE_MAPPING).find(([key]) => r.includes(key.toLowerCase()));
-    const nationalDept = Object.entries(NATIONAL_DEPT_MAPPING).find(([key]) => d.includes(key.toLowerCase()));
-    const national = nationalRole ?? nationalDept;
-    if (national) results.add(national[1]);
-  }
-
-  // 6. Overlap injectors
-
-  if (prov === CanadianProvince.ON) {
-    // ON tech: IATSE 873 or NABET 700-M
-    const techRoles = ['grip', 'electric', 'sound', 'props', 'set dec', 'costume', 'wardrobe', 'construction', 'paint', 'hair', 'makeup', 'special effects', 'greens'];
-    if (techRoles.some(t => r.includes(t) || d.includes(t))) {
-      results.add('u-873');
-      results.add('u-nabet');
-    }
-
-    // ON transportation: Teamsters 938, NABET 700-M or IATSE 873
-    if (r.includes('transportation') || r.includes('driver') || d.includes('transportation')) {
-      results.add('u-t938');
-      results.add('u-nabet');
-      results.add('u-873');
-    }
-
-    // ON craft service: IATSE 411 Craftservice caucus or IATSE 873
-    if (r.includes('craft')) {
-      results.add('u-411');
-      results.add('u-873');
-    }
-  }
-
-  // AB: DGC or IATSE 212
-  if (prov === CanadianProvince.AB) {
-    const abOverlapRoles = ['production designer', 'art director', 'editor', 'accountant'];
-    if (abOverlapRoles.some(t => r.includes(t))) {
-      results.add('u-dgc');
-      results.add('u-212');
-    }
-  }
-
-  // BC: DGC or IATSE 891
-  if (prov === CanadianProvince.BC && r.includes('editor')) {
-    results.add('u-dgc');
-    results.add('u-891');
-  }
-
-  // 7. Province / region filter (+ fallback)
-  return finish(results);
+  const seen = new Set<string>();
+  return chosen
+    .filter(c => operatesIn(c[3], province, reg) && !seen.has(c[3]) && seen.add(c[3]))
+    .map(c => ({ unionId: c[3], relationship: c[4], notes: c[5] }));
 };
 
-export const resolveGuildForRole = (province: string, role: string, department: string, options?: ResolveOptions): string => {
-  return resolveGuildsForRole(province, role, department, options)[0];
-};
+export const resolveGuildsForRole = (province: string, role: string, department: string, options: { region?: string } = {}): string[] =>
+  getCoverage(province, role, department, options).map(c => c.unionId);
 
-export const getUnionSpec = (id: string) => UNION_REGISTRY[id] || null;
-export const getAllUnions = () => Object.values(UNION_REGISTRY);
+export const resolveGuildForRole = (province: string, role: string, department: string, options?: { region?: string }): string | undefined =>
+  resolveGuildsForRole(province, role, department, options)[0];
+
+export const getUnionSpec = (id: string): EngineUnion | null => engine.unionById.get(id) ?? null;
+export const getAllUnions = (): EngineUnion[] => engine.unions;
+export const getDepartments = (): IndustryDepartment[] => engine.departments;
+export const getRateSchedule = (unionId: string): RateSchedule | undefined => engine.rateSchedules.find(s => s.unionId === unionId);
 
 // Unions that operate in a province (and Ontario region, when known).
 export const getUnionsForProvince = (province: string, region?: string) =>
-  getAllUnions().filter(u => operatesIn(u.id, province as CanadianProvince, province === CanadianProvince.ON ? region as OntarioRegion : undefined));
+  engine.unions.filter(u => operatesIn(u.id, province, knownRegion(province, region)));
 
 // Looks a union up by id or by the name people write in a CSV / older rows
 // ("IATSE 873", "Directors Guild of Canada", "UBCP").
@@ -161,13 +270,13 @@ const ALIASES: Record<string, string> = {
   'nabet': 'u-nabet',
   'nabet 700-m': 'u-nabet',
   'aqtis': 'u-aqtis',
+  'union des artistes': 'u-uda',
 };
-const normalizeName = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
 
-export const findUnion = (idOrName?: string | null) => {
+export const findUnion = (idOrName?: string | null): EngineUnion | null => {
   if (!idOrName) return null;
-  if (UNION_REGISTRY[idOrName]) return UNION_REGISTRY[idOrName];
-  const n = normalizeName(idOrName);
-  const byName = getAllUnions().find(u => normalizeName(u.name) === n);
-  return byName ?? (ALIASES[n] ? UNION_REGISTRY[ALIASES[n]] : null);
+  const byId = engine.unionById.get(idOrName);
+  if (byId) return byId;
+  const n = normalize(idOrName);
+  return engine.unions.find(u => normalize(u.name) === n) ?? (ALIASES[n] ? engine.unionById.get(ALIASES[n]) ?? null : null);
 };

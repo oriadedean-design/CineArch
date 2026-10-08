@@ -1,6 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { PROVINCES, DEPARTMENTS, areasFor, unionsFor, unionsInProvince } from '../../lib/guide';
+import { PROVINCES, DEPARTMENTS, areasFor, coverageFor, coverageNotes, unionsInProvince } from '../../lib/guide';
 import type { GuideProvince } from '../../lib/guide';
 
 export function getStaticPaths() {
@@ -12,7 +12,7 @@ const active = unionsInProvince(province);
 const areas = areasFor(province);
 const departments = DEPARTMENTS.map(d => ({
   ...d,
-  rows: d.roles.map(role => ({ role, byArea: areas.map(area => unionsFor(province, role, area)) })),
+  rows: d.roles.map(role => ({ role, byArea: areas.map(area => coverageFor(province, role, area)) })),
 }));
 const overlaps = departments.flatMap(d => d.rows).filter(r => r.byArea.some(u => u.length > 1));
 const notes = areas.flatMap(a => a.note ? [a.note] : []);
@@ -53,7 +53,7 @@ const topNames = active.slice(0, 4).map(a => a.union.name).join(', ');
             {d.rows.map(({ role, byArea }) => (
               <tr>
                 <td><a href={`/roles/${role.slug}/`}>{role.name}</a></td>
-                {byArea.map(unions => <td>
+                {byArea.map(cov => { const unions = cov.map(c => c.union); return <td>
                   {unions.length === 0 ? <span class="muted">Non-union / varies</span> : (
                     <>
                       <a href={`/unions/${unions[0].slug}/`}>{unions[0].name}</a>
@@ -64,7 +64,8 @@ const topNames = active.slice(0, 4).map(a => a.union.name).join(', ');
                       )}
                     </>
                   )}
-                </td>)}
+                  {coverageNotes(cov).map(n => <div class="muted">{n}</div>)}
+                </td>; })}
               </tr>
             ))}
           </tbody>

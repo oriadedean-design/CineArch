@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, CanadianProvince, UserUnionTracking, ONTARIO_REGION_LABELS, type OntarioRegion } from '../types';
-import { INDUSTRY_DEPARTMENTS } from '../config/industry_roles';
-import { resolveGuildsForRole, getUnionSpec, getUnionsForProvince } from '../services/union_engine';
+import { resolveGuildsForRole, getUnionSpec, getUnionsForProvince, getDepartments } from '../services/union_engine';
 import { api } from '../services/storage';
 import { Button, Input, Heading, Text, Select, Badge, Card } from '../components/ui';
 import { ArrowRight, MapPin, Sparkles, AlertTriangle } from 'lucide-react';
@@ -135,7 +134,7 @@ const StepRoles = ({ formData, setFormData, onNext, onBack }: StepProps) => (
     </div>
 
     <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
-      {INDUSTRY_DEPARTMENTS.map(d => (
+      {getDepartments().map(d => (
         <button
           key={d.name}
           onClick={() => setFormData(f => ({...f, department: d.name}))}
@@ -151,7 +150,7 @@ const StepRoles = ({ formData, setFormData, onNext, onBack }: StepProps) => (
 
     {formData.department && (
       <div className="grid md:grid-cols-2 gap-1 pt-10 border-t border-white/10 animate-in fade-in duration-700">
-        {INDUSTRY_DEPARTMENTS.find(d => d.name === formData.department)?.roles.map(r => {
+        {getDepartments().find(d => d.name === formData.department)?.roles.map(r => {
           const resolvedUnionIds = resolveGuildsForRole(formData.province, r.name, formData.department, { region: formData.region });
           const isSelected = formData.selectedRoles.includes(r.name);
           return (
@@ -326,7 +325,8 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
 
       const newTrackings: UserUnionTracking[] = formData.selectedUnions.flatMap(id => {
         const spec = getUnionSpec(id);
-        if (!spec) return [];
+        // Unions without a published tier (e.g. requirements not yet sourced) can't be tracked yet.
+        if (!spec || spec.tiers.length === 0) return [];
         return {
           id: `track_${id}_${Date.now()}`,
           userId: user.id,

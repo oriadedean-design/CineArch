@@ -2,7 +2,7 @@
 import Base from '../../../layouts/Base.astro';
 import { UNIONS, rateScheduleFor, slugify } from '../../../lib/guide';
 import type { GuideUnion } from '../../../lib/guide';
-import type { RateSchedule } from '../../../../../config/unions/rates/iatse_212_2025';
+import type { RateSchedule } from '../../../../../services/union_engine';
 
 export function getStaticPaths() {
   return UNIONS

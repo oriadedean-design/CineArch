@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "db:types": "supabase gen types typescript --linked --schema public > services/database.types.ts",
-    "db:test": "supabase db query --linked -f supabase/tests/rls_smoke.sql"
+    "db:test": "supabase db query --linked -f supabase/tests/rls_smoke.sql",
+    "db:test:engine": "supabase db query --linked -f supabase/tests/union_engine_smoke.sql"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
