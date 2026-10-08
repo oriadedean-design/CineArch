@@ -1,0 +1,76 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { UNIONS, rateScheduleFor, slugify } from '../../../lib/guide';
+import type { GuideUnion } from '../../../lib/guide';
+import type { RateSchedule } from '../../../../../config/unions/rates/iatse_212_2025';
+
+export function getStaticPaths() {
+  return UNIONS
+    .filter(union => rateScheduleFor(union.id))
+    .map(union => ({ params: { slug: union.slug }, props: { union, schedule: rateScheduleFor(union.id) } }));
+}
+
+const { union, schedule } = Astro.props as { union: GuideUnion; schedule: RateSchedule };
+
+const fmtDate = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+const money = (n: number | null) =>
+  n == null ? 'Negotiable' : `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const from = fmtDate(schedule.effectiveFrom);
+const to = fmtDate(schedule.effectiveTo);
+const expired = new Date(`${schedule.effectiveTo}T23:59:59`) < new Date();
+const yearLabel = `${schedule.effectiveFrom.slice(0, 4)}–${schedule.effectiveTo.slice(2, 4)}`;
+---
+<Base
+  title={`${union.name} Rates ${yearLabel}: Wage Scale by Department`}
+  description={`${union.name} minimum wage rates for ${schedule.sections.length} departments — grips, electrics, art, costume, sound and more — by High Budget and Tier A, B and C productions. In effect ${from} to ${to}.`}
+  crumbs={[
+    { name: 'Unions', href: '/unions/' },
+    { name: union.name, href: `/unions/${union.slug}/` },
+    { name: 'Rates', href: `/unions/${union.slug}/rates/` },
+  ]}
+>
+  <p class="eyebrow">Rate schedule</p>
+  <h1>{union.name} rates {yearLabel}</h1>
+  <p class="lede">{schedule.title}. Minimum rates by production budget tier, in effect {from} to {to}.</p>
+
+  {expired && (
+    <p class="note">
+      <strong>This schedule ended {to}.</strong> A newer schedule may now apply — confirm current rates with
+      {' '}<a href={`/unions/${union.slug}/`}>{union.name}</a> before quoting or negotiating.
+    </p>
+  )}
+  <p class="muted">Figures as published in the collective agreement. "Negotiable" means the agreement sets no minimum for that position.</p>
+
+  <nav aria-label="Departments">
+    <ul class="chips">
+      {schedule.sections.map(s => <li><a href={`#${slugify(s.department)}`}>{s.department}</a></li>)}
+    </ul>
+  </nav>
+
+  {schedule.sections.map(section => (
+    <section>
+      <h2 id={slugify(section.department)}>{section.department}</h2>
+      {section.note && <p class="muted">{section.note}</p>}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Position</th>
+              {schedule.columns.map(c => <th scope="col">{c}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {section.rows.map(row => (
+              <tr>
+                <td>{row.title}</td>
+                {row.rates.map(v => <td class={v == null ? 'muted' : undefined}>{money(v)}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ))}
+</Base>

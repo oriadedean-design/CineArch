@@ -1,7 +1,7 @@
 ---
-import Base from '../../layouts/Base.astro';
-import { UNIONS, coverageForUnion, formatTier, formatPercent } from '../../lib/guide';
-import type { GuideUnion } from '../../lib/guide';
+import Base from '../../../layouts/Base.astro';
+import { UNIONS, coverageForUnion, formatTier, formatPercent, rateScheduleFor } from '../../../lib/guide';
+import type { GuideUnion } from '../../../lib/guide';
 
 export function getStaticPaths() {
   return UNIONS.map(union => ({ params: { slug: union.slug }, props: { union } }));
@@ -12,6 +12,7 @@ const coverage = coverageForUnion(union);
 const provinceNames = coverage.map(c => c.province.name);
 const firstTier = union.tiers[0];
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
+const rates = rateScheduleFor(union.id);
 
 const description = [
   `How to join ${union.name}`,
@@ -50,6 +51,12 @@ const description = [
       <li><strong>{t.name}:</strong> {formatTier(t)}. {t.description}{t.requiresDepartment && ' Requirements vary by department.'}</li>
     ))}
   </ul>
+  {union.joiningRequirements && union.joiningRequirements.length > 0 && (
+    <>
+      <h3>Requirements</h3>
+      <ul>{union.joiningRequirements.map(req => <li>{req}</li>)}</ul>
+    </>
+  )}
   {union.residencyRule && <p class="note"><strong>Residency:</strong> {union.residencyRule}</p>}
   {union.jurisdictionalNotes && <p class="note">{union.jurisdictionalNotes}</p>}
 
@@ -57,6 +64,33 @@ const description = [
     <>
       <h2>Application process</h2>
       <ol>{union.applicationProcess.map(step => <li>{step}</li>)}</ol>
+    </>
+  )}
+
+  {(union.contactEmail || union.contactPhone) && (
+    <>
+      <h2>Contact</h2>
+      <p>
+        {union.contactEmail && <>Email: <a href={`mailto:${union.contactEmail}`}>{union.contactEmail}</a><br /></>}
+        {union.contactPhone && <>Phone: <a href={`tel:+1${union.contactPhone.replace(/\D/g, '')}`}>{union.contactPhone}</a></>}
+      </p>
+    </>
+  )}
+
+  {union.departments && union.departments.length > 0 && (
+    <>
+      <h2>Departments {union.name} represents</h2>
+      <ul class="chips">{union.departments.map(d => <li><span>{d}</span></li>)}</ul>
+    </>
+  )}
+
+  {rates && (
+    <>
+      <h2>Wage rates</h2>
+      <p>
+        <a href={`/unions/${union.slug}/rates/`}>{union.name} rate schedule</a> — minimum rates for every department by
+        production budget tier, from the {rates.title}.
+      </p>
     </>
   )}
 

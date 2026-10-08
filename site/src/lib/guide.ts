@@ -7,6 +7,9 @@ import { INDUSTRY_DEPARTMENTS } from '../../../config/industry_roles';
 import { resolveGuildsForRole } from '../../../services/union_engine';
 import { CanadianProvince } from '../../../types';
 import type { UnionType } from '../../../types';
+import { RATE_SCHEDULES } from '../../../config/unions/rates/iatse_212_2025';
+
+export const rateScheduleFor = (unionId: string) => RATE_SCHEDULES[unionId];
 
 export const slugify = (s: string) =>
   s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

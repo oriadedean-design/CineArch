@@ -95,6 +95,8 @@ export interface UnionType {
   contactEmail?: string;
   jurisdictionalNotes?: string;
   regions?: CanadianProvince[];   // provinces where this local operates; omitted = national
+  departments?: string[];         // departments the local represents, as the local lists them
+  contactPhone?: string;
 }
 
 export interface UserUnionTracking {

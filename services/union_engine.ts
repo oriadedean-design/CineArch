@@ -24,7 +24,9 @@ export const resolveGuildsForRole = (
   const results = new Set<string>();
 
   // Normalized inputs
-  const r = role.toLowerCase();
+  // "Director of Photography" is camera, not direction: normalize it so
+  // rules targeting "Director" don't capture it.
+  const r = role.toLowerCase().replace('director of photography', 'dop');
   const d = department.toLowerCase();
 
   // 1. Check Provincial Overrides (Explicit Roles)
@@ -60,7 +62,7 @@ export const resolveGuildsForRole = (
   
   // ONTARIO TECH: IATSE 873 or NABET 700-M
   if (prov === CanadianProvince.ON) {
-    const techRoles = ['grip', 'electric', 'sound', 'props', 'set dec', 'costume', 'wardrobe', 'construction', 'paint', 'hair', 'makeup'];
+    const techRoles = ['grip', 'electric', 'sound', 'props', 'set dec', 'costume', 'wardrobe', 'construction', 'paint', 'hair', 'makeup', 'special effects', 'greens'];
     const isTech = techRoles.some(target => r.includes(target) || d.includes(target));
     if (isTech) {
        results.add('u-873');
@@ -76,7 +78,7 @@ export const resolveGuildsForRole = (
 
   // ALBERTA: DGC or IATSE 212
   if (prov === CanadianProvince.AB) {
-    const abOverlapRoles = ['production designer', 'art director', 'editor'];
+    const abOverlapRoles = ['production designer', 'art director', 'editor', 'accountant'];
     if (abOverlapRoles.some(target => r.includes(target))) {
        results.add('u-dgc');
        results.add('u-212');
