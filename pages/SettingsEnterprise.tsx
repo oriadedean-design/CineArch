@@ -20,16 +20,23 @@ export const SettingsEnterprise = () => {
 
   const handleSave = async () => {
     if (profileForm) {
-      await api.auth.updateUser(profileForm);
-      const u = await api.auth.getUser();
-      setUser(u);
-      alert("Organization Terminal Calibrated.");
+      try {
+        const u = await api.auth.updateUser(profileForm);
+        setUser(u);
+        alert("Organization Terminal Calibrated.");
+      } catch (e: any) {
+        alert(`Save failed: ${e.message}`);
+      }
     }
   };
 
-  const handleReleaseUser = async (clientId: string) => {
-    if (window.confirm("Release this personnel from your roster? This will disconnect their ledger from your command view.")) {
-      await api.auth.removeManagedUser(clientId);
+  const handleReleaseUser = async (client: User) => {
+    const pending = client.inviteStatus === 'PENDING';
+    const prompt = pending
+      ? "Cancel this pending invite?"
+      : "Release this personnel from your roster? This will disconnect their ledger from your command view.";
+    if (window.confirm(prompt)) {
+      await api.auth.removeManagedUser(client.id, pending);
       const u = await api.auth.getUser();
       setUser(u);
     }
@@ -58,9 +65,11 @@ export const SettingsEnterprise = () => {
                <div className="space-y-4">
                   {user?.managedUsers?.map(client => (
                     <div key={client.id} className="flex justify-between items-center group">
-                       <span className="text-sm font-serif italic text-white/60">{client.name}</span>
+                       <span className="text-sm font-serif italic text-white/60">
+                         {client.name}{client.inviteStatus === 'PENDING' && <span className="ml-2 text-[10px] not-italic uppercase tracking-widest text-white/30">Pending</span>}
+                       </span>
                        <button 
-                         onClick={() => handleReleaseUser(client.id)}
+                         onClick={() => handleReleaseUser(client)}
                          className="p-2 text-white/10 hover:text-red-500 transition-colors"
                          title="Release Personnel"
                        >

@@ -1,0 +1,71 @@
+---
+import Base from '../../layouts/Base.astro';
+import { PROVINCES, DEPARTMENTS, unionsFor, unionsInProvince } from '../../lib/guide';
+import type { GuideProvince } from '../../lib/guide';
+
+export function getStaticPaths() {
+  return PROVINCES.map(province => ({ params: { slug: province.slug }, props: { province } }));
+}
+
+const { province } = Astro.props as { province: GuideProvince };
+const active = unionsInProvince(province);
+const departments = DEPARTMENTS.map(d => ({
+  ...d,
+  rows: d.roles.map(role => ({ role, unions: unionsFor(province, role) })),
+}));
+const overlaps = departments.flatMap(d => d.rows).filter(r => r.unions.length > 1);
+const topNames = active.slice(0, 4).map(a => a.union.name).join(', ');
+---
+<Base
+  title={`Film & TV Unions in ${province.name}`}
+  description={`Which union covers your film or TV job in ${province.name}? Department-by-department jurisdiction for ${topNames} and other locals.`}
+  crumbs={[{ name: 'Provinces', href: '/provinces/' }, { name: province.name, href: `/provinces/${province.slug}/` }]}
+>
+  <p class="eyebrow">Jurisdiction</p>
+  <h1>Film &amp; TV unions in {province.name}</h1>
+  <p class="lede">
+    {active.length} unions and locals cover film and TV work in {province.name}.
+    {overlaps.length > 0 && ` ${overlaps.length} roles have competing or shared jurisdiction, so the production's agreement decides which applies.`}
+  </p>
+
+  <h2>Active unions</h2>
+  <div class="grid">
+    {active.map(({ union, roles }) => (
+      <a class="card" href={`/unions/${union.slug}/`}>
+        <h3>{union.name}</h3>
+        <p>{roles.length} roles in {province.name}</p>
+      </a>
+    ))}
+  </div>
+
+  <h2>By department</h2>
+  {departments.map(d => (
+    <section>
+      <h3 id={d.slug}>{d.name}</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Role</th><th scope="col">Union</th></tr></thead>
+          <tbody>
+            {d.rows.map(({ role, unions }) => (
+              <tr>
+                <td><a href={`/roles/${role.slug}/`}>{role.name}</a></td>
+                <td>
+                  {unions.length === 0 ? <span class="muted">Non-union / varies</span> : (
+                    <>
+                      <a href={`/unions/${unions[0].slug}/`}>{unions[0].name}</a>
+                      {unions.length > 1 && (
+                        <span class="alt"> · also {unions.slice(1).map((u, i) => (
+                          <>{i > 0 && ', '}<a href={`/unions/${u.slug}/`}>{u.name}</a></>
+                        ))}</span>
+                      )}
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ))}
+</Base>

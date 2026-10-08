@@ -1,0 +1,23 @@
+---
+import Base from '../../layouts/Base.astro';
+import { DEPARTMENTS, ROLES } from '../../lib/guide';
+---
+<Base
+  title="Film & TV Crew Roles and Their Unions"
+  description={`${ROLES.length} film and TV production roles by department, with what each job does and which union covers it in every Canadian province.`}
+  crumbs={[{ name: 'Roles', href: '/roles/' }]}
+>
+  <p class="eyebrow">Roles</p>
+  <h1>Production roles</h1>
+  <p class="lede">Find your job title to see what it covers and which union represents it in each province.</p>
+
+  {DEPARTMENTS.map(d => (
+    <section>
+      <h2 id={d.slug}>{d.name}</h2>
+      <p class="muted">{d.description}</p>
+      <ul class="chips">
+        {d.roles.map(r => <li><a href={`/roles/${r.slug}/`}>{r.name}</a></li>)}
+      </ul>
+    </section>
+  ))}
+</Base>

@@ -473,5 +473,150 @@ export const INDUSTRY_DEPARTMENTS: IndustryDepartment[] = [
         description: "Responsible for movement of assets and personnel across locations.",
       }
     ]
+  },
+  {
+    name: "Performers",
+    code: "PERF",
+    description: "Actors, stunt performers and background performers on camera.",
+    roles: [
+      {
+        name: "Actor",
+        primaryUnion: "ACTRA / UBCP",
+        departmentCode: "PERF",
+        description: "Performs a speaking or principal role on camera.",
+      },
+      {
+        name: "Stunt Performer",
+        primaryUnion: "ACTRA / UBCP",
+        departmentCode: "PERF",
+        description: "Performs stunts and action sequences under the stunt coordinator's direction.",
+      },
+      {
+        name: "Background Performer",
+        primaryUnion: "ACTRA / UBCP",
+        departmentCode: "PERF",
+        description: "Appears on camera in non-speaking roles to populate scenes.",
+      }
+    ]
+  },
+  {
+    name: "Writing",
+    code: "WRI",
+    description: "Screenwriters and story staff who write the script.",
+    roles: [
+      {
+        name: "Screenwriter",
+        primaryUnion: "WGC",
+        departmentCode: "WRI",
+        description: "Writes the screenplay or teleplay for a film or series episode.",
+      },
+      {
+        name: "Story Editor",
+        primaryUnion: "WGC",
+        departmentCode: "WRI",
+        description: "Works with the writing team to develop, shape and revise scripts across a series.",
+      }
+    ]
+  },
+  {
+    name: "Props",
+    code: "PRP",
+    description: "Sourcing, building and managing every object actors handle on camera.",
+    roles: [
+      {
+        name: "Property Master",
+        primaryUnion: "IATSE",
+        departmentCode: "PRP",
+        description: "Heads the props department, sourcing and managing all hand props and their continuity.",
+      },
+      {
+        name: "Assistant Property Master",
+        primaryUnion: "IATSE",
+        departmentCode: "PRP",
+        description: "Supports the property master on set and in prep, tracking props through each scene.",
+      },
+      {
+        name: "Props Buyer",
+        primaryUnion: "IATSE",
+        departmentCode: "PRP",
+        description: "Purchases and rents props to the property master's specifications.",
+      }
+    ]
+  },
+  {
+    name: "Production Sound",
+    code: "SND",
+    description: "Recording dialogue and sound on set.",
+    roles: [
+      {
+        name: "Production Sound Mixer",
+        primaryUnion: "IATSE / NABET",
+        departmentCode: "SND",
+        description: "Records and mixes dialogue and on-set sound during filming.",
+      },
+      {
+        name: "Boom Operator",
+        primaryUnion: "IATSE / NABET",
+        departmentCode: "SND",
+        description: "Positions the boom microphone to capture dialogue without entering frame.",
+      }
+    ]
+  },
+  {
+    name: "Special Effects",
+    code: "SFX",
+    description: "Practical on-set effects such as rain, wind, smoke, fire and rigged gags.",
+    roles: [
+      {
+        name: "Special Effects Coordinator",
+        primaryUnion: "IATSE / NABET",
+        departmentCode: "SFX",
+        description: "Plans and runs practical effects safely, leading the special effects crew.",
+      },
+      {
+        name: "Special Effects Assistant",
+        primaryUnion: "IATSE / NABET",
+        departmentCode: "SFX",
+        description: "Builds, rigs and operates practical effects under the coordinator.",
+      }
+    ]
+  },
+  {
+    name: "Greens",
+    code: "GRN",
+    description: "Plants, trees, lawns and landscaping dressed on sets and locations.",
+    roles: [
+      {
+        name: "Head Greensperson",
+        primaryUnion: "IATSE / NABET",
+        departmentCode: "GRN",
+        description: "Leads the greens department, designing and installing live and artificial greenery.",
+      },
+      {
+        name: "Greensperson",
+        primaryUnion: "IATSE / NABET",
+        departmentCode: "GRN",
+        description: "Installs, maintains and strikes greens on sets and locations.",
+      }
+    ]
+  },
+  {
+    name: "Craft Service & First Aid",
+    code: "FACS",
+    description: "On-set food service and medical coverage for cast and crew.",
+    roles: [
+      {
+        name: "Head of Craft Service",
+        primaryUnion: "IATSE",
+        departmentCode: "FACS",
+        description: "Runs on-set snacks and refreshments for cast and crew throughout the shooting day.",
+      },
+      {
+        name: "First Aid Attendant",
+        primaryUnion: "IATSE",
+        departmentCode: "FACS",
+        description: "Provides on-set first aid and medical coverage; requires current first aid certification.",
+      }
+    ]
   }
 ];

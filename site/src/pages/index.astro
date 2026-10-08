@@ -1,0 +1,69 @@
+---
+import Base from '../layouts/Base.astro';
+import { UNIONS, PROVINCES, ROLES } from '../lib/guide';
+
+const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
+const featured = ['ontario', 'british-columbia', 'quebec', 'alberta'];
+const featuredProvinces = PROVINCES.filter(p => featured.includes(p.slug));
+---
+<Base
+  title="CineArch"
+  description="Find which film and TV union covers your job in your province — IATSE, DGC, ACTRA, Teamsters, NABET and more — and track your hours and days toward membership."
+  jsonLd={[{
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'CineArch',
+    url: Astro.site?.href,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: new URL('/search/?q={query}', Astro.site).href,
+      'query-input': 'required name=query',
+    },
+  }, {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'CineArch',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    url: appUrl,
+    description: 'Union eligibility tracking, job logs and finances for Canadian film and TV crew and performers.',
+  }]}
+>
+  <section class="hero">
+    <p class="eyebrow">Canadian film &amp; TV unions</p>
+    <h1>Which union covers <span>your job?</span></h1>
+    <p class="lede">
+      Union jurisdiction in Canadian film changes by province and department. CineArch maps {ROLES.length} production
+      roles across {PROVINCES.length} provinces and territories to the {UNIONS.length} guilds and locals that cover them.
+    </p>
+    <div class="cta-row">
+      <a class="btn" href="/search/">Search the guide</a>
+      <a class="btn btn-ghost" href={appUrl}>Track your eligibility</a>
+    </div>
+  </section>
+
+  <h2>Browse by province</h2>
+  <div class="grid">
+    {featuredProvinces.map(p => (
+      <a class="card" href={`/provinces/${p.slug}/`}>
+        <h3>{p.name}</h3>
+        <p>Unions and locals for film and TV work in {p.name}.</p>
+      </a>
+    ))}
+    <a class="card" href="/provinces/"><h3>All provinces</h3><p>Every province and territory.</p></a>
+  </div>
+
+  <h2>Guilds and locals</h2>
+  <ul class="chips">
+    {UNIONS.map(u => <li><a href={`/unions/${u.slug}/`}>{u.name}</a></li>)}
+  </ul>
+
+  <h2>Track it, don't guess it</h2>
+  <p>
+    The CineArch app logs every job, counts your hours, days and credits against your union's threshold, and keeps your
+    paperwork and GST in one place. Agencies can manage their whole roster.
+  </p>
+  <div class="cta-row">
+    <a class="btn" href={appUrl}>Open the app</a>
+  </div>
+</Base>

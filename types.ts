@@ -41,6 +41,8 @@ export interface User {
   accountType: 'INDIVIDUAL' | 'AGENT';
   managedUsers?: User[]; 
   activeViewId?: string; 
+  inviteStatus?: 'PENDING';        // roster entry that hasn't accepted yet
+  pendingInvites?: AgencyInvite[]; // invites addressed to this individual
   primaryIndustry?: string;
   // Track which agency is managing this individual
   managedByAgencyId?: string;
@@ -92,6 +94,9 @@ export interface UnionType {
   applicationFee?: number;
   contactEmail?: string;
   jurisdictionalNotes?: string;
+  regions?: CanadianProvince[];   // provinces where this local operates; omitted = national
+  departments?: string[];         // departments the local represents, as the local lists them
+  contactPhone?: string;
 }
 
 export interface UserUnionTracking {
@@ -249,11 +254,19 @@ export const PLANS: Record<string, Plan> = {
   }
 };
 
+export interface AgencyInvite {
+  id: string;
+  agencyId: string;
+  agencyName: string;
+  createdAt: string;
+}
+
 export interface ResidencyDocument {
   id: string;
   userId: string;
   type: string;
   fileName: string;
+  storagePath?: string;
   uploadedAt: string;
   verified: boolean;
 }

@@ -50,18 +50,23 @@ export const Management = () => {
 
     setIsSubmitting(true);
     try {
-      const newClient: User = {
-        id: crypto.randomUUID(),
+      const invite = await api.auth.addClient({
         name: addForm.name.trim(),
         email: addForm.email.trim(),
-        role: 'Talent',
         province: addForm.province,
-        isOnboarded: true,
+      });
+      // Shown as pending until they accept from their own account
+      const pending: User = {
+        id: invite.id,
+        name: addForm.name.trim(),
+        email: addForm.email.trim().toLowerCase(),
+        role: 'Invited',
+        province: addForm.province,
+        isOnboarded: false,
         accountType: 'INDIVIDUAL',
-        isPremium: false
+        inviteStatus: 'PENDING'
       };
-      await api.auth.addClient(newClient);
-      setRoster(prev => [...prev, newClient]);
+      setRoster(prev => [...prev.filter(r => r.email !== pending.email), pending]);
       setShowAddModal(false);
       setAddForm({ name: '', email: '', province: 'Ontario' });
     } catch (e: any) {
@@ -114,6 +119,14 @@ export const Management = () => {
                     </div>
                   </div>
                 </div>
+                {client.inviteStatus === 'PENDING' ? (
+                  <div className="flex items-center gap-4">
+                    <Badge color="neutral">Invite Pending</Badge>
+                    <span className="text-[10px] text-white/30 uppercase font-black tracking-widest italic max-w-xs">
+                      They accept from Settings after signing up with {client.email}
+                    </span>
+                  </div>
+                ) : (
                 <div className="flex items-center gap-4">
                   <Button
                     variant="outline"
@@ -129,6 +142,7 @@ export const Management = () => {
                     View Drive <ArrowUpRight size={14} className="ml-3" />
                   </Button>
                 </div>
+                )}
               </div>
 
               {showIngest === client.id && (
@@ -208,7 +222,7 @@ export const Management = () => {
                   disabled={isSubmitting}
                   className="w-full h-16 text-[10px] font-black uppercase tracking-[0.5em] bg-white text-black hover:bg-accent disabled:opacity-40"
                 >
-                  {isSubmitting ? 'Syncing...' : 'Sync Personnel'}
+                  {isSubmitting ? 'Sending...' : 'Send Invite'}
                 </Button>
               </div>
             </div>

@@ -19,7 +19,7 @@ export const BulkJobUploadIndividual = ({ userId, onComplete }: { userId: string
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: async (results) => {
         try {
           const rows = results.data as any[];
           if (rows.length === 0) throw new Error("CSV appears empty");
@@ -34,7 +34,7 @@ export const BulkJobUploadIndividual = ({ userId, onComplete }: { userId: string
               userId: userId,
               role: row['Role'] || 'Talent',
               totalHours: parseFloat(row['Total Hours'] || '0'),
-              startDate: row['Start Date'] ? new Date(row['Start Date']).toISOString() : new Date().toISOString(),
+              startDate: row['Start Date'] || new Date().toISOString(),
               isUnion: isUnion,
               unionName: unionName,
               unionTypeId: unionObj?.id,
@@ -46,7 +46,7 @@ export const BulkJobUploadIndividual = ({ userId, onComplete }: { userId: string
             } as Job;
           });
 
-          jobsToInsert.forEach(job => api.jobs.add(job));
+          await api.jobs.addMany(jobsToInsert, userId);
           onComplete();
         } catch (err: any) {
           setError(err.message || "Parse failed");

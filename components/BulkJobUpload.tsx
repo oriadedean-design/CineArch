@@ -72,17 +72,16 @@ export const BulkJobUpload = ({ userId, onComplete }: { userId: string, onComple
         } as Job;
       });
 
-      for (const job of jobsToInsert) {
-        await api.jobs.add(job);
-      }
+      await api.jobs.addMany(jobsToInsert, userId);
 
       setStep('FINISHING');
       setTimeout(() => {
         onComplete();
         setStep('IDLE');
       }, 1500);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Import failed:", e);
+      alert(`Import failed: ${e.message || 'unknown error'}`);
     } finally {
       setUploading(false);
     }

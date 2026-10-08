@@ -12,13 +12,21 @@ import { UNION_REGISTRY } from '../config/unions/registry';
  * 3. Competition & Overlap Injectors (The "OR" logic from the Matrix)
  * 4. National Standards Fallback
  */
-export const resolveGuildsForRole = (province: string, role: string, department: string): string[] => {
+export const resolveGuildsForRole = (
+  province: string,
+  role: string,
+  department: string,
+  // The app always wants a suggestion; the public guide must not publish a guess.
+  { fallback = true }: { fallback?: boolean } = {}
+): string[] => {
   const prov = province as CanadianProvince;
   const overrides = PROVINCIAL_OVERRIDES[prov] || [];
   const results = new Set<string>();
 
   // Normalized inputs
-  const r = role.toLowerCase();
+  // "Director of Photography" is camera, not direction: normalize it so
+  // rules targeting "Director" don't capture it.
+  const r = role.toLowerCase().replace('director of photography', 'dop');
   const d = department.toLowerCase();
 
   // 1. Check Provincial Overrides (Explicit Roles)
@@ -54,7 +62,7 @@ export const resolveGuildsForRole = (province: string, role: string, department:
   
   // ONTARIO TECH: IATSE 873 or NABET 700-M
   if (prov === CanadianProvince.ON) {
-    const techRoles = ['grip', 'electric', 'sound', 'props', 'set dec', 'costume', 'wardrobe', 'construction', 'paint', 'hair', 'makeup'];
+    const techRoles = ['grip', 'electric', 'sound', 'props', 'set dec', 'costume', 'wardrobe', 'construction', 'paint', 'hair', 'makeup', 'special effects', 'greens'];
     const isTech = techRoles.some(target => r.includes(target) || d.includes(target));
     if (isTech) {
        results.add('u-873');
@@ -70,7 +78,7 @@ export const resolveGuildsForRole = (province: string, role: string, department:
 
   // ALBERTA: DGC or IATSE 212
   if (prov === CanadianProvince.AB) {
-    const abOverlapRoles = ['production designer', 'art director', 'editor'];
+    const abOverlapRoles = ['production designer', 'art director', 'editor', 'accountant'];
     if (abOverlapRoles.some(target => r.includes(target))) {
        results.add('u-dgc');
        results.add('u-212');
@@ -85,8 +93,15 @@ export const resolveGuildsForRole = (province: string, role: string, department:
     }
   }
 
+  // Drop locals that don't operate in this province (e.g. a Toronto local
+  // reached through the national fallback table for a Saskatchewan job).
+  for (const id of results) {
+    const regions = UNION_REGISTRY[id]?.regions;
+    if (regions && !regions.includes(prov)) results.delete(id);
+  }
+
   // Fallback if empty
-  if (results.size === 0) {
+  if (results.size === 0 && fallback) {
     results.add('u-873');
   }
 
