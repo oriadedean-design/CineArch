@@ -1,0 +1,65 @@
+---
+import Base from '../../layouts/Base.astro';
+import { ROLES, PROVINCES, unionsFor } from '../../lib/guide';
+import type { GuideRole } from '../../lib/guide';
+
+export function getStaticPaths() {
+  return ROLES.map(role => ({ params: { slug: role.slug }, props: { role } }));
+}
+
+const { role } = Astro.props as { role: GuideRole };
+const byProvince = PROVINCES.map(province => ({ province, unions: unionsFor(province, role) }));
+const covered = byProvince.filter(p => p.unions.length > 0);
+const sample = covered.slice(0, 3).map(p => `${p.unions[0].name} in ${p.province.name}`).join(', ');
+const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
+---
+<Base
+  title={`${role.name} Union by Province (Canada)`}
+  description={`Which union represents a ${role.name} in Canadian film and TV? ${sample ? `For example ${sample}.` : ''} See every province.`}
+  crumbs={[
+    { name: 'Roles', href: '/roles/' },
+    { name: role.department, href: `/roles/#${role.departmentSlug}` },
+    { name: role.name, href: `/roles/${role.slug}/` },
+  ]}
+  jsonLd={[{
+    '@context': 'https://schema.org',
+    '@type': 'Occupation',
+    name: role.name,
+    description: role.description,
+    occupationalCategory: role.department,
+    occupationLocation: { '@type': 'Country', name: 'Canada' },
+  }]}
+>
+  <p class="eyebrow">{role.department}</p>
+  <h1>{role.name}</h1>
+  <p class="lede">{role.description}</p>
+
+  {role.requirements.length > 0 && (
+    <>
+      <h2>Requirements</h2>
+      <ul>{role.requirements.map(r => <li>{r}</li>)}</ul>
+    </>
+  )}
+
+  <h2>Which union covers a {role.name}?</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th scope="col">Province / territory</th><th scope="col">Union</th></tr></thead>
+      <tbody>
+        {byProvince.map(({ province, unions }) => (
+          <tr>
+            <td><a href={`/provinces/${province.slug}/`}>{province.name}</a></td>
+            <td>
+              {unions.length === 0 ? <span class="muted">Varies</span> : unions.map((u, i) => (
+                <>{i > 0 && <span class="alt"> or </span>}<a href={`/unions/${u.slug}/`}>{u.name}</a></>
+              ))}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">Where two unions are listed, both have agreements covering this role and the production's agreement decides which applies.</p>
+
+  <div class="cta-row"><a class="btn" href={appUrl}>Track your {role.name} days</a></div>
+</Base>

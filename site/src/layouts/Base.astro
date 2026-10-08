@@ -1,0 +1,109 @@
+---
+import '../styles/global.css';
+
+export interface Crumb { name: string; href: string }
+
+interface Props {
+  title: string;
+  description: string;
+  crumbs?: Crumb[];
+  jsonLd?: Record<string, unknown>[];
+  noindex?: boolean;
+}
+
+const { title, description, crumbs = [], jsonLd = [], noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
+const gscToken = import.meta.env.PUBLIC_GSC_VERIFICATION;
+const fullTitle = title === 'CineArch' ? title : `${title} | CineArch`;
+
+const structured = [
+  ...(crumbs.length
+    ? [{
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [{ name: 'Home', href: '/' }, ...crumbs].map((c, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: c.name,
+          item: new URL(c.href, Astro.site).href,
+        })),
+      }]
+    : []),
+  ...jsonLd,
+];
+---
+<!doctype html>
+<html lang="en-CA">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    {gscToken && <meta name="google-site-verification" content={gscToken} />}
+    <meta name="theme-color" content="#000000" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CineArch" />
+    <meta property="og:locale" content="en_CA" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+
+    {structured.map(data => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a href="/" class="brand">Cine<span>Arch</span></a>
+        <nav aria-label="Guide">
+          <a href="/unions/">Unions</a>
+          <a href="/provinces/">Provinces</a>
+          <a href="/roles/">Roles</a>
+          <a href="/search/">Search</a>
+        </nav>
+        <a class="btn btn-sm" href={appUrl}>Open the app</a>
+      </div>
+    </header>
+
+    {crumbs.length > 0 && (
+      <nav class="wrap crumbs" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        {crumbs.map((c, i) => (
+          <>
+            <span aria-hidden="true">/</span>
+            {i === crumbs.length - 1 ? <span aria-current="page">{c.name}</span> : <a href={c.href}>{c.name}</a>}
+          </>
+        ))}
+      </nav>
+    )}
+
+    <main id="main" class="wrap">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <p>CineArch helps Canadian film and TV workers track union eligibility, log jobs and manage their paperwork.</p>
+        <p class="muted">
+          This guide summarizes publicly available information and is not legal advice. Requirements change — always confirm
+          with the union local before applying.
+        </p>
+        <p class="muted">
+          <a href="/unions/">Unions</a> · <a href="/provinces/">Provinces</a> · <a href="/roles/">Roles</a> ·
+          <a href={appUrl}>Web app</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

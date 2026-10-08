@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import { PROVINCES, unionsInProvince } from '../../lib/guide';
+
+const rows = PROVINCES.map(p => ({ province: p, unions: unionsInProvince(p).map(u => u.union.name) }));
+---
+<Base
+  title="Film & TV Union Jurisdiction by Province"
+  description="Which film and TV unions cover crew and performers in each Canadian province and territory, from Ontario and BC to Quebec, Alberta and the Atlantic provinces."
+  crumbs={[{ name: 'Provinces', href: '/provinces/' }]}
+>
+  <p class="eyebrow">Jurisdiction</p>
+  <h1>Union jurisdiction by province</h1>
+  <p class="lede">
+    The same job can fall under a different union depending on where the production shoots. Choose a province to see
+    which guilds and locals cover each department there.
+  </p>
+
+  <div class="grid">
+    {rows.map(({ province, unions }) => (
+      <a class="card" href={`/provinces/${province.slug}/`}>
+        <h3>{province.name}</h3>
+        <p>{unions.slice(0, 5).join(', ')}{unions.length > 5 ? '…' : ''}</p>
+      </a>
+    ))}
+  </div>
+</Base>

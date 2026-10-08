@@ -12,7 +12,13 @@ import { UNION_REGISTRY } from '../config/unions/registry';
  * 3. Competition & Overlap Injectors (The "OR" logic from the Matrix)
  * 4. National Standards Fallback
  */
-export const resolveGuildsForRole = (province: string, role: string, department: string): string[] => {
+export const resolveGuildsForRole = (
+  province: string,
+  role: string,
+  department: string,
+  // The app always wants a suggestion; the public guide must not publish a guess.
+  { fallback = true }: { fallback?: boolean } = {}
+): string[] => {
   const prov = province as CanadianProvince;
   const overrides = PROVINCIAL_OVERRIDES[prov] || [];
   const results = new Set<string>();
@@ -85,8 +91,15 @@ export const resolveGuildsForRole = (province: string, role: string, department:
     }
   }
 
+  // Drop locals that don't operate in this province (e.g. a Toronto local
+  // reached through the national fallback table for a Saskatchewan job).
+  for (const id of results) {
+    const regions = UNION_REGISTRY[id]?.regions;
+    if (regions && !regions.includes(prov)) results.delete(id);
+  }
+
   // Fallback if empty
-  if (results.size === 0) {
+  if (results.size === 0 && fallback) {
     results.add('u-873');
   }
 

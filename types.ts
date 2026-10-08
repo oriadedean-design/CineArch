@@ -94,6 +94,7 @@ export interface UnionType {
   applicationFee?: number;
   contactEmail?: string;
   jurisdictionalNotes?: string;
+  regions?: CanadianProvince[];   // provinces where this local operates; omitted = national
 }
 
 export interface UserUnionTracking {

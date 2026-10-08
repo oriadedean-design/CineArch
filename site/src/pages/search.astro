@@ -1,0 +1,71 @@
+---
+import Base from '../layouts/Base.astro';
+import { UNIONS, PROVINCES, ROLES } from '../lib/guide';
+
+// Small static index (~100 entries) shipped inline; filtering happens in the browser.
+const index = [
+  ...UNIONS.map(u => ({ kind: 'Union', title: u.name, href: `/unions/${u.slug}/`, text: `${u.name} ${u.description}` })),
+  ...PROVINCES.map(p => ({ kind: 'Province', title: p.name, href: `/provinces/${p.slug}/`, text: `${p.name} ${p.code}` })),
+  ...ROLES.map(r => ({ kind: 'Role', title: r.name, href: `/roles/${r.slug}/`, text: `${r.name} ${r.department} ${r.description}` })),
+];
+---
+<Base
+  title="Search the Union Guide"
+  description="Search Canadian film and TV unions, provinces and production roles."
+  crumbs={[{ name: 'Search', href: '/search/' }]}
+  noindex
+>
+  <h1>Search the guide</h1>
+  <form role="search" action="/search/" method="get" onsubmit="return false">
+    <label for="q" class="muted">Union, province or job title</label>
+    <input id="q" name="q" class="search-input" type="search" placeholder="e.g. grip ontario, IATSE 667, background performer" autocomplete="off" autofocus />
+  </form>
+  <p id="count" class="muted" aria-live="polite"></p>
+  <ul id="results" class="results"></ul>
+
+  <script is:inline type="application/json" id="search-index" set:html={JSON.stringify(index)} />
+  <script>
+    type Entry = { kind: string; title: string; href: string; text: string };
+    const index: Entry[] = JSON.parse(document.getElementById('search-index')!.textContent || '[]');
+    const input = document.getElementById('q') as HTMLInputElement;
+    const list = document.getElementById('results')!;
+    const count = document.getElementById('count')!;
+
+    const render = (q: string) => {
+      const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+      const hits = terms.length === 0 ? [] : index
+        .map(e => {
+          const hay = e.text.toLowerCase();
+          if (!terms.every(t => hay.includes(t))) return null;
+          const score = terms.reduce((s, t) => s + (e.title.toLowerCase().includes(t) ? 2 : 1), 0);
+          return { e, score };
+        })
+        .filter((h): h is { e: Entry; score: number } => !!h)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 50);
+
+      list.replaceChildren(...hits.map(({ e }) => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = e.href;
+        const kind = document.createElement('span');
+        kind.className = 'kind';
+        kind.textContent = e.kind;
+        a.append(kind, e.title);
+        li.append(a);
+        return li;
+      }));
+      count.textContent = terms.length === 0 ? '' : `${hits.length} result${hits.length === 1 ? '' : 's'}`;
+    };
+
+    const initial = new URLSearchParams(location.search).get('q') || '';
+    input.value = initial;
+    render(initial);
+    input.addEventListener('input', () => {
+      render(input.value);
+      const url = new URL(location.href);
+      if (input.value) url.searchParams.set('q', input.value); else url.searchParams.delete('q');
+      history.replaceState(null, '', url);
+    });
+  </script>
+</Base>

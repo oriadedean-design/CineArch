@@ -1,0 +1,28 @@
+---
+import Base from '../../layouts/Base.astro';
+import { UNIONS, coverageForUnion } from '../../lib/guide';
+
+const rows = UNIONS.map(u => ({ union: u, provinces: coverageForUnion(u).map(c => c.province.name) }));
+---
+<Base
+  title="Canadian Film & TV Unions and Guilds"
+  description="Every major Canadian film and TV union — IATSE locals, DGC, ACTRA, UBCP, WGC, Teamsters, NABET and AQTIS — with membership requirements and the provinces they cover."
+  crumbs={[{ name: 'Unions', href: '/unions/' }]}
+>
+  <p class="eyebrow">Directory</p>
+  <h1>Film &amp; TV unions in Canada</h1>
+  <p class="lede">
+    {UNIONS.length} guilds and locals represent crew, performers, directors and writers on Canadian productions. Pick one
+    to see who it represents, what it takes to join and where it has jurisdiction.
+  </p>
+
+  <div class="grid">
+    {rows.map(({ union, provinces }) => (
+      <a class="card" href={`/unions/${union.slug}/`}>
+        <h3>{union.name}</h3>
+        <p>{union.description}</p>
+        {provinces.length > 0 && <p class="alt" style="margin-top:8px">{provinces.join(', ')}</p>}
+      </a>
+    ))}
+  </div>
+</Base>

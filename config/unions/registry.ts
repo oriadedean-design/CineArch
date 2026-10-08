@@ -1,9 +1,10 @@
 
-import { UnionType } from '../../types';
+import { CanadianProvince as P, type UnionType } from '../../types';
 
 export const UNION_REGISTRY: Record<string, UnionType> = {
   'u-actra': {
     id: 'u-actra',
+    regions: [P.ON, P.QC, P.AB, P.MB, P.SK, P.NS, P.NB, P.NL, P.PE, P.YT, P.NT, P.NU],
     name: 'ACTRA',
     description: 'National baseline for performers (Except BC). Authority for Actors, Background, and Stunts.',
     defaultDuesRate: 0.0225,
@@ -13,6 +14,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-ubcp': {
     id: 'u-ubcp',
+    regions: [P.BC],
     name: 'UBCP/ACTRA',
     description: 'Autonomous BC branch representing performers in British Columbia.',
     defaultDuesRate: 0.025,
@@ -39,6 +41,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-873': {
     id: 'u-873',
+    regions: [P.ON],
     name: 'IATSE 873',
     description: 'Toronto technical local. Jurisdiction for Script Supervisors and primary Tech Depts in the GTA.',
     defaultDuesRate: 0.045,
@@ -47,6 +50,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-nabet': {
     id: 'u-nabet',
+    regions: [P.ON],
     name: 'NABET 700-M UNIFOR',
     description: 'Ontario technical guild. Competitive jurisdiction for Tech, Craft, and Transportation.',
     defaultDuesRate: 0.03,
@@ -55,6 +59,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-891': {
     id: 'u-891',
+    regions: [P.BC, P.YT],
     name: 'IATSE 891',
     description: 'BC/Yukon technical local. Jurisdiction for Tech, Sound, and First Aid.',
     defaultDuesRate: 0.035,
@@ -63,6 +68,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-212': {
     id: 'u-212',
+    regions: [P.AB],
     name: 'IATSE 212',
     description: 'Alberta Mixed Local. Covers Tech, Sound, Art Dept, and Picture Editing.',
     defaultDuesRate: 0.03,
@@ -71,6 +77,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-856': {
     id: 'u-856',
+    regions: [P.MB],
     name: 'IATSE 856',
     description: 'Manitoba Local. Jurisdiction for Tech, Sound, FACS, and Transportation.',
     defaultDuesRate: 0.03,
@@ -80,6 +87,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-849': {
     id: 'u-849',
+    regions: [P.NS, P.NB, P.NL, P.PE],
     name: 'IATSE 849',
     description: 'Atlantic Technical Local. Covers all tech, Sound, and Transportation.',
     defaultDuesRate: 0.03,
@@ -88,6 +96,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-667': {
     id: 'u-667',
+    regions: [P.ON, P.QC, P.NS, P.NB, P.NL, P.PE],
     name: 'IATSE 667',
     description: 'Cinematographers Guild (Eastern). Camera authority in ON, QC, and Atlantic.',
     defaultDuesRate: 0.04,
@@ -96,6 +105,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-669': {
     id: 'u-669',
+    regions: [P.BC, P.AB, P.SK, P.MB, P.YT, P.NT, P.NU],
     name: 'IATSE 669',
     description: 'Cinematographers Guild (Western). Camera authority in BC, AB, SK, MB, and Territories.',
     defaultDuesRate: 0.04,
@@ -104,6 +114,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-aqtis': {
     id: 'u-aqtis',
+    regions: [P.QC],
     name: 'AQTIS 514 IATSE',
     description: 'Quebec Mega-Local for all technical and camera departments.',
     defaultDuesRate: 0.03,
@@ -113,6 +124,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-t155': {
     id: 'u-t155',
+    regions: [P.BC],
     name: 'Teamsters 155',
     description: 'Transportation and Security in British Columbia.',
     defaultDuesRate: 0.03,
@@ -121,6 +133,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-t938': {
     id: 'u-t938',
+    regions: [P.ON],
     name: 'Teamsters 938',
     description: 'Transportation and Logistics in Ontario.',
     defaultDuesRate: 0.03,
@@ -129,6 +142,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-t362': {
     id: 'u-t362',
+    regions: [P.AB],
     name: 'Teamsters 362',
     description: 'Transportation and Security in Alberta.',
     defaultDuesRate: 0.03,
@@ -137,6 +151,7 @@ export const UNION_REGISTRY: Record<string, UnionType> = {
   },
   'u-411': {
     id: 'u-411',
+    regions: [P.ON],
     name: 'IATSE 411',
     description: 'Ontario specialized local for Coordinators and Craft Service.',
     defaultDuesRate: 0.035,

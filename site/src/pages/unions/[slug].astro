@@ -1,0 +1,91 @@
+---
+import Base from '../../layouts/Base.astro';
+import { UNIONS, coverageForUnion, formatTier, formatPercent } from '../../lib/guide';
+import type { GuideUnion } from '../../lib/guide';
+
+export function getStaticPaths() {
+  return UNIONS.map(union => ({ params: { slug: union.slug }, props: { union } }));
+}
+
+const { union } = Astro.props as { union: GuideUnion };
+const coverage = coverageForUnion(union);
+const provinceNames = coverage.map(c => c.province.name);
+const firstTier = union.tiers[0];
+const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
+
+const description = [
+  `How to join ${union.name}`,
+  firstTier ? `${firstTier.name} status requires ${formatTier(firstTier)}` : null,
+  provinceNames.length ? `Jurisdiction in ${provinceNames.slice(0, 4).join(', ')}${provinceNames.length > 4 ? ' and more' : ''}` : null,
+].filter(Boolean).join('. ') + '.';
+---
+<Base
+  title={`${union.name}: Membership Requirements & Jurisdiction`}
+  description={description}
+  crumbs={[{ name: 'Unions', href: '/unions/' }, { name: union.name, href: `/unions/${union.slug}/` }]}
+  jsonLd={[{
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: `${union.name} membership requirements and jurisdiction`,
+    about: { '@type': 'Organization', name: union.name, ...(union.contactEmail ? { email: union.contactEmail } : {}) },
+    inLanguage: 'en-CA',
+  }]}
+>
+  <p class="eyebrow">Union profile</p>
+  <h1>{union.name}</h1>
+  <p class="lede">{union.description}</p>
+
+  <dl class="facts">
+    {union.tiers.map(t => (
+      <div><dt>{t.name}</dt><dd>{formatTier(t)}</dd></div>
+    ))}
+    {union.applicationFee != null && <div><dt>Application fee</dt><dd>${union.applicationFee.toLocaleString('en-CA')}</dd></div>}
+    <div><dt>Typical dues</dt><dd>{formatPercent(union.defaultDuesRate)} of earnings</dd></div>
+    <div><dt>Operates in</dt><dd>{union.regions ? (union.regions.length > 3 ? `${union.regions.length} provinces & territories` : union.regions.join(', ')) : 'Across Canada'}</dd></div>
+  </dl>
+
+  <h2>How to qualify</h2>
+  <ul>
+    {union.tiers.map(t => (
+      <li><strong>{t.name}:</strong> {formatTier(t)}. {t.description}{t.requiresDepartment && ' Requirements vary by department.'}</li>
+    ))}
+  </ul>
+  {union.residencyRule && <p class="note"><strong>Residency:</strong> {union.residencyRule}</p>}
+  {union.jurisdictionalNotes && <p class="note">{union.jurisdictionalNotes}</p>}
+
+  {union.applicationProcess && union.applicationProcess.length > 0 && (
+    <>
+      <h2>Application process</h2>
+      <ol>{union.applicationProcess.map(step => <li>{step}</li>)}</ol>
+    </>
+  )}
+
+  {union.memberBenefits && union.memberBenefits.length > 0 && (
+    <>
+      <h2>Member benefits</h2>
+      <ul class="chips">{union.memberBenefits.map(b => <li><span>{b}</span></li>)}</ul>
+    </>
+  )}
+
+  {union.regions && union.regions.length > 3 && (
+    <p class="muted">Operates in {union.regions.join(', ')}.</p>
+  )}
+
+  {coverage.length > 0 && (
+    <>
+      <h2>Where {union.name} has jurisdiction</h2>
+      {coverage.map(({ province, roles }) => (
+        <>
+          <h3><a href={`/provinces/${province.slug}/`}>{province.name}</a></h3>
+          <ul class="chips">
+            {roles.map(r => <li><a href={`/roles/${r.slug}/`}>{r.name}</a></li>)}
+          </ul>
+        </>
+      ))}
+    </>
+  )}
+
+  <h2>Track your progress to {union.name}</h2>
+  <p>Log each production in CineArch and it counts your hours, days and credits toward {union.name} automatically.</p>
+  <div class="cta-row"><a class="btn" href={appUrl}>Start tracking</a></div>
+</Base>
