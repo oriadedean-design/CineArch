@@ -331,6 +331,21 @@ export const api = {
       return data;
     },
 
+    // 2d. Password reset: email a recovery link that returns to the app,
+    // where ResetPassword sets the new key.
+    async requestPasswordReset(email: string): Promise<void> {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+    },
+
+    async updatePassword(password: string): Promise<void> {
+      if (password.length < 8) throw new Error("AUTH_ERR: Access key must be at least 8 characters.");
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    },
+
     // Called on app start / SIGNED_IN: records this device and signs out
     // devices evicted by the 3-session cap.
     verifySession,
