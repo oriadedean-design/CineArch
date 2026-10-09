@@ -8,6 +8,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Check your .env.local file.');
 }
 
+// Read before the client consumes the URL hash: a password-reset email link
+// lands as #access_token=...&type=recovery (or #error=... if it expired).
+const linkHash = new URLSearchParams(window.location.hash.replace(/^#\/?/, ''));
+export const openedFromRecoveryLink = linkHash.get('type') === 'recovery';
+export const authLinkError = linkHash.get('error_description');
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     // Persist session in localStorage so the user stays logged in across tabs/refreshes

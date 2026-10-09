@@ -2,7 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { api } from './services/storage';
-import { supabase } from './services/supabase';
+import { supabase, openedFromRecoveryLink, authLinkError } from './services/supabase';
 import { isDemoMode, DEMO_USER } from './services/demo';
 import { User } from './types';
 
@@ -11,6 +11,7 @@ import { Auth } from './pages/Auth';
 import { Welcome } from './pages/Welcome';
 import { OnboardingIndividual } from './pages/OnboardingIndividual';
 import { OnboardingEnterprise } from './pages/OnboardingEnterprise';
+import { ResetPassword } from './pages/ResetPassword';
 
 // Route-split: each page becomes its own JS chunk, dramatically reducing
 // the initial bundle from ~1MB to ~200KB for the critical path.
@@ -41,6 +42,8 @@ const MainApp = () => {
   const [loading, setLoading]         = useState(true);
   const [showWelcome, setShowWelcome] = useState(true);
   const [authAgentMode, setAuthAgentMode] = useState(false);
+  const [recovering, setRecovering]   = useState(openedFromRecoveryLink);
+  const [linkError, setLinkError]     = useState(authLinkError);
   const location = useLocation();
 
   useEffect(() => {
@@ -57,6 +60,7 @@ const MainApp = () => {
     hydrateSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') setRecovering(true);
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         // Defer out of the auth callback: awaiting Supabase calls inside it deadlocks the client.
         await new Promise(r => setTimeout(r, 0));
@@ -80,6 +84,11 @@ const MainApp = () => {
   const handleLogout       = () => api.auth.logout();
   const handleWelcomeEnter = (asAgent = false) => { setAuthAgentMode(asAgent); setShowWelcome(false); };
   const handleAuthBack     = () => setShowWelcome(true);
+  const handleRecoveryDone = () => {
+    setRecovering(false);
+    setLinkError(null);
+    window.history.replaceState(null, '', window.location.pathname + '#/');
+  };
 
   // Demo mode: bypass all auth and use mock user
   if (isDemoMode() && !user) {
@@ -101,6 +110,10 @@ const MainApp = () => {
   }
 
   if (loading) return <PageLoader />;
+
+  if (recovering || (linkError && !user)) {
+    return <ResetPassword onDone={handleRecoveryDone} linkError={recovering ? null : linkError} />;
+  }
 
   const isAgent = user?.accountType === 'AGENT';
 
