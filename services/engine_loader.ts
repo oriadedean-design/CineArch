@@ -1,7 +1,8 @@
 import { supabase } from './supabase';
-import { setEngineSnapshot, setRateLines, getRateLines, type EngineSnapshot, type RateLine } from './union_engine';
+import { setEngineSnapshot, setRateLineLoader, type EngineSnapshot, type RateLine } from './union_engine';
 
-// Loads the union engine from Supabase. The snapshot is cached in
+// The app's connection between the engine (services/engine.ts) and Supabase.
+// Loads the union engine snapshot. It is cached in
 // localStorage and only re-downloaded when union_engine_version() changes,
 // so a normal app start costs one tiny request.
 
@@ -53,11 +54,9 @@ export async function loadUnionEngine(): Promise<void> {
   }
 }
 
-// Loads rate lines for the given schedules (those not already loaded).
-export async function loadRateLines(scheduleIds: string[]): Promise<void> {
-  const missing = [...new Set(scheduleIds)].filter(id => !getRateLines(id));
-  if (missing.length === 0) return;
-  const { data, error } = await supabase.rpc('rate_schedule_lines', { p_schedule_ids: missing });
+// Rate lines come from rate_schedule_lines() when a job needs them.
+setRateLineLoader(async (scheduleIds) => {
+  const { data, error } = await supabase.rpc('rate_schedule_lines', { p_schedule_ids: scheduleIds });
   if (error) throw error;
-  setRateLines(data as unknown as Record<string, RateLine[]>);
-}
+  return data as unknown as Record<string, RateLine[]>;
+});

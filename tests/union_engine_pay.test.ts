@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import {
   setEngineSnapshot, setRateLines, getPayRule, findRateSchedule, findMinimumRate, getProductionTypes,
   type EngineSnapshot, type RateLine,
-} from '../services/union_engine';
+} from '../services/engine';
 import fixture from './fixtures/pay_engine.json';
 
 // A slice of the real engine data (pay rules, IATSE 873 and ACTRA schedules),

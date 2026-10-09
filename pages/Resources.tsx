@@ -4,32 +4,47 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Heading, Badge, Card } from '../components/ui';
 import { ArrowLeft } from 'lucide-react';
 import { Article } from '../types';
+import { getDepartments, getCoverage, getUnionSpec } from '../services/engine';
+
+// Which union covers each catalog role in Ontario (outside Ottawa and Northern Ontario).
+const OntarioCoverage = () => {
+  const byUnion = new Map<string, string[]>();
+  for (const d of getDepartments()) for (const r of d.roles) {
+    for (const c of getCoverage('Ontario', r.name, d.name)) {
+      byUnion.set(c.unionId, [...(byUnion.get(c.unionId) ?? []), r.name]);
+    }
+  }
+  return (
+    <div className="space-y-6">
+      <p className="text-xl font-serif leading-relaxed text-gray-300 italic">
+        "The landscape of Ontario film is a puzzle of specific Locals. Knowing where your role fits isn't just about dues—it's about eligibility."
+      </p>
+      <p className="text-gray-400 leading-relaxed">
+        Who covers each role in Ontario, from CineArch's union engine. Some roles appear under more than one union where
+        jurisdiction is shared. Ottawa and Northern Ontario differ: see the <a className="text-accent underline" href="/guide/provinces/ontario/">Ontario guide</a>.
+      </p>
+      {[...byUnion].sort((a, b) => b[1].length - a[1].length).map(([unionId, roles]) => (
+        <div key={unionId} className="p-6 glass-ui border-white/10">
+          <h4 className="text-accent font-black uppercase text-[10px] tracking-widest mb-3 italic">{getUnionSpec(unionId)?.name ?? unionId}</h4>
+          <p className="text-sm text-white/70">{roles.join(' · ')}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const ARTICLES: Article[] = [
   {
     slug: 'ontario-union-guide',
     title: 'Ontario Jurisdictional Alignment',
-    subtitle: 'Navigating IATSE 873, 411, 667 and the DGC boundaries in the Toronto hub.',
+    subtitle: 'Which union covers which role in Ontario, from the CineArch union engine.',
     category: 'UNION',
     date: 'Jan 15, 2025',
     readTime: '10 min read',
     author: 'CineArch Editorial',
     imageUrl: 'https://i.pinimg.com/1200x/5e/42/57/5e4257679a36daca5536198bb55a92dc.jpg',
-    content: (
-      <div className="space-y-6">
-        <p className="text-xl font-serif leading-relaxed text-gray-300 italic">
-          "The landscape of Ontario film is a puzzle of specific Locals. Knowing where your role fits isn't just about dues—it's about eligibility."
-        </p>
-        <h3 className="text-2xl font-bold text-white mt-8 mb-4">The DGC/IATSE Divide</h3>
-        <p className="text-gray-400 leading-relaxed">
-          In Ontario, job titles like Art Director, Locations, and Set P.A. are strictly covered by the Directors Guild of Canada (DGC). This differs from many US jurisdictions where these may fall under IATSE.
-        </p>
-        <div className="p-8 glass-ui border-accent/20 bg-accent/5 my-8">
-           <h4 className="text-accent font-black uppercase text-[10px] tracking-widest mb-4 italic">Quick Check: Local 411</h4>
-           <p className="text-sm text-white/80 italic">Office P.A.s, Production Coordinators, and Craft Services are all protected by IATSE 411 in Ontario.</p>
-        </div>
-      </div>
-    )
+    // Built from the union engine, so it changes when the engine's data does.
+    content: <OntarioCoverage />
   }
 ];
 

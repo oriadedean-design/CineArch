@@ -1,11 +1,11 @@
 // Public union & jurisdiction guide data.
 // Read from the union engine tables in Supabase at build time, through the
-// same engine module the web app uses, so the guide and the app's
-// eligibility logic can't drift apart.
+// same engine the web app uses (services/engine.ts), so the guide and the
+// app can't drift apart. This file is the guide's host: it feeds the engine.
 import {
-  setEngineSnapshot, setRateLines, getAllUnions, getDepartments, getCurrentRateSchedules, getRateSections, getPayRules, getCoverage,
+  setEngineSnapshot, setRateLineLoader, ensureRateLines, getAllUnions, getDepartments, getCurrentRateSchedules, getRateSections, getPayRules, getCoverage,
   type EngineSnapshot, type EngineUnion, type Coverage, type RateLine, type RateSchedule, type RateSection, type PayRule,
-} from '../../../services/union_engine';
+} from '../../../services/engine';
 import { CanadianProvince, ONTARIO_REGION_LABELS, type OntarioRegion } from '../../../types';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -27,9 +27,8 @@ setEngineSnapshot(await rpc('union_engine_snapshot', {}) as EngineSnapshot);
 // Rates in effect on the build date (or each union's latest, if none are).
 export const BUILD_DATE = new Date().toISOString().slice(0, 10);
 const currentSchedules = new Map(getAllUnions().map(u => [u.id, getCurrentRateSchedules(u.id, BUILD_DATE)]));
-setRateLines(await rpc('rate_schedule_lines', {
-  p_schedule_ids: [...currentSchedules.values()].flat().map(s => s.id),
-}) as Record<string, RateLine[]>);
+setRateLineLoader(async ids => await rpc('rate_schedule_lines', { p_schedule_ids: ids }) as Record<string, RateLine[]>);
+await ensureRateLines([...currentSchedules.values()].flat().map(s => s.id));
 
 export interface UnionRates {
   schedules: (RateSchedule & { sections: RateSection[] })[];

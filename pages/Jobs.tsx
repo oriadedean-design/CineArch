@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/storage';
 import { Job, User, CanadianProvince } from '../types';
-import { resolveGuildsForRole, getUnionSpec, getAllUnions, getDepartments, getRatePositions } from '../services/union_engine';
-import { priceJob, loadJobRates } from '../services/job_pay';
-import { describeOvertime, workedHours } from '../services/pay';
+import { resolveGuildsForRole, getUnionSpec, getAllUnions, getDepartments, getRatePositions, priceJob, loadJobRates, describeOvertime, workedHours } from '../services/engine';
 import { Button, Input, Select, Badge, Card } from '../components/ui';
 import { ArrowLeft, ShieldCheck, Clock, Trash2, AlertTriangle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';

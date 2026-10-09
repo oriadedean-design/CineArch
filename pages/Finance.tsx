@@ -5,7 +5,7 @@ import { Lock, Crown, Plus, TrendingUp, TrendingDown, DollarSign, AlertTriangle,
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
 import { User, FinanceTransaction, FinanceStats, UserUnionTracking } from '../types';
-import { findUnion } from '../services/union_engine';
+import { findUnion } from '../services/engine';
 import { clsx } from 'clsx';
 
 export const Finance = () => {

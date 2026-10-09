@@ -2,10 +2,9 @@
 // the role on the job date, the union's pay rule, and works out the pay.
 // Used by the job form and the spreadsheet import so both agree.
 import {
-  findRateSchedule, findMinimumRate, getPayRule, getProductionTypes, getRateLines,
+  findRateSchedule, findMinimumRate, getPayRule, getProductionTypes, getRateLines, ensureRateLines,
   type MinimumRate, type PayRule, type RateSchedule,
 } from './union_engine';
-import { loadRateLines } from './engine_loader';
 import { jobPay, scaleStatus, type JobPay, type ScaleStatus } from './pay';
 
 export interface JobPayInput {
@@ -67,5 +66,5 @@ export async function loadJobRates(inputs: Pick<JobPayInput, 'isUnion' | 'unionI
     const s = findRateSchedule(i.unionId, day(i.date), i.productionType);
     if (s && !getRateLines(s.id)) ids.add(s.id);
   }
-  if (ids.size > 0) await loadRateLines([...ids]);
+  if (ids.size > 0) await ensureRateLines([...ids]);
 }

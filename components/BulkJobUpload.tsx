@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Papa from 'papaparse';
 import { api } from '../services/storage';
-import { IMPORT_FIELDS, TEMPLATE_CSV, buildImport, guessMapping, type ImportField, type ImportResult } from '../services/job_import';
+import { IMPORT_FIELDS, TEMPLATE_CSV, buildImport, guessMapping, type ImportField, type ImportResult } from '../services/engine';
 import { Upload, CheckCircle, Settings2, ArrowRight, Download, AlertTriangle } from 'lucide-react';
 import { Button, Select, Badge } from './ui';
 

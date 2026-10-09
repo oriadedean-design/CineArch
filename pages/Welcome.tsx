@@ -4,7 +4,7 @@ import { Heading, Text, Button, Card, Badge } from '../components/ui';
 import { ArrowRight, Shield, Target, FileText, ChevronRight, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PLANS } from '../types';
-import { getAllUnions } from '../services/union_engine';
+import { getAllUnions } from '../services/engine';
 import { clsx } from 'clsx';
 import { enterDemoMode } from '../services/demo';
 

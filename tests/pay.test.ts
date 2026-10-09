@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayPay, jobPay, scaleStatus, workedHours } from '../services/pay';
+import { dayPay, jobPay, scaleStatus, workedHours } from '../services/engine';
 
 // Rules as seeded from the agreements (supabase/migrations/20261009000004_pay_rules_seed.sql).
 const IATSE_873 = { minimumCallHours: 8, overtimeAfter: [8, 12, 15], overtimeMultipliers: [1.5, 2, 3], incrementMinutes: 6 };

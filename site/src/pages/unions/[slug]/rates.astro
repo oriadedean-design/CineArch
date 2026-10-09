@@ -2,7 +2,7 @@
 import Base from '../../../layouts/Base.astro';
 import { UNIONS, ratesFor, slugify, BUILD_DATE } from '../../../lib/guide';
 import type { GuideUnion, UnionRates } from '../../../lib/guide';
-import { describeOvertime } from '../../../../../services/pay';
+import { describeOvertime } from '../../../../../services/engine';
 
 export function getStaticPaths() {
   return UNIONS

@@ -229,6 +229,20 @@ export const setRateLines = (lines: Record<string, RateLine[]>) => {
   for (const [id, list] of Object.entries(lines)) rateLines.set(id, list);
 };
 export const getRateLines = (scheduleId: string): RateLine[] | undefined => rateLines.get(scheduleId);
+
+// The engine doesn't fetch anything itself: each host (the app's
+// engine_loader, the guide's build) plugs in how rate lines are loaded.
+type RateLineLoader = (scheduleIds: string[]) => Promise<Record<string, RateLine[]>>;
+let rateLineLoader: RateLineLoader | undefined;
+export const setRateLineLoader = (loader: RateLineLoader) => { rateLineLoader = loader; };
+
+// Loads lines for these schedules, skipping ones already loaded.
+export async function ensureRateLines(scheduleIds: string[]): Promise<void> {
+  const missing = [...new Set(scheduleIds)].filter(id => !rateLines.has(id));
+  if (missing.length === 0) return;
+  if (!rateLineLoader) throw new Error('Union engine: no rate line loader set (setRateLineLoader).');
+  setRateLines(await rateLineLoader(missing));
+}
 export const getEngineVersion = () => engine.version;
 export const isEngineLoaded = () => engine.version > 0;
 

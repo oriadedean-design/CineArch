@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { registerSession, clearSession, verifySession } from './auth';
+import { trackProgress } from './career';
 import { User, Job, UserUnionTracking, ResidencyDocument, AgencyInvite } from '../types';
 import { isDemoMode, DEMO_USER, DEMO_JOBS, DEMO_TRACKING } from './demo';
 import type { Tables, TablesInsert, TablesUpdate } from './database.types';
@@ -173,15 +174,6 @@ const toJobRow = (job: Job) => ({
   genre: job.genre ?? null,
   province: job.province ?? null,
 });
-
-// Days worked: the logged day count, else the inclusive date span
-// (single day when there's no end date).
-const workedDays = (job: Job): number => {
-  if (job.daysWorked && job.daysWorked > 1) return job.daysWorked;
-  if (!job.endDate) return 1;
-  const ms = Date.parse(job.endDate) - Date.parse(job.startDate);
-  return isNaN(ms) || ms < 0 ? 1 : Math.round(ms / 86_400_000) + 1;
-};
 
 const toTracking = (t: TrackingRow): UserUnionTracking => ({
   id: t.id,
@@ -538,23 +530,10 @@ export const api = {
       if (error) throw error;
     },
 
-    // Calculate progress towards union tier requirements
+    // Progress toward a union tier (the engine's career logic, services/career.ts)
     calculateProgress: (track: UserUnionTracking, jobs: Job[]) => {
-      const relevantJobs = jobs.filter(j =>
-        (track.unionTypeId && j.unionTypeId === track.unionTypeId) || j.unionName === track.unionName
-      );
-      let current = track.startingValue || 0;
-      if (track.targetType === 'HOURS') {
-        current += relevantJobs.reduce((acc, job) => acc + (job.totalHours || 0), 0);
-      } else if (track.targetType === 'EARNINGS') {
-        current += relevantJobs.reduce((acc, job) => acc + (job.grossEarnings || 0), 0);
-      } else if (track.targetType === 'DAYS') {
-        current += relevantJobs.reduce((acc, job) => acc + workedDays(job), 0);
-      } else {
-        current += relevantJobs.length;
-      }
-      const percent = track.targetValue > 0 ? Math.min(100, (current / track.targetValue) * 100) : 0;
-      return { percent, current, target: track.targetValue };
+      const { percent, current, target } = trackProgress(track, jobs);
+      return { percent, current, target };
     }
   },
 

@@ -1,10 +1,9 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { setEngineSnapshot, setRateLines, type EngineSnapshot, type RateLine } from '../services/union_engine';
-import { buildImport, detectDateOrder, guessMapping, parseDate, TEMPLATE_CSV } from '../services/job_import';
+import { beforeAll, describe, expect, it } from 'vitest';
+import {
+  setEngineSnapshot, setRateLines, buildImport, detectDateOrder, guessMapping, parseDate, TEMPLATE_CSV,
+  type EngineSnapshot, type RateLine,
+} from '../services/engine';
 import fixture from './fixtures/pay_engine.json';
-
-// Rate lines are preloaded below, so the import never reaches the network.
-vi.mock('../services/supabase', () => ({ supabase: {} }));
 
 beforeAll(() => {
   setEngineSnapshot(fixture.snapshot as unknown as EngineSnapshot);

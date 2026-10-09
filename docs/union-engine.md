@@ -2,6 +2,29 @@
 
 The union engine is the source of truth for every union, its requirements, fees, dues and rates, the role catalog, and which union covers which role where. It lives in Supabase. Edit it in **Supabase → Table Editor**. The app picks up changes the next time it starts, and the guide picks them up on its next build.
 
+## One engine, three places
+
+Every part of CineArch asks the same engine, `services/engine.ts`:
+
+| Who | How it uses the engine |
+|---|---|
+| Public guide (`/guide`) | Union pages, coverage by province and role, rate cards, overtime rules. Built from the engine at deploy time (`site/src/lib/guide.ts`). |
+| Personal app | Which union covers your role, the union minimum and overtime for each job, spreadsheet import, your progress toward joining. |
+| Agency Mode | The same job pricing and import for each client, and each client's standing (progress, union and non-union hours, pay below scale) on the agency dashboard. |
+
+The engine is built in layers, each using the one before:
+
+1. `union_engine`: the data. Unions, coverage, rate cards and pay rules from the tables below.
+2. `pay`: how a day is paid.
+3. `job_pay`: a job priced against its union's rate card.
+4. `job_import`: spreadsheets turned into priced jobs.
+5. `career`: a person's standing, built from their jobs.
+
+The engine never fetches data itself. A host connects it: `services/engine_loader.ts` in the app, `site/src/lib/guide.ts` for the guide. To extend it:
+
+- **New union facts** go in the tables.
+- **New reasoning** (e.g. 6th-day premiums, non-union work counting toward a union) goes in a layer, with a test in `tests/`. Pages only display what the engine returns.
+
 ## Tables
 
 | Table | What a row is |
