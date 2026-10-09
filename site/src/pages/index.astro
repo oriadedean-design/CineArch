@@ -16,7 +16,7 @@ const featuredProvinces = PROVINCES.filter(p => featured.includes(p.slug));
     url: Astro.site?.href,
     potentialAction: {
       '@type': 'SearchAction',
-      target: new URL('/search/?q={query}', Astro.site).href,
+      target: new URL('/guide/search/?q={query}', Astro.site).href,
       'query-input': 'required name=query',
     },
   }, {
@@ -37,7 +37,7 @@ const featuredProvinces = PROVINCES.filter(p => featured.includes(p.slug));
       roles across {PROVINCES.length} provinces and territories to the {UNIONS.length} guilds and locals that cover them.
     </p>
     <div class="cta-row">
-      <a class="btn" href="/search/">Search the guide</a>
+      <a class="btn" href="/guide/search/">Search the guide</a>
       <a class="btn btn-ghost" href={appUrl}>Track your eligibility</a>
     </div>
   </section>
@@ -45,17 +45,17 @@ const featuredProvinces = PROVINCES.filter(p => featured.includes(p.slug));
   <h2>Browse by province</h2>
   <div class="grid">
     {featuredProvinces.map(p => (
-      <a class="card" href={`/provinces/${p.slug}/`}>
+      <a class="card" href={`/guide/provinces/${p.slug}/`}>
         <h3>{p.name}</h3>
         <p>Unions and locals for film and TV work in {p.name}.</p>
       </a>
     ))}
-    <a class="card" href="/provinces/"><h3>All provinces</h3><p>Every province and territory.</p></a>
+    <a class="card" href="/guide/provinces/"><h3>All provinces</h3><p>Every province and territory.</p></a>
   </div>
 
   <h2>Guilds and locals</h2>
   <ul class="chips">
-    {UNIONS.map(u => <li><a href={`/unions/${u.slug}/`}>{u.name}</a></li>)}
+    {UNIONS.map(u => <li><a href={`/guide/unions/${u.slug}/`}>{u.name}</a></li>)}
   </ul>
 
   <h2>Track it, don't guess it</h2>

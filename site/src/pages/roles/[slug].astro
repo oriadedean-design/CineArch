@@ -21,9 +21,9 @@ const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
   title={`${role.name} Union by Province (Canada)`}
   description={`Which union represents a ${role.name} in Canadian film and TV? ${sample ? `For example ${sample}.` : ''} See every province.`}
   crumbs={[
-    { name: 'Roles', href: '/roles/' },
-    { name: role.department, href: `/roles/#${role.departmentSlug}` },
-    { name: role.name, href: `/roles/${role.slug}/` },
+    { name: 'Roles', href: '/guide/roles/' },
+    { name: role.department, href: `/guide/roles/#${role.departmentSlug}` },
+    { name: role.name, href: `/guide/roles/${role.slug}/` },
   ]}
   jsonLd={[{
     '@context': 'https://schema.org',
@@ -53,12 +53,12 @@ const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
         {byProvince.map(({ province, area, unions, notes }) => (
           <tr>
             <td>
-              <a href={`/provinces/${province.slug}/`}>{province.name}</a>{area.label && <span class="muted"> · {area.label}</span>}
+              <a href={`/guide/provinces/${province.slug}/`}>{province.name}</a>{area.label && <span class="muted"> · {area.label}</span>}
               {area.note && <span class="muted"> (unconfirmed)</span>}
             </td>
             <td>
               {unions.length === 0 ? <span class="muted">Varies</span> : unions.map((u, i) => (
-                <>{i > 0 && <span class="alt"> or </span>}<a href={`/unions/${u.slug}/`}>{u.name}</a></>
+                <>{i > 0 && <span class="alt"> or </span>}<a href={`/guide/unions/${u.slug}/`}>{u.name}</a></>
               ))}
               {notes.map(n => <div class="muted">{n}</div>)}
             </td>

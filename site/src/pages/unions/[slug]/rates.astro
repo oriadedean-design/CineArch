@@ -29,9 +29,9 @@ const rules = [payRule, ...departmentRules].filter(r => r != null);
   title={`${union.name} Minimum Rates and Overtime`}
   description={`${union.name} minimum rates for every position${many ? ` across ${schedules.length} production types` : ''}${payRule ? `, with overtime rules (${describeOvertime(payRule)})` : ''}. As published by the union.`}
   crumbs={[
-    { name: 'Unions', href: '/unions/' },
-    { name: union.name, href: `/unions/${union.slug}/` },
-    { name: 'Rates', href: `/unions/${union.slug}/rates/` },
+    { name: 'Unions', href: '/guide/unions/' },
+    { name: union.name, href: `/guide/unions/${union.slug}/` },
+    { name: 'Rates', href: `/guide/unions/${union.slug}/rates/` },
   ]}
 >
   <p class="eyebrow">Minimum rates</p>
@@ -44,7 +44,7 @@ const rules = [payRule, ...departmentRules].filter(r => r != null);
   {!current && (
     <p class="note">
       <strong>No schedule we have is in effect today.</strong> These are the most recent published rates — confirm current
-      rates with <a href={`/unions/${union.slug}/`}>{union.name}</a> before quoting or negotiating.
+      rates with <a href={`/guide/unions/${union.slug}/`}>{union.name}</a> before quoting or negotiating.
     </p>
   )}
 

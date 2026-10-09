@@ -13,7 +13,7 @@ interface Props {
 
 const { title, description, crumbs = [], jsonLd = [], noindex = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
-const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
+const appUrl = '/';  // the app is served from the same site
 const fullTitle = title === 'CineArch' ? title : `${title} | CineArch`;
 
 const structured = [
@@ -21,7 +21,7 @@ const structured = [
     ? [{
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
-        itemListElement: [{ name: 'Home', href: '/' }, ...crumbs].map((c, i) => ({
+        itemListElement: [{ name: 'Home', href: '/guide/' }, ...crumbs].map((c, i) => ({
           '@type': 'ListItem',
           position: i + 1,
           name: c.name,
@@ -42,8 +42,8 @@ const structured = [
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex" />}
     <meta name="theme-color" content="#000000" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="icon" href="/guide/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/guide/sitemap-index.xml" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="CineArch" />
@@ -63,12 +63,12 @@ const structured = [
     <a class="skip" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="wrap header-inner">
-        <a href="/" class="brand">Cine<span>Arch</span></a>
+        <a href="/guide/" class="brand">Cine<span>Arch</span></a>
         <nav aria-label="Guide">
-          <a href="/unions/">Unions</a>
-          <a href="/provinces/">Provinces</a>
-          <a href="/roles/">Roles</a>
-          <a href="/search/">Search</a>
+          <a href="/guide/unions/">Unions</a>
+          <a href="/guide/provinces/">Provinces</a>
+          <a href="/guide/roles/">Roles</a>
+          <a href="/guide/search/">Search</a>
         </nav>
         <a class="btn btn-sm" href={appUrl}>Open the app</a>
       </div>
@@ -76,7 +76,7 @@ const structured = [
 
     {crumbs.length > 0 && (
       <nav class="wrap crumbs" aria-label="Breadcrumb">
-        <a href="/">Home</a>
+        <a href="/guide/">Home</a>
         {crumbs.map((c, i) => (
           <>
             <span aria-hidden="true">/</span>
@@ -98,7 +98,7 @@ const structured = [
           with the union local before applying.
         </p>
         <p class="muted">
-          <a href="/unions/">Unions</a> · <a href="/provinces/">Provinces</a> · <a href="/roles/">Roles</a> ·
+          <a href="/guide/unions/">Unions</a> · <a href="/guide/provinces/">Provinces</a> · <a href="/guide/roles/">Roles</a> ·
           <a href={appUrl}>Web app</a>
         </p>
       </div>
