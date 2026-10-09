@@ -18,14 +18,20 @@ jobs:
       # services/database.types.ts is generated from the live schema (npm run db:types)
       # and committed, so a column rename that the code doesn't follow fails here.
       - run: npm run typecheck
+      # Pay calculator, union rate lookups and spreadsheet import.
+      - run: npm test
       - run: npm run build
         env:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_ANON_KEY: ci-placeholder
-      # Public guide (site/) imports union data from config/ and services/
+      # Public guide (site/) reads the union engine from Supabase at build time.
+      # SUPABASE_URL / SUPABASE_ANON_KEY are repo variables (both are public values).
       - run: npm ci
         working-directory: site
       - run: npx tsc --noEmit -p .
         working-directory: site
       - run: npm run build
         working-directory: site
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}

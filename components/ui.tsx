@@ -128,7 +128,7 @@ export const Card = ({ children, className, onClick, ...props }: CardProps) => {
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children?: React.ReactNode;
-  color?: "neutral" | "success" | "blue" | "accent";
+  color?: "neutral" | "success" | "blue" | "accent" | "danger";
   className?: string;
   // Fix: Explicitly include key for TypeScript support in lists
   key?: React.Key;
@@ -139,7 +139,8 @@ export const Badge = ({ children, color = "neutral", className, ...props }: Badg
     neutral: "bg-white/10 text-white border-white/30",
     success: "bg-green-500/20 text-green-400 border-green-500/40",
     blue: "bg-blue-500/20 text-blue-400 border-blue-500/40",
-    accent: "bg-accent/15 text-accent border-accent/50"
+    accent: "bg-accent/15 text-accent border-accent/50",
+    danger: "bg-red-500/20 text-red-400 border-red-500/40"
   };
   return (
     <span 

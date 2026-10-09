@@ -85,7 +85,7 @@ export interface UnionType {
   id: string;
   name: string;
   description: string;
-  defaultDuesRate: number;
+  defaultDuesRate?: number;       // omitted = not sourced yet
   tiers: UnionTier[];
   joiningRequirements?: string[];
   applicationProcess?: string[];
@@ -97,7 +97,21 @@ export interface UnionType {
   regions?: CanadianProvince[];   // provinces where this local operates; omitted = national
   departments?: string[];         // departments the local represents, as the local lists them
   contactPhone?: string;
+  applicationFeeNotes?: string;   // breakdown / refund policy for applicationFee
+  // Ontario sub-regions this local covers (omitted = the whole province).
+  ontarioRegions?: OntarioRegion[];
+  // Claims taken from a source we haven't confirmed with the union yet.
+  needsVerification?: string[];
 }
+
+export type OntarioRegion = 'TORONTO' | 'NORTHERN_ON' | 'OTTAWA' | 'OTHER';
+
+export const ONTARIO_REGION_LABELS: Record<OntarioRegion, string> = {
+  TORONTO: 'Toronto area',
+  NORTHERN_ON: 'Northern Ontario',
+  OTTAWA: 'Ottawa',
+  OTHER: 'Elsewhere in Ontario',
+};
 
 export interface UserUnionTracking {
   id: string;
@@ -127,8 +141,14 @@ export interface Job {
   productionTier?: string; 
   startDate: string; 
   endDate?: string;
-  totalHours: number;
+  totalHours: number;          // hours worked across all days, after unpaid meal breaks
   hourlyRate?: number;
+  daysWorked?: number;         // identical days logged together (default 1)
+  hoursPerDay?: number;        // call to wrap, per day
+  mealBreakMinutes?: number;   // unpaid, per day
+  overtimeHours?: number;      // across all days
+  unionMinimumRate?: number;   // union scale for the position when logged
+  ratePosition?: string;       // the rate-sheet position used
   grossEarnings?: number; 
   unionDeductions?: number; 
   notes?: string;
@@ -155,72 +175,6 @@ export enum CanadianProvince {
   NT = "Northwest Territories",
   NU = "Nunavut"
 }
-
-export const UNIONS: UnionType[] = [
-  { 
-    id: 'u-actra', 
-    name: 'ACTRA', 
-    description: 'National Performer Guild representing actors, singers, and stunt performers.', 
-    defaultDuesRate: 0.0225, 
-    joiningRequirements: ['Proof of Canadian Citizenship/PR', 'Varies by credit type'],
-    memberBenefits: ['Collective Bargaining', 'Retirement Plan', 'Health Insurance', 'Legal Assistance'],
-    applicationProcess: ['Submit qualifying credits', 'Payment of application fee', 'Orientation attendance'],
-    tiers: [
-      { name: 'Apprentice', targetType: 'HOURS', targetValue: 1600, description: 'National Apprentice Program.' }, 
-      { name: 'Full Member', targetType: 'CREDITS', targetValue: 3, description: 'Requires 3 qualifying credits.' }
-    ] 
-  },
-  { 
-    id: 'u-873', 
-    name: 'IATSE 873', 
-    description: 'Primary technical local for film and TV production in the Greater Toronto Area.', 
-    defaultDuesRate: 0.045, 
-    tiers: [{ name: 'Permit Status', targetType: 'DAYS', targetValue: 30, description: '30 days worked to gain status.' }] 
-  },
-  { 
-    id: 'u-667', 
-    name: 'IATSE 667', 
-    description: 'International Cinematographers Guild representing camera personnel and publicists in Eastern Canada.', 
-    defaultDuesRate: 0.04, 
-    tiers: [{ name: 'Trainee', targetType: 'DAYS', targetValue: 60, description: 'Camera Trainee program.' }] 
-  },
-  { 
-    id: 'u-411', 
-    name: 'IATSE 411', 
-    description: 'Specialized local for Production Coordinators, Assistant Coordinators, and Craft Service.', 
-    defaultDuesRate: 0.035, 
-    tiers: [{ name: 'Permit', targetType: 'DAYS', targetValue: 120, description: 'Requires 120 office days.' }],
-    memberBenefits: ['Health & Welfare', 'Group RRSP', 'Master Contract Protections']
-  },
-  { 
-    id: 'u-dgc', 
-    name: 'Directors Guild of Canada', 
-    description: 'National organization representing directors, editors, production designers, and more.', 
-    defaultDuesRate: 0.02, 
-    jurisdictionalNotes: 'In Quebec, technical positions are often represented by AQTIS 514 IATSE instead of DGC technical locals. DGC National standards apply to creative leadership.',
-    applicationProcess: ['Check Department requirements', 'Complete Gap orientation', 'Apply to District Council'],
-    tiers: [{ name: 'Associate', targetType: 'DAYS', targetValue: 150, description: 'Guild Apprentice Program.', requiresDepartment: true }] 
-  },
-  {
-    id: 'u-aqtis',
-    name: 'AQTIS 514 IATSE',
-    description: 'The dominant technical guild in Quebec, formed by the merger of AQTIS and IATSE 514.',
-    defaultDuesRate: 0.03,
-    applicationFee: 250,
-    contactEmail: 'membres@aqtis514iatse.com',
-    memberBenefits: ['Group Insurance', 'RRSP Transfers', 'Collective Agreement Enforcement'],
-    applicationProcess: [
-      'Provide Date of Birth and SIN',
-      'Complete Introduction to the Union session',
-      'Accumulate department-specific days (90-200)',
-      'Submit required letters of recommendation'
-    ],
-    tiers: [
-      { name: 'Permit Holder', targetType: 'DAYS', targetValue: 90, description: 'Accumulated days under AQTIS contract.' }
-    ],
-    residencyRule: 'Provincial Quebec residency required for local member status.'
-  }
-];
 
 export interface Plan {
   id: string;

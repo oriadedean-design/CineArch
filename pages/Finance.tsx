@@ -4,7 +4,8 @@ import { Heading, Text, Card, Button, Input, Select, Badge, ProgressBar } from '
 import { Lock, Crown, Plus, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Calculator, PieChart, FileText, Landmark, Wallet } from 'lucide-react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
-import { User, FinanceTransaction, FinanceStats, UNIONS, UserUnionTracking } from '../types';
+import { User, FinanceTransaction, FinanceStats, UserUnionTracking } from '../types';
+import { findUnion } from '../services/engine';
 import { clsx } from 'clsx';
 
 export const Finance = () => {
@@ -175,15 +176,15 @@ export const Finance = () => {
           </div>
           <div className="space-y-8">
             {tracking.length > 0 ? tracking.map(t => {
-              const master = UNIONS.find(u => u.name === t.unionName);
-              if (!master?.applicationFee) return null;
+              const master = findUnion(t.unionTypeId) ?? findUnion(t.unionName);
+              const fee = master?.applicationFee;
               return (
                 <div key={t.id} className="space-y-3">
                   <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/40 italic">
                     <span>{t.unionName} Application</span>
-                    <span className="text-white">${master.applicationFee}</span>
+                    <span className="text-white">{fee != null ? `$${fee}` : 'Application cost not yet added'}</span>
                   </div>
-                  <p className="text-xs text-white/20 leading-relaxed italic">Estimated initiation for {t.tierLabel}.</p>
+                  <p className="text-xs text-white/20 leading-relaxed italic">{master?.applicationFeeNotes ?? `Estimated initiation for ${t.tierLabel}.`}</p>
                 </div>
               );
             }) : (

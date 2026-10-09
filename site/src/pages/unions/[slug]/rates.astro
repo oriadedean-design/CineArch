@@ -1,76 +1,114 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import { UNIONS, rateScheduleFor, slugify } from '../../../lib/guide';
-import type { GuideUnion } from '../../../lib/guide';
-import type { RateSchedule } from '../../../../../config/unions/rates/iatse_212_2025';
+import { UNIONS, ratesFor, slugify, BUILD_DATE } from '../../../lib/guide';
+import type { GuideUnion, UnionRates } from '../../../lib/guide';
+import { describeOvertime } from '../../../../../services/engine';
 
 export function getStaticPaths() {
   return UNIONS
-    .filter(union => rateScheduleFor(union.id))
-    .map(union => ({ params: { slug: union.slug }, props: { union, schedule: rateScheduleFor(union.id) } }));
+    .filter(union => ratesFor(union.id))
+    .map(union => ({ params: { slug: union.slug }, props: { union, rates: ratesFor(union.id) } }));
 }
 
-const { union, schedule } = Astro.props as { union: GuideUnion; schedule: RateSchedule };
+const { union, rates } = Astro.props as { union: GuideUnion; rates: UnionRates };
+const { schedules, payRule, departmentRules } = rates;
 
 const fmtDate = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
 const money = (n: number | null) =>
   n == null ? 'Negotiable' : `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const period = (s: { effectiveFrom: string; effectiveTo?: string }) =>
+  s.effectiveTo ? `${fmtDate(s.effectiveFrom)} to ${fmtDate(s.effectiveTo)}` : `from ${fmtDate(s.effectiveFrom)}`;
 
-const from = fmtDate(schedule.effectiveFrom);
-const to = fmtDate(schedule.effectiveTo);
-const expired = new Date(`${schedule.effectiveTo}T23:59:59`) < new Date();
-const yearLabel = `${schedule.effectiveFrom.slice(0, 4)}–${schedule.effectiveTo.slice(2, 4)}`;
+const current = schedules.some(s => s.effectiveFrom <= BUILD_DATE && (!s.effectiveTo || BUILD_DATE <= s.effectiveTo));
+const many = schedules.length > 1;
+const label = (s: (typeof schedules)[number]) => s.productionType ?? s.title;
+const rules = [payRule, ...departmentRules].filter(r => r != null);
 ---
 <Base
-  title={`${union.name} Rates ${yearLabel}: Wage Scale by Department`}
-  description={`${union.name} minimum wage rates for ${schedule.sections.length} departments — grips, electrics, art, costume, sound and more — by High Budget and Tier A, B and C productions. In effect ${from} to ${to}.`}
+  title={`${union.name} Minimum Rates and Overtime`}
+  description={`${union.name} minimum rates for every position${many ? ` across ${schedules.length} production types` : ''}${payRule ? `, with overtime rules (${describeOvertime(payRule)})` : ''}. As published by the union.`}
   crumbs={[
-    { name: 'Unions', href: '/unions/' },
-    { name: union.name, href: `/unions/${union.slug}/` },
-    { name: 'Rates', href: `/unions/${union.slug}/rates/` },
+    { name: 'Unions', href: '/guide/unions/' },
+    { name: union.name, href: `/guide/unions/${union.slug}/` },
+    { name: 'Rates', href: `/guide/unions/${union.slug}/rates/` },
   ]}
 >
-  <p class="eyebrow">Rate schedule</p>
-  <h1>{union.name} rates {yearLabel}</h1>
-  <p class="lede">{schedule.title}. Minimum rates by production budget tier, in effect {from} to {to}.</p>
+  <p class="eyebrow">Minimum rates</p>
+  <h1>{union.name} rates</h1>
+  <p class="lede">
+    The minimum the agreement sets for each position{many ? ', by production type' : ''}. On a union set these minimums
+    apply to everyone hired under the agreement, member or not.
+  </p>
 
-  {expired && (
+  {!current && (
     <p class="note">
-      <strong>This schedule ended {to}.</strong> A newer schedule may now apply — confirm current rates with
-      {' '}<a href={`/unions/${union.slug}/`}>{union.name}</a> before quoting or negotiating.
+      <strong>No schedule we have is in effect today.</strong> These are the most recent published rates — confirm current
+      rates with <a href={`/guide/unions/${union.slug}/`}>{union.name}</a> before quoting or negotiating.
     </p>
   )}
-  <p class="muted">Figures as published in the collective agreement. "Negotiable" means the agreement sets no minimum for that position.</p>
 
-  <nav aria-label="Departments">
-    <ul class="chips">
-      {schedule.sections.map(s => <li><a href={`#${slugify(s.department)}`}>{s.department}</a></li>)}
-    </ul>
-  </nav>
-
-  {schedule.sections.map(section => (
+  {rules.length > 0 && (
     <section>
-      <h2 id={slugify(section.department)}>{section.department}</h2>
-      {section.note && <p class="muted">{section.note}</p>}
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Position</th>
-              {schedule.columns.map(c => <th scope="col">{c}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {section.rows.map(row => (
-              <tr>
-                <td>{row.title}</td>
-                {row.rates.map(v => <td class={v == null ? 'muted' : undefined}>{money(v)}</td>)}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <h2 id="overtime">Hours and overtime</h2>
+      {rules.map(rule => (
+        <div>
+          <p>
+            <strong>{rule.title}:</strong> {describeOvertime(rule)}{rule.minimumCallHours ? `; ${rule.minimumCallHours}-hour minimum call` : ''}
+            {rule.incrementMinutes ? `; paid in ${rule.incrementMinutes}-minute units` : ''}.
+          </p>
+          {rule.notes && <p class="muted">{rule.notes}</p>}
+          {rule.mealBreakNotes && <p class="muted">Meals: {rule.mealBreakNotes}</p>}
+          {rule.needsVerification.length > 0 && <p class="muted">Awaiting confirmation: {rule.needsVerification.join('; ')}.</p>}
+          {rule.sourceUrl && <p class="muted"><a href={rule.sourceUrl} rel="nofollow">Source</a></p>}
+        </div>
+      ))}
+    </section>
+  )}
+
+  <p class="muted">Figures as published. "Negotiable" means the agreement sets no minimum for that position.</p>
+
+  {many && (
+    <nav aria-label="Production types">
+      <ul class="chips">
+        {schedules.map(s => <li><a href={`#${slugify(label(s))}`}>{label(s)}</a></li>)}
+      </ul>
+    </nav>
+  )}
+
+  {schedules.map((schedule, i) => (
+    <section>
+      <details open={i === 0 || !many}>
+        <summary><h2 id={slugify(label(schedule))} style="display:inline">{label(schedule)}</h2></summary>
+        <p class="muted">
+          In effect {period(schedule)}.{schedule.notes && ` ${schedule.notes}`}
+          {schedule.sourceUrl && <> <a href={schedule.sourceUrl} rel="nofollow">Source</a></>}
+        </p>
+        {schedule.sections.map(section => (
+          <>
+            <h3>{section.department}</h3>
+            {section.note && <p class="muted">{section.note}</p>}
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Position</th>
+                    {schedule.columns.map(c => <th scope="col">{c}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {section.rows.map(row => (
+                    <tr>
+                      <td>{row.title}</td>
+                      {row.rates.map(v => <td class={v == null ? 'muted' : undefined}>{money(v)}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ))}
+      </details>
     </section>
   ))}
 </Base>

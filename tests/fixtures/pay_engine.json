@@ -1,0 +1,3930 @@
+{
+ "snapshot": {
+  "version": 24,
+  "unions": [
+   {
+    "applicationFee": 75,
+    "applicationFeeNotes": "$75 Apprentice administration fee, paid yearly. Full membership has a one-time $1,600 initiation fee, less qualifying Apprentice credits and the initial Apprentice fee.",
+    "contactEmail": null,
+    "contactPhone": null,
+    "departments": [
+     "Actors",
+     "Background Performers",
+     "Choreographers",
+     "Dancers",
+     "Singers",
+     "Puppeteers",
+     "Stunt Coordinators",
+     "Stunt Performers"
+    ],
+    "description": "National union of professional performers in English-language recorded media (outside BC, where UBCP/ACTRA is the autonomous branch). Represents actors, background performers, choreographers, dancers, singers, puppeteers, stunt coordinators and stunt performers.",
+    "duesNotes": "Full members: $195 basic annual dues plus 2.25% working dues on gross earnings, combined maximum $4,000 a year.",
+    "duesRate": 0.0225,
+    "id": "u-actra",
+    "jurisdictionalNotes": null,
+    "jurisdictions": [
+     {
+      "contactEmail": "alberta@actra.ca",
+      "contactPhone": "403-228-3123",
+      "needsVerification": false,
+      "notes": "ACTRA Alberta",
+      "province": "Alberta",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": "ACTRA Manitoba",
+      "province": "Manitoba",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": "ACTRA Maritimes",
+      "province": "New Brunswick",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": "ACTRA Newfoundland/Labrador",
+      "province": "Newfoundland and Labrador",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": null,
+      "province": "Northwest Territories",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": "ACTRA Maritimes",
+      "province": "Nova Scotia",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": null,
+      "province": "Nunavut",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": "ACTRA Toronto and ACTRA Ottawa branches",
+      "province": "Ontario",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": "ACTRA Maritimes",
+      "province": "Prince Edward Island",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": "ACTRA Montreal (English-language work)",
+      "province": "Quebec",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": "ACTRA Saskatchewan",
+      "province": "Saskatchewan",
+      "region": null
+     },
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": null,
+      "province": "Yukon",
+      "region": null
+     }
+    ],
+    "lastVerified": "2026-10-09",
+    "memberBenefits": [
+     "Health Insurance",
+     "Retirement Plan",
+     "Collective Bargaining"
+    ],
+    "name": "ACTRA",
+    "needsVerification": [
+     "coverage in the territories"
+    ],
+    "requirements": [
+     {
+      "caucus": null,
+      "kind": "application_step",
+      "province": null,
+      "text": "Check the \"join ACTRA\" box on a qualifying work permit; there is a 6-week window to join as an Apprentice"
+     },
+     {
+      "caucus": null,
+      "kind": "application_step",
+      "province": null,
+      "text": "Pay the $75 Apprentice fee and complete the new-member orientation"
+     },
+     {
+      "caucus": null,
+      "kind": "requirement",
+      "province": null,
+      "text": "Canadian citizen or permanent resident"
+     },
+     {
+      "caucus": null,
+      "kind": "requirement",
+      "province": null,
+      "text": "Apprentice routes: graduate of an eligible acting program (apply within one year), a qualifying role on an ACTRA production, Additional Background Performer status, or a reciprocal agreement (e.g. Canadian Actors' Equity Association)"
+     },
+     {
+      "caucus": "Background",
+      "kind": "requirement",
+      "province": null,
+      "text": "Additional Background Performer: 15 days of background work within a 12-month period"
+     }
+    ],
+    "residencyRule": null,
+    "scope": "performers",
+    "sourceUrls": [
+     "https://www.actra.ca/join",
+     "https://actraalberta.com/join/",
+     "https://actratoronto.com/apprentice-program/"
+    ],
+    "tiers": [
+     {
+      "description": "At least one qualifying work permit (principal, acting or stunt roles; background permits excluded), or a course of studies from an eligible school within the past year.",
+      "name": "Apprentice",
+      "requiresDepartment": false,
+      "targetType": "CREDITS",
+      "targetValue": 1
+     },
+     {
+      "description": "Three qualifying work permits and/or credits. No time limit while Apprentice membership is maintained.",
+      "name": "Full Member",
+      "requiresDepartment": false,
+      "targetType": "CREDITS",
+      "targetValue": 3
+     }
+    ],
+    "website": "https://www.actra.ca"
+   },
+   {
+    "applicationFee": 100,
+    "applicationFeeNotes": null,
+    "contactEmail": null,
+    "contactPhone": null,
+    "departments": [],
+    "description": "Union of British Columbia Performers, the autonomous BC branch of ACTRA, representing performers in English-language recorded media in BC.",
+    "duesNotes": null,
+    "duesRate": 0.025,
+    "id": "u-ubcp",
+    "jurisdictionalNotes": null,
+    "jurisdictions": [
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": null,
+      "province": "British Columbia",
+      "region": null
+     }
+    ],
+    "lastVerified": "2026-10-09",
+    "memberBenefits": [
+     "BC Health & Welfare",
+     "Retirement Plan"
+    ],
+    "name": "UBCP/ACTRA",
+    "needsVerification": [
+     "application fee",
+     "dues rate (BC may differ from ACTRA national)"
+    ],
+    "requirements": [
+     {
+      "caucus": null,
+      "kind": "requirement",
+      "province": null,
+      "text": "Canadian citizen or permanent resident"
+     }
+    ],
+    "residencyRule": null,
+    "scope": "performers",
+    "sourceUrls": [
+     "https://artsbc.org/union-for-bc-performers/"
+    ],
+    "tiers": [
+     {
+      "description": "One qualifying work permit, an eligible acting program (within one year), background status or a reciprocal agreement.",
+      "name": "Apprentice",
+      "requiresDepartment": false,
+      "targetType": "CREDITS",
+      "targetValue": 1
+     },
+     {
+      "description": "Three qualifying credits.",
+      "name": "Full Member",
+      "requiresDepartment": false,
+      "targetType": "CREDITS",
+      "targetValue": 3
+     }
+    ],
+    "website": "https://www.ubcp.com"
+   },
+   {
+    "applicationFee": 200,
+    "applicationFeeNotes": null,
+    "contactEmail": null,
+    "contactPhone": null,
+    "departments": [
+     "Construction",
+     "Costume",
+     "Craftservice",
+     "Grip",
+     "Hair",
+     "Lighting",
+     "Makeup",
+     "Props / Set Dec / Greens",
+     "Scenic",
+     "Script Supervisor",
+     "Sound / Boom",
+     "SPFX",
+     "Transportation"
+    ],
+    "description": "Toronto area technical local. Jurisdiction for Script Supervisors and primary Tech Depts in the GTA.",
+    "duesNotes": null,
+    "duesRate": 0.045,
+    "id": "u-873",
+    "jurisdictionalNotes": null,
+    "jurisdictions": [
+     {
+      "contactEmail": null,
+      "contactPhone": null,
+      "needsVerification": false,
+      "notes": null,
+      "province": "Ontario",
+      "region": "TORONTO"
+     }
+    ],
+    "lastVerified": null,
+    "memberBenefits": [],
+    "name": "IATSE 873",
+    "needsVerification": [
+     "application fee",
+     "membership day count",
+     "dues rate"
+    ],
+    "requirements": [],
+    "residencyRule": null,
+    "scope": "technicians",
+    "sourceUrls": [],
+    "tiers": [
+     {
+      "description": "Toronto Tech Standard.",
+      "name": "Member",
+      "requiresDepartment": false,
+      "targetType": "DAYS",
+      "targetValue": 90
+     }
+    ],
+    "website": null
+   }
+  ],
+  "departments": [
+   {
+    "code": "DIR",
+    "description": "The driving force behind the artistic and dramatic visualization of the script.",
+    "id": "direction",
+    "name": "Direction",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "A Director is the driving force in the dramatic and artistic aspects of an audiovisual work. The Director visualizes and defines the style and structure of the script.",
+      "id": "director",
+      "isTrainee": false,
+      "name": "Director",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Responsible for breaking down all elements presented in a script and maintaining the shooting schedule.",
+      "id": "1st-assistant-director",
+      "isTrainee": false,
+      "name": "1st Assistant Director",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "SCR",
+    "description": "Ensuring narrative and visual consistency throughout the filming process.",
+    "id": "script-and-continuity",
+    "name": "Script & Continuity",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "The guardian of continuity, timing, and editing notes for the production. Tracks narrative logic across takes.",
+      "id": "script-supervisor",
+      "isTrainee": false,
+      "name": "Script Supervisor",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "PRO",
+    "description": "Administrative and logistical command for the production budget and operations.",
+    "id": "production-office",
+    "name": "Production Office",
+    "roles": [
+     {
+      "aliases": [],
+      "code": "PM",
+      "description": "Oversees general operations and implementation of the production budget.",
+      "id": "production-manager-pm",
+      "isTrainee": false,
+      "name": "Production Manager (PM)",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Manages office operations, travel, insurance, and vendor relations.",
+      "id": "production-coordinator",
+      "isTrainee": false,
+      "name": "Production Coordinator",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": "1st APC",
+      "description": null,
+      "id": "1st-assistant-production-coordinator-1st-apc",
+      "isTrainee": false,
+      "name": "1st Assistant Production Coordinator (1st APC)",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": "2nd APC",
+      "description": null,
+      "id": "2nd-assistant-production-coordinator-2nd-apc",
+      "isTrainee": false,
+      "name": "2nd Assistant Production Coordinator (2nd APC)",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "travel-coordinator",
+      "isTrainee": false,
+      "name": "Travel Coordinator",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "script-coordinator",
+      "isTrainee": false,
+      "name": "Script Coordinator",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "AD",
+    "description": "On-set management and communication bridge between creative and technical departments.",
+    "id": "assistant-directors",
+    "name": "Assistant Directors",
+    "roles": [
+     {
+      "aliases": [],
+      "code": "2AD",
+      "description": "Creates daily call sheets and prep documentation, ensuring all required elements are reflected.",
+      "id": "second-assistant-director-2ad",
+      "isTrainee": false,
+      "name": "Second Assistant Director (2AD)",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": "PA",
+      "description": "Assigned any and all necessary tasks by the senior ADs. Entry level position.",
+      "id": "set-pa-pa",
+      "isTrainee": false,
+      "name": "Set PA (PA)",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "LOC",
+    "description": "Responsible for finding and securing environments for filming.",
+    "id": "locations",
+    "name": "Locations",
+    "roles": [
+     {
+      "aliases": [],
+      "code": "LM",
+      "description": "Responsible for finding filming locations, securing contracts, and operational needs.",
+      "id": "location-manager-lm",
+      "isTrainee": false,
+      "name": "Location Manager (LM)",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": "LPA",
+      "description": "Works on set to ensure permits are respected and that the location remains clean.",
+      "id": "location-production-assistant-lpa",
+      "isTrainee": false,
+      "name": "Location Production Assistant (LPA)",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "ART",
+    "description": "Visual generation of sets, environments, and overall design concepts.",
+    "id": "art-dept",
+    "name": "Art Dept",
+    "roles": [
+     {
+      "aliases": [],
+      "code": "PD",
+      "description": "Creative head responsible for visualization and generation of set design and overall concept.",
+      "id": "production-designer-pd",
+      "isTrainee": false,
+      "name": "Production Designer (PD)",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": "ART",
+      "description": "Coordinates the preparation and execution of all visual elements in the Art Department.",
+      "id": "art-director-art",
+      "isTrainee": false,
+      "name": "Art Director (ART)",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "DEC",
+    "description": "Dressing and detailing sets with furniture, decor, and textures.",
+    "id": "set-decoration",
+    "name": "Set Decoration",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Creative lead responsible for the decor and interior/exterior dressing of all sets.",
+      "id": "set-decorator",
+      "isTrainee": false,
+      "name": "Set Decorator",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Coordinates procurement and placement of decor elements as per the vision.",
+      "id": "assistant-set-decorator",
+      "isTrainee": false,
+      "name": "Assistant Set Decorator",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Responsible for sourcing, purchasing, and renting furniture and decor items.",
+      "id": "buyer",
+      "isTrainee": false,
+      "name": "Buyer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Manages the set dressing crew in the physical layout and installation of decor.",
+      "id": "lead-dresser",
+      "isTrainee": false,
+      "name": "Lead Dresser",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Executes the physical dressing and arrangement of furniture on set.",
+      "id": "set-dresser",
+      "isTrainee": false,
+      "name": "Set Dresser",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Maintains the decor during filming and handles continuity of dressing elements.",
+      "id": "on-set-dresser",
+      "isTrainee": false,
+      "name": "On-Set Dresser",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "COST",
+    "description": "Design, procurement, and maintenance of all on-screen character apparel.",
+    "id": "costume-department",
+    "name": "Costume Department",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Creative visionary for the look of all characters' wardrobe and accessories.",
+      "id": "costume-designer",
+      "isTrainee": false,
+      "name": "Costume Designer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Supports the Designer in sourcing, research, and department logistics.",
+      "id": "assistant-costume-designer",
+      "isTrainee": false,
+      "name": "Assistant Costume Designer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Administrative lead for the department, managing budget and inventory.",
+      "id": "wardrobe-coordinator",
+      "isTrainee": false,
+      "name": "Wardrobe Coordinator",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Supervises the on-set wardrobe crew and character wardrobe continuity.",
+      "id": "key-wardrobe",
+      "isTrainee": false,
+      "name": "Key Wardrobe",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Responsible for the organization and maintenance of the wardrobe trailer.",
+      "id": "truck-supervisor",
+      "isTrainee": false,
+      "name": "Truck Supervisor",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Highly skilled technician responsible for pattern making and structural construction.",
+      "id": "cutter",
+      "isTrainee": false,
+      "name": "Cutter",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Responsible for garment construction, alterations, and maintenance.",
+      "id": "sewer",
+      "isTrainee": false,
+      "name": "Sewer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Assists cast members with costume changes and maintains character continuity.",
+      "id": "dresser",
+      "isTrainee": false,
+      "name": "Dresser",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "HMU",
+    "description": "Personnel aesthetics, character design, and prosthetic applications.",
+    "id": "hair-and-makeup",
+    "name": "Hair & Makeup",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Department head for makeup, supervising artists and defining character looks.",
+      "id": "key-makeup-artist",
+      "isTrainee": false,
+      "name": "Key Makeup Artist",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Applies makeup to cast and background under the direction of the Key.",
+      "id": "assistant-makeup",
+      "isTrainee": false,
+      "name": "Assistant Makeup",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Department head for hair, supervising stylists and character hair design.",
+      "id": "key-hair",
+      "isTrainee": false,
+      "name": "Key Hair",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Executes hair styling for cast and background as per the department vision.",
+      "id": "assistant-hair",
+      "isTrainee": false,
+      "name": "Assistant Hair",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Specialized artist for the application and maintenance of prosthetic effects.",
+      "id": "prosthetics-artist",
+      "isTrainee": false,
+      "name": "Prosthetics Artist",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "CAM",
+    "description": "Optics, lighting, and visual capture technical crew.",
+    "id": "camera-department",
+    "name": "Camera Department",
+    "roles": [
+     {
+      "aliases": [],
+      "code": "DOP",
+      "description": "Chief of camera and lighting, responsible for the cinematic look.",
+      "id": "director-of-photography-dop",
+      "isTrainee": false,
+      "name": "Director of Photography (DOP)",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Responsible for camera maintenance, focus pulling, and technical assembly.",
+      "id": "assistant-camera-1st-2nd",
+      "isTrainee": false,
+      "name": "Assistant Camera (1st/2nd)",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "GRP",
+    "description": "Support equipment, camera movement, and lighting modification.",
+    "id": "grip",
+    "name": "Grip",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Supervises the grip crew and manages all support and movement equipment.",
+      "id": "key-grip",
+      "isTrainee": false,
+      "name": "Key Grip",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Administrative lead for the grip department, managing equipment and personnel.",
+      "id": "best-boy-grip",
+      "isTrainee": false,
+      "name": "Best Boy Grip",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Specialized grip responsible for the operation and maintenance of the camera dolly.",
+      "id": "dolly-grip",
+      "isTrainee": false,
+      "name": "Dolly Grip",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Technician responsible for rigging support equipment and light modification.",
+      "id": "grip",
+      "isTrainee": false,
+      "name": "Grip",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "ELE",
+    "description": "Electrical distribution and lighting equipment management.",
+    "id": "lighting-electric",
+    "name": "Lighting/Electric",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Chief of the electrical department, executing the DOP's lighting plan.",
+      "id": "gaffer",
+      "isTrainee": false,
+      "name": "Gaffer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Manages electrical equipment inventory and coordinates the electric crew.",
+      "id": "best-boy-electric",
+      "isTrainee": false,
+      "name": "Best Boy Electric",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Responsible for the operation and safety of the production power generators.",
+      "id": "generator-operator",
+      "isTrainee": false,
+      "name": "Generator Operator",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Technician responsible for the physical placement and operation of lighting fixtures.",
+      "id": "lamp-operator",
+      "isTrainee": false,
+      "name": "Lamp Operator",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "CONST",
+    "description": "The physical fabrication and scenic finishing of sets and props.",
+    "id": "construction-and-paint",
+    "name": "Construction & Paint",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Manages the set construction budget, logistics, and personnel.",
+      "id": "construction-coordinator",
+      "isTrainee": false,
+      "name": "Construction Coordinator",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Supervises the woodworking crew in set fabrication and assembly.",
+      "id": "head-carpenter",
+      "isTrainee": false,
+      "name": "Head Carpenter",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Fabricates sets and structural elements using wood and specialized materials.",
+      "id": "carpenter",
+      "isTrainee": false,
+      "name": "Carpenter",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Supervises the scenic painting crew and defines set finishing textures.",
+      "id": "key-scenic-artist",
+      "isTrainee": false,
+      "name": "Key Scenic Artist",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Applies specialized finishes and textures to sets to create realism.",
+      "id": "scenic-painter",
+      "isTrainee": false,
+      "name": "Scenic Painter",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Responsible for general set painting and finishing applications.",
+      "id": "painter",
+      "isTrainee": false,
+      "name": "Painter",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "PEDIT",
+    "description": "Post-production assembly of visual assets to create the final narrative.",
+    "id": "picture-editing",
+    "name": "Picture Editing",
+    "roles": [
+     {
+      "aliases": [],
+      "code": "PE",
+      "description": "Creative head who works closely with the Director in crafting the final story.",
+      "id": "picture-editor-pe",
+      "isTrainee": false,
+      "name": "Picture Editor (PE)",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Works in the editing room, assisting with daily technical assemblies and organization.",
+      "id": "assistant-picture-editor",
+      "isTrainee": false,
+      "name": "Assistant Picture Editor",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "SEDIT",
+    "description": "Post-production design and assembly of all auditory elements.",
+    "id": "sound-editing",
+    "name": "Sound Editing",
+    "roles": [
+     {
+      "aliases": [],
+      "code": "SE",
+      "description": "Manages Post Sound elements including dialogue, ADR, SFX and Foley.",
+      "id": "sound-editor-se",
+      "isTrainee": false,
+      "name": "Sound Editor (SE)",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "POST",
+    "description": "Management of the finishing process after principal photography.",
+    "id": "post-production",
+    "name": "Post Production",
+    "roles": [
+     {
+      "aliases": [],
+      "code": "PPS",
+      "description": "Administrative liaison between Editorial and Producers.",
+      "id": "post-production-supervisor-pps",
+      "isTrainee": false,
+      "name": "Post Production Supervisor (PPS)",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": "PPC",
+      "description": "Assists Post Production Supervisors in all aspects of their duties.",
+      "id": "post-production-coordinator-ppc",
+      "isTrainee": false,
+      "name": "Post Production Coordinator (PPC)",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "ACC",
+    "description": "Financial management, payroll, and auditing for the production.",
+    "id": "accounting-department",
+    "name": "Accounting Department",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Responsible for coordination, supervision and operation of the Accounting Department.",
+      "id": "production-accountant",
+      "isTrainee": false,
+      "name": "Production Accountant",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Responsibilities include data entry, preparation of accounts payable, and payroll.",
+      "id": "assistant-accountant",
+      "isTrainee": false,
+      "name": "Assistant Accountant",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "TRA",
+    "description": "Logistics and fleet management for cast, crew, and equipment.",
+    "id": "transportation",
+    "name": "Transportation",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Responsible for movement of assets and personnel across locations.",
+      "id": "coordinator-driver",
+      "isTrainee": false,
+      "name": "Coordinator / Driver",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "honeywagon-operator",
+      "isTrainee": false,
+      "name": "Honeywagon Operator",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "PERF",
+    "description": "Actors, stunt performers and background performers on camera.",
+    "id": "performers",
+    "name": "Performers",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Performs a speaking or principal role on camera.",
+      "id": "actor",
+      "isTrainee": false,
+      "name": "Actor",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Performs stunts and action sequences under the stunt coordinator's direction.",
+      "id": "stunt-performer",
+      "isTrainee": false,
+      "name": "Stunt Performer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Appears on camera in non-speaking roles to populate scenes.",
+      "id": "background-performer",
+      "isTrainee": false,
+      "name": "Background Performer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "stunt-coordinator",
+      "isTrainee": false,
+      "name": "Stunt Coordinator",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "choreographer",
+      "isTrainee": false,
+      "name": "Choreographer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "dancer",
+      "isTrainee": false,
+      "name": "Dancer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "singer",
+      "isTrainee": false,
+      "name": "Singer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "puppeteer",
+      "isTrainee": false,
+      "name": "Puppeteer",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "WRI",
+    "description": "Screenwriters and story staff who write the script.",
+    "id": "writing",
+    "name": "Writing",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Writes the screenplay or teleplay for a film or series episode.",
+      "id": "screenwriter",
+      "isTrainee": false,
+      "name": "Screenwriter",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Works with the writing team to develop, shape and revise scripts across a series.",
+      "id": "story-editor",
+      "isTrainee": false,
+      "name": "Story Editor",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "story-consultant",
+      "isTrainee": false,
+      "name": "Story Consultant",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "program-writer",
+      "isTrainee": false,
+      "name": "Program Writer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "continuity-writer",
+      "isTrainee": false,
+      "name": "Continuity Writer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "contributing-writer",
+      "isTrainee": false,
+      "name": "Contributing Writer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "show-writer",
+      "isTrainee": false,
+      "name": "Show Writer",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "PRP",
+    "description": "Sourcing, building and managing every object actors handle on camera.",
+    "id": "props",
+    "name": "Props",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Heads the props department, sourcing and managing all hand props and their continuity.",
+      "id": "property-master",
+      "isTrainee": false,
+      "name": "Property Master",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Supports the property master on set and in prep, tracking props through each scene.",
+      "id": "assistant-property-master",
+      "isTrainee": false,
+      "name": "Assistant Property Master",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Purchases and rents props to the property master's specifications.",
+      "id": "props-buyer",
+      "isTrainee": false,
+      "name": "Props Buyer",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "SND",
+    "description": "Recording dialogue and sound on set.",
+    "id": "production-sound",
+    "name": "Production Sound",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Records and mixes dialogue and on-set sound during filming.",
+      "id": "production-sound-mixer",
+      "isTrainee": false,
+      "name": "Production Sound Mixer",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Positions the boom microphone to capture dialogue without entering frame.",
+      "id": "boom-operator",
+      "isTrainee": false,
+      "name": "Boom Operator",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "SFX",
+    "description": "Practical on-set effects such as rain, wind, smoke, fire and rigged gags.",
+    "id": "special-effects",
+    "name": "Special Effects",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Plans and runs practical effects safely, leading the special effects crew.",
+      "id": "special-effects-coordinator",
+      "isTrainee": false,
+      "name": "Special Effects Coordinator",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Builds, rigs and operates practical effects under the coordinator.",
+      "id": "special-effects-assistant",
+      "isTrainee": false,
+      "name": "Special Effects Assistant",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "GRN",
+    "description": "Plants, trees, lawns and landscaping dressed on sets and locations.",
+    "id": "greens",
+    "name": "Greens",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Leads the greens department, designing and installing live and artificial greenery.",
+      "id": "head-greensperson",
+      "isTrainee": false,
+      "name": "Head Greensperson",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Installs, maintains and strikes greens on sets and locations.",
+      "id": "greensperson",
+      "isTrainee": false,
+      "name": "Greensperson",
+      "requirements": []
+     }
+    ]
+   },
+   {
+    "code": "FACS",
+    "description": "On-set food service and medical coverage for cast and crew.",
+    "id": "craft-service-and-first-aid",
+    "name": "Craft Service & First Aid",
+    "roles": [
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Runs on-set snacks and refreshments for cast and crew throughout the shooting day.",
+      "id": "head-of-craft-service",
+      "isTrainee": false,
+      "name": "Head of Craft Service",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": "Provides on-set first aid and medical coverage; requires current first aid certification.",
+      "id": "first-aid-attendant",
+      "isTrainee": false,
+      "name": "First Aid Attendant",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "assistant-craft-service",
+      "isTrainee": false,
+      "name": "Assistant Craft Service",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "background-craft-service",
+      "isTrainee": false,
+      "name": "Background Craft Service",
+      "requirements": []
+     },
+     {
+      "aliases": [],
+      "code": null,
+      "description": null,
+      "id": "craftservice-compliance-driver",
+      "isTrainee": false,
+      "name": "Craftservice Compliance Driver",
+      "requirements": []
+     }
+    ]
+   }
+  ],
+  "roleCoverage": [],
+  "departmentCoverage": [],
+  "rateSchedules": [
+   {
+    "columns": [
+     "Hourly"
+    ],
+    "dailyColumn": null,
+    "effectiveFrom": "2026-03-29",
+    "effectiveTo": "2027-04-03",
+    "hourlyColumn": "Hourly",
+    "id": "iatse-873-feature-2026",
+    "notes": "Rates in effect from 2026-03-29 to 2027-04-03 (agreement year 3).",
+    "productionType": "Feature Film",
+    "rateUnit": "hourly",
+    "roleIds": [
+     "assistant-costume-designer",
+     "assistant-hair",
+     "assistant-property-master",
+     "assistant-set-decorator",
+     "best-boy-electric",
+     "best-boy-grip",
+     "boom-operator",
+     "carpenter",
+     "costume-designer",
+     "dolly-grip",
+     "gaffer",
+     "generator-operator",
+     "greensperson",
+     "grip",
+     "head-carpenter",
+     "head-greensperson",
+     "key-grip",
+     "key-hair",
+     "key-scenic-artist",
+     "lamp-operator",
+     "on-set-dresser",
+     "painter",
+     "production-sound-mixer",
+     "property-master",
+     "scenic-painter",
+     "script-supervisor",
+     "set-decorator",
+     "set-dresser",
+     "special-effects-coordinator"
+    ],
+    "sourceUrl": "https://www.iatse873.com/sites/default/files/2024-05/all_2024-28_iatse_local_873_toronto_rates_year_1_highlight.pdf",
+    "title": "IATSE 873 Feature Film, from 2026-03-29",
+    "unionId": "u-873"
+   },
+   {
+    "columns": [
+     "Hourly"
+    ],
+    "dailyColumn": null,
+    "effectiveFrom": "2026-03-29",
+    "effectiveTo": "2027-04-03",
+    "hourlyColumn": "Hourly",
+    "id": "iatse-873-lb-3m-2026",
+    "notes": "Rates in effect from 2026-03-29 to 2027-04-03 (agreement year 3).",
+    "productionType": "Low Budget Feature ($3M and below)",
+    "rateUnit": "hourly",
+    "roleIds": [
+     "assistant-costume-designer",
+     "assistant-hair",
+     "assistant-property-master",
+     "assistant-set-decorator",
+     "best-boy-electric",
+     "best-boy-grip",
+     "boom-operator",
+     "carpenter",
+     "costume-designer",
+     "dolly-grip",
+     "gaffer",
+     "generator-operator",
+     "greensperson",
+     "grip",
+     "head-carpenter",
+     "head-greensperson",
+     "key-grip",
+     "key-hair",
+     "key-scenic-artist",
+     "lamp-operator",
+     "on-set-dresser",
+     "painter",
+     "production-sound-mixer",
+     "property-master",
+     "scenic-painter",
+     "script-supervisor",
+     "set-decorator",
+     "set-dresser",
+     "special-effects-coordinator"
+    ],
+    "sourceUrl": "https://www.iatse873.com/sites/default/files/2024-05/all_2024-28_iatse_local_873_toronto_rates_year_1_highlight.pdf",
+    "title": "IATSE 873 Low Budget Feature ($3M and below), from 2026-03-29",
+    "unionId": "u-873"
+   },
+   {
+    "columns": [
+     "Hourly"
+    ],
+    "dailyColumn": null,
+    "effectiveFrom": "2025-03-30",
+    "effectiveTo": "2026-03-28",
+    "hourlyColumn": "Hourly",
+    "id": "iatse-873-feature-2025",
+    "notes": "Rates in effect from 2025-03-30 to 2026-03-28 (agreement year 2).",
+    "productionType": "Feature Film",
+    "rateUnit": "hourly",
+    "roleIds": [
+     "assistant-costume-designer",
+     "assistant-hair",
+     "assistant-property-master",
+     "assistant-set-decorator",
+     "best-boy-electric",
+     "best-boy-grip",
+     "boom-operator",
+     "carpenter",
+     "costume-designer",
+     "dolly-grip",
+     "gaffer",
+     "generator-operator",
+     "greensperson",
+     "grip",
+     "head-carpenter",
+     "head-greensperson",
+     "key-grip",
+     "key-hair",
+     "key-scenic-artist",
+     "lamp-operator",
+     "on-set-dresser",
+     "painter",
+     "production-sound-mixer",
+     "property-master",
+     "scenic-painter",
+     "script-supervisor",
+     "set-decorator",
+     "set-dresser",
+     "special-effects-coordinator"
+    ],
+    "sourceUrl": "https://www.iatse873.com/sites/default/files/2024-05/all_2024-28_iatse_local_873_toronto_rates_year_1_highlight.pdf",
+    "title": "IATSE 873 Feature Film, from 2025-03-30",
+    "unionId": "u-873"
+   },
+   {
+    "columns": [
+     "Daily",
+     "Hourly",
+     "Overtime"
+    ],
+    "dailyColumn": "Daily",
+    "effectiveFrom": "2027-01-01",
+    "effectiveTo": "2027-12-31",
+    "hourlyColumn": "Hourly",
+    "id": "actra-ipa-2027",
+    "notes": "Rate chart lists fees by calendar year; January 1 start dates are assumed. Low-budget productions may apply discounts (CIPIP). Overtime column = 150% of the hourly rate.",
+    "productionType": null,
+    "rateUnit": "per day / per hour",
+    "roleIds": [
+     "actor",
+     "background-performer",
+     "singer",
+     "stunt-coordinator"
+    ],
+    "sourceUrl": "https://www.aqpm.ca/wp-content/uploads/2025/01/ACTRA-Grilles-tarifaires-2025-2027-EN.pdf",
+    "title": "ACTRA IPA minimum fees 2027",
+    "unionId": "u-actra"
+   },
+   {
+    "columns": [
+     "Daily",
+     "Hourly",
+     "Overtime"
+    ],
+    "dailyColumn": "Daily",
+    "effectiveFrom": "2026-01-01",
+    "effectiveTo": "2026-12-31",
+    "hourlyColumn": "Hourly",
+    "id": "actra-ipa-2026",
+    "notes": "Rate chart lists fees by calendar year; January 1 start dates are assumed. Low-budget productions may apply discounts (CIPIP). Overtime column = 150% of the hourly rate.",
+    "productionType": null,
+    "rateUnit": "per day / per hour",
+    "roleIds": [
+     "actor",
+     "background-performer",
+     "singer",
+     "stunt-coordinator"
+    ],
+    "sourceUrl": "https://www.aqpm.ca/wp-content/uploads/2025/01/ACTRA-Grilles-tarifaires-2025-2027-EN.pdf",
+    "title": "ACTRA IPA minimum fees 2026",
+    "unionId": "u-actra"
+   },
+   {
+    "columns": [
+     "Daily",
+     "Hourly",
+     "Overtime"
+    ],
+    "dailyColumn": "Daily",
+    "effectiveFrom": "2025-01-01",
+    "effectiveTo": "2025-12-31",
+    "hourlyColumn": "Hourly",
+    "id": "actra-ipa-2025",
+    "notes": "Rate chart lists fees by calendar year; January 1 start dates are assumed. Low-budget productions may apply discounts (CIPIP). Overtime column = 150% of the hourly rate.",
+    "productionType": null,
+    "rateUnit": "per day / per hour",
+    "roleIds": [
+     "actor",
+     "background-performer",
+     "singer",
+     "stunt-coordinator"
+    ],
+    "sourceUrl": "https://www.aqpm.ca/wp-content/uploads/2025/01/ACTRA-Grilles-tarifaires-2025-2027-EN.pdf",
+    "title": "ACTRA IPA minimum fees 2025",
+    "unionId": "u-actra"
+   },
+   {
+    "columns": [
+     "Daily",
+     "Hourly",
+     "OT 1.5x",
+     "OT 2x"
+    ],
+    "dailyColumn": "Daily",
+    "effectiveFrom": "2026-03-29",
+    "effectiveTo": "2027-04-03",
+    "hourlyColumn": "Hourly",
+    "id": "ubcp-bcmpa-2026",
+    "notes": "Low-budget Canadian productions: see Appendix Q (BCIPIP).",
+    "productionType": null,
+    "rateUnit": "per day / per hour",
+    "roleIds": [
+     "actor",
+     "background-performer",
+     "choreographer",
+     "stunt-coordinator"
+    ],
+    "sourceUrl": "https://ubcpactra.ca/wp-content/uploads/2025/03/2025-2028-BCMPA-Rate-Sheet.pdf",
+    "title": "UBCP/ACTRA BCMPA minimum fees from 2026-03-29",
+    "unionId": "u-ubcp"
+   }
+  ],
+  "payRules": [
+   {
+    "departmentId": null,
+    "id": "iatse-873",
+    "incrementMinutes": 6,
+    "mealBreakNotes": "Each meal period is 60 minutes and unpaid. If production calls a 30-minute catered first meal, it is paid work time. Under \"Ontario Hours\" the meal is paid.",
+    "minimumCallHours": 8,
+    "needsVerification": [
+     "Sixth and seventh day premiums are not calculated yet"
+    ],
+    "notes": "Minimum call is 8 hours plus an unpaid meal. 1.5x after 8 hours up to the 12th, 2x from 12 to 15, 3x from the 16th hour, in 0.1-hour units. 6th and 7th days in a work week pay more (not yet calculated here).",
+    "overtimeAfter": [
+     8,
+     12,
+     15
+    ],
+    "overtimeMultipliers": [
+     1.5,
+     2,
+     3
+    ],
+    "sourceUrl": "https://amptp.org/wp-content/themes/amptp/assets/pdf/Canada/IATSE%20Local%20873/2024%20Local%20873%20Long%20Term%20Agreement.pdf",
+    "title": "IATSE 873 Long Term Agreement 2024\u20132028",
+    "unionId": "u-873"
+   },
+   {
+    "departmentId": "transportation",
+    "id": "iatse-873-transportation",
+    "incrementMinutes": 6,
+    "mealBreakNotes": "Each meal period is 60 minutes and unpaid.",
+    "minimumCallHours": 9,
+    "needsVerification": [
+     "Sixth and seventh day premiums are not calculated yet"
+    ],
+    "notes": "Transportation minimum call is 9 hours plus an unpaid meal. 1.5x after 9 hours up to the 12th, 2x from 12 to 15, 3x from the 16th hour.",
+    "overtimeAfter": [
+     9,
+     12,
+     15
+    ],
+    "overtimeMultipliers": [
+     1.5,
+     2,
+     3
+    ],
+    "sourceUrl": "https://amptp.org/wp-content/themes/amptp/assets/pdf/Canada/IATSE%20Local%20873/2024%20Local%20873%20Long%20Term%20Agreement.pdf",
+    "title": "IATSE 873 Long Term Agreement 2024\u20132028 \u2014 Transportation",
+    "unionId": "u-873"
+   },
+   {
+    "departmentId": null,
+    "id": "actra-ipa",
+    "incrementMinutes": 6,
+    "mealBreakNotes": "Meal breaks are unpaid. If production gives a 30-minute first meal instead, it is paid and counts as work time. Lunch is due within 6 hours (meal penalties after that).",
+    "minimumCallHours": null,
+    "needsVerification": [
+     "Background performer overtime thresholds: assumed to match principals (1.5x after 8 hours, 2x after 12)"
+    ],
+    "notes": "The daily fee is the minimum for a day. Overtime is 150% of your contracted hourly rate after 8 hours worked and 200% after 12, in 6-minute units.",
+    "overtimeAfter": [
+     8,
+     12
+    ],
+    "overtimeMultipliers": [
+     1.5,
+     2
+    ],
+    "sourceUrl": "https://actraottawa.ca/understanding-your-cheque-under-the-ipa/",
+    "title": "Independent Production Agreement (IPA) 2025\u20132027",
+    "unionId": "u-actra"
+   },
+   {
+    "departmentId": null,
+    "id": "ubcp-bcmpa",
+    "incrementMinutes": 6,
+    "mealBreakNotes": "Meal period due by the end of the 6th hour; meal penalties are paid at the overtime rate in 0.1-hour units until it starts.",
+    "minimumCallHours": null,
+    "needsVerification": [],
+    "notes": "The daily fee is the minimum for a day. 150% after 8 hours worked in a day, 200% after 12, in 0.1-hour units.",
+    "overtimeAfter": [
+     8,
+     12
+    ],
+    "overtimeMultipliers": [
+     1.5,
+     2
+    ],
+    "sourceUrl": "https://ubcpactra.ca/understanding-your-pay-cheque/",
+    "title": "BC Master Production Agreement (BCMPA) 2025\u20132028",
+    "unionId": "u-ubcp"
+   }
+  ]
+ },
+ "lines": {
+  "actra-ipa-2025": [
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(a) Principal Actor, etc.",
+    "rates": [
+     935.25,
+     116.5,
+     175.5
+    ],
+    "roleId": "actor"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(b) Singer, etc.",
+    "rates": [
+     700.75,
+     87.75,
+     131.5
+    ],
+    "roleId": "singer"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(c) Actor, etc.",
+    "rates": [
+     631.25,
+     78.75,
+     118.5
+    ],
+    "roleId": "actor"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(d) Variety Principal",
+    "rates": [
+     1402.75,
+     175.5,
+     263
+    ],
+    "roleId": null
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(e) Chorus Performer",
+    "rates": [
+     909,
+     113.5,
+     170.75
+    ],
+    "roleId": null
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(f) Stunt Coordinator",
+    "rates": [
+     1239.5,
+     155,
+     232.5
+    ],
+    "roleId": "stunt-coordinator"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(g) Stunt Actor",
+    "rates": [
+     1402.75,
+     175.5,
+     263
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Background Performer",
+    "rates": [
+     273.5,
+     34,
+     51.25
+    ],
+    "roleId": "background-performer"
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Stand-In",
+    "rates": [
+     287.75,
+     36,
+     54.25
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Photo Double",
+    "rates": [
+     273.5,
+     34,
+     51.25
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Special Skill",
+    "rates": [
+     364.75,
+     45.75,
+     68.5
+    ],
+    "roleId": null
+   }
+  ],
+  "actra-ipa-2026": [
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(a) Principal Actor, etc.",
+    "rates": [
+     972.75,
+     121.25,
+     182.5
+    ],
+    "roleId": "actor"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(b) Singer, etc.",
+    "rates": [
+     728.75,
+     91.25,
+     136.75
+    ],
+    "roleId": "singer"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(c) Actor, etc.",
+    "rates": [
+     656.5,
+     82,
+     123.25
+    ],
+    "roleId": "actor"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(d) Variety Principal",
+    "rates": [
+     1458.75,
+     182.5,
+     273.5
+    ],
+    "roleId": null
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(e) Chorus Performer",
+    "rates": [
+     945.25,
+     118,
+     177.5
+    ],
+    "roleId": null
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(f) Stunt Coordinator",
+    "rates": [
+     1289,
+     161.25,
+     241.75
+    ],
+    "roleId": "stunt-coordinator"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(g) Stunt Actor",
+    "rates": [
+     1458.75,
+     182.5,
+     273.5
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Background Performer",
+    "rates": [
+     284.5,
+     35.25,
+     53.25
+    ],
+    "roleId": "background-performer"
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Stand-In",
+    "rates": [
+     299.25,
+     37.5,
+     56.5
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Photo Double",
+    "rates": [
+     284.5,
+     35.25,
+     53.25
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Special Skill",
+    "rates": [
+     379.25,
+     47.5,
+     71.25
+    ],
+    "roleId": null
+   }
+  ],
+  "actra-ipa-2027": [
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(a) Principal Actor, etc.",
+    "rates": [
+     1006.75,
+     125.5,
+     189
+    ],
+    "roleId": "actor"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(b) Singer, etc.",
+    "rates": [
+     754.25,
+     94.5,
+     141.5
+    ],
+    "roleId": "singer"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(c) Actor, etc.",
+    "rates": [
+     679.5,
+     84.75,
+     127.5
+    ],
+    "roleId": "actor"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(d) Variety Principal",
+    "rates": [
+     1509.75,
+     189,
+     283
+    ],
+    "roleId": null
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(e) Chorus Performer",
+    "rates": [
+     978.25,
+     122.25,
+     183.75
+    ],
+    "roleId": null
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(f) Stunt Coordinator",
+    "rates": [
+     1334,
+     167,
+     250.25
+    ],
+    "roleId": "stunt-coordinator"
+   },
+   {
+    "department": "On-camera performers (B101)",
+    "departmentNote": null,
+    "position": "(g) Stunt Actor",
+    "rates": [
+     1509.75,
+     189,
+     283
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Background Performer",
+    "rates": [
+     294.5,
+     36.5,
+     55
+    ],
+    "roleId": "background-performer"
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Stand-In",
+    "rates": [
+     309.75,
+     38.75,
+     58.5
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Photo Double",
+    "rates": [
+     294.5,
+     36.5,
+     55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (C101)",
+    "departmentNote": null,
+    "position": "Special Skill",
+    "rates": [
+     392.5,
+     49.25,
+     73.75
+    ],
+    "roleId": null
+   }
+  ],
+  "iatse-873-feature-2025": [
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Construction Supervisor",
+    "rates": [
+     null
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Head Carpenter/On-set Carp",
+    "rates": [
+     56.12
+    ],
+    "roleId": "head-carpenter"
+   },
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Assistant Head Carpenter",
+    "rates": [
+     53.57
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Carpenter",
+    "rates": [
+     52.55
+    ],
+    "roleId": "carpenter"
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Designer",
+    "rates": [
+     null
+    ],
+    "roleId": "costume-designer"
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Assistant Costume Designer",
+    "rates": [
+     56.12
+    ],
+    "roleId": "assistant-costume-designer"
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Supervisor",
+    "rates": [
+     56.12
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Set Supervisor",
+    "rates": [
+     56.12
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Assistant Costume Set Supervisor",
+    "rates": [
+     52.55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Dresser/Sewer",
+    "rates": [
+     52.55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Assistant",
+    "rates": [
+     46.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Head Lighting Technician",
+    "rates": [
+     56.12
+    ],
+    "roleId": "gaffer"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Second Lighting Technician",
+    "rates": [
+     52.55
+    ],
+    "roleId": "best-boy-electric"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Lighting Technician",
+    "rates": [
+     46.96
+    ],
+    "roleId": "lamp-operator"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Generator Operator",
+    "rates": [
+     50.51
+    ],
+    "roleId": "generator-operator"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Head Rigging Lighting Technician",
+    "rates": [
+     56.12
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Second Rigging Lighting Tech.",
+    "rates": [
+     52.55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Rigging Lighting Technician",
+    "rates": [
+     46.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Key Grip",
+    "rates": [
+     56.12
+    ],
+    "roleId": "key-grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Assistant Key Grip",
+    "rates": [
+     52.55
+    ],
+    "roleId": "best-boy-grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Dolly Grip",
+    "rates": [
+     52.55
+    ],
+    "roleId": "dolly-grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Grip",
+    "rates": [
+     46.96
+    ],
+    "roleId": "grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Key Rigging Grip",
+    "rates": [
+     56.12
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Assistant Rigging Grip",
+    "rates": [
+     52.55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Rigging Grip",
+    "rates": [
+     46.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Hair Department",
+    "departmentNote": null,
+    "position": "Head of Department",
+    "rates": [
+     null
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Hair Department",
+    "departmentNote": null,
+    "position": "Key Hair Stylist",
+    "rates": [
+     56.12
+    ],
+    "roleId": "key-hair"
+   },
+   {
+    "department": "Hair Department",
+    "departmentNote": null,
+    "position": "Assistant Hair Stylist",
+    "rates": [
+     56.12
+    ],
+    "roleId": "assistant-hair"
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Head of Department",
+    "rates": [
+     null
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Assistant Head of Department",
+    "rates": [
+     56.12
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Mould Maker",
+    "rates": [
+     52.55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Production Labourer",
+    "rates": [
+     38.86
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Craft Service",
+    "rates": [
+     38.86
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Property Department",
+    "departmentNote": null,
+    "position": "Property Master/Buyer",
+    "rates": [
+     56.12
+    ],
+    "roleId": "property-master"
+   },
+   {
+    "department": "Property Department",
+    "departmentNote": null,
+    "position": "Assistant Property Master",
+    "rates": [
+     52.55
+    ],
+    "roleId": "assistant-property-master"
+   },
+   {
+    "department": "Property Department",
+    "departmentNote": null,
+    "position": "Prop Person",
+    "rates": [
+     46.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Key Scenic Artist",
+    "rates": [
+     null
+    ],
+    "roleId": "key-scenic-artist"
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Scenic Artist",
+    "rates": [
+     56.12
+    ],
+    "roleId": "scenic-painter"
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Head Painter/On-set Painter",
+    "rates": [
+     56.12
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Assistant Head Painter",
+    "rates": [
+     53.57
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Painter/Sign Writer",
+    "rates": [
+     52.55
+    ],
+    "roleId": "painter"
+   },
+   {
+    "department": "Script Department",
+    "departmentNote": null,
+    "position": "Script Supervisor",
+    "rates": [
+     56.12
+    ],
+    "roleId": "script-supervisor"
+   },
+   {
+    "department": "Script Department",
+    "departmentNote": null,
+    "position": "Script Assistant",
+    "rates": [
+     52.55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Set Decorator/Buyer",
+    "rates": [
+     56.12
+    ],
+    "roleId": "set-decorator"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Assistant Set Decorator",
+    "rates": [
+     52.55
+    ],
+    "roleId": "assistant-set-decorator"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "On-Set Dresser",
+    "rates": [
+     56.12
+    ],
+    "roleId": "on-set-dresser"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Assistant On-Set Dresser",
+    "rates": [
+     52.55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Set Dresser",
+    "rates": [
+     46.96
+    ],
+    "roleId": "set-dresser"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Key Greens-Person",
+    "rates": [
+     56.12
+    ],
+    "roleId": "head-greensperson"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Assistant Greens-Person",
+    "rates": [
+     52.55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Greens-Person",
+    "rates": [
+     46.96
+    ],
+    "roleId": "greensperson"
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Production Sound Mixer",
+    "rates": [
+     null
+    ],
+    "roleId": "production-sound-mixer"
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Boom Operator",
+    "rates": [
+     56.12
+    ],
+    "roleId": "boom-operator"
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Playback Operator",
+    "rates": [
+     52.55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Sound Utility",
+    "rates": [
+     46.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Coordinator",
+    "rates": [
+     null
+    ],
+    "roleId": "special-effects-coordinator"
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Head of Special Effects",
+    "rates": [
+     56.12
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Assistant Head of Special Effects",
+    "rates": [
+     52.55
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Special Effects Technician",
+    "rates": [
+     46.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Coordinator",
+    "rates": [
+     47.9
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Transport Captain",
+    "rates": [
+     44.79
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Picture Vehicle Captain",
+    "rates": [
+     44.79
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Transport Co-Captain",
+    "rates": [
+     42.11
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Driver",
+    "rates": [
+     41.91
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Tractor Trailer Driver/Bus Driver",
+    "rates": [
+     42.41
+    ],
+    "roleId": null
+   }
+  ],
+  "iatse-873-feature-2026": [
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Construction Supervisor",
+    "rates": [
+     null
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Head Carpenter/On-set Carp",
+    "rates": [
+     58.08
+    ],
+    "roleId": "head-carpenter"
+   },
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Assistant Head Carpenter",
+    "rates": [
+     55.44
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Carpenter",
+    "rates": [
+     54.39
+    ],
+    "roleId": "carpenter"
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Designer",
+    "rates": [
+     null
+    ],
+    "roleId": "costume-designer"
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Assistant Costume Designer",
+    "rates": [
+     58.08
+    ],
+    "roleId": "assistant-costume-designer"
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Supervisor",
+    "rates": [
+     58.08
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Set Supervisor",
+    "rates": [
+     58.08
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Assistant Costume Set Supervisor",
+    "rates": [
+     54.39
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Dresser/Sewer",
+    "rates": [
+     54.39
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Assistant",
+    "rates": [
+     48.6
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Head Lighting Technician",
+    "rates": [
+     58.08
+    ],
+    "roleId": "gaffer"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Second Lighting Technician",
+    "rates": [
+     54.39
+    ],
+    "roleId": "best-boy-electric"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Lighting Technician",
+    "rates": [
+     48.6
+    ],
+    "roleId": "lamp-operator"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Generator Operator",
+    "rates": [
+     52.28
+    ],
+    "roleId": "generator-operator"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Head Rigging Lighting Technician",
+    "rates": [
+     58.08
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Second Rigging Lighting Tech.",
+    "rates": [
+     54.39
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Rigging Lighting Technician",
+    "rates": [
+     48.6
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Key Grip",
+    "rates": [
+     58.08
+    ],
+    "roleId": "key-grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Assistant Key Grip",
+    "rates": [
+     54.39
+    ],
+    "roleId": "best-boy-grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Dolly Grip",
+    "rates": [
+     54.39
+    ],
+    "roleId": "dolly-grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Grip",
+    "rates": [
+     48.6
+    ],
+    "roleId": "grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Key Rigging Grip",
+    "rates": [
+     58.08
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Assistant Rigging Grip",
+    "rates": [
+     54.39
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Rigging Grip",
+    "rates": [
+     48.6
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Hair Department",
+    "departmentNote": null,
+    "position": "Head of Department",
+    "rates": [
+     null
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Hair Department",
+    "departmentNote": null,
+    "position": "Key Hair Stylist",
+    "rates": [
+     58.08
+    ],
+    "roleId": "key-hair"
+   },
+   {
+    "department": "Hair Department",
+    "departmentNote": null,
+    "position": "Assistant Hair Stylist",
+    "rates": [
+     58.08
+    ],
+    "roleId": "assistant-hair"
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Head of Department",
+    "rates": [
+     null
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Assistant Head of Department",
+    "rates": [
+     58.08
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Mould Maker",
+    "rates": [
+     54.39
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Production Labourer",
+    "rates": [
+     40.22
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Craft Service",
+    "rates": [
+     40.22
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Property Department",
+    "departmentNote": null,
+    "position": "Property Master/Buyer",
+    "rates": [
+     58.08
+    ],
+    "roleId": "property-master"
+   },
+   {
+    "department": "Property Department",
+    "departmentNote": null,
+    "position": "Assistant Property Master",
+    "rates": [
+     54.39
+    ],
+    "roleId": "assistant-property-master"
+   },
+   {
+    "department": "Property Department",
+    "departmentNote": null,
+    "position": "Prop Person",
+    "rates": [
+     48.6
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Key Scenic Artist",
+    "rates": [
+     null
+    ],
+    "roleId": "key-scenic-artist"
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Scenic Artist",
+    "rates": [
+     58.08
+    ],
+    "roleId": "scenic-painter"
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Head Painter/On-set Painter",
+    "rates": [
+     58.08
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Assistant Head Painter",
+    "rates": [
+     55.44
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Painter/Sign Writer",
+    "rates": [
+     54.39
+    ],
+    "roleId": "painter"
+   },
+   {
+    "department": "Script Department",
+    "departmentNote": null,
+    "position": "Script Supervisor",
+    "rates": [
+     58.08
+    ],
+    "roleId": "script-supervisor"
+   },
+   {
+    "department": "Script Department",
+    "departmentNote": null,
+    "position": "Script Assistant",
+    "rates": [
+     54.39
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Set Decorator/Buyer",
+    "rates": [
+     58.08
+    ],
+    "roleId": "set-decorator"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Assistant Set Decorator",
+    "rates": [
+     54.39
+    ],
+    "roleId": "assistant-set-decorator"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "On-Set Dresser",
+    "rates": [
+     58.08
+    ],
+    "roleId": "on-set-dresser"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Assistant On-Set Dresser",
+    "rates": [
+     54.39
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Set Dresser",
+    "rates": [
+     48.6
+    ],
+    "roleId": "set-dresser"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Key Greens-Person",
+    "rates": [
+     58.08
+    ],
+    "roleId": "head-greensperson"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Assistant Greens-Person",
+    "rates": [
+     54.39
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Greens-Person",
+    "rates": [
+     48.6
+    ],
+    "roleId": "greensperson"
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Production Sound Mixer",
+    "rates": [
+     null
+    ],
+    "roleId": "production-sound-mixer"
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Boom Operator",
+    "rates": [
+     58.08
+    ],
+    "roleId": "boom-operator"
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Playback Operator",
+    "rates": [
+     54.39
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Sound Utility",
+    "rates": [
+     48.6
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Coordinator",
+    "rates": [
+     null
+    ],
+    "roleId": "special-effects-coordinator"
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Head of Special Effects",
+    "rates": [
+     58.08
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Assistant Head of Special Effects",
+    "rates": [
+     54.39
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Special Effects Technician",
+    "rates": [
+     48.6
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Coordinator",
+    "rates": [
+     49.58
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Transport Captain",
+    "rates": [
+     46.36
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Picture Vehicle Captain",
+    "rates": [
+     46.36
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Transport Co-Captain",
+    "rates": [
+     43.58
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Driver",
+    "rates": [
+     43.38
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Tractor Trailer Driver/Bus Driver",
+    "rates": [
+     43.88
+    ],
+    "roleId": null
+   }
+  ],
+  "iatse-873-lb-3m-2026": [
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Construction Supervisor",
+    "rates": [
+     null
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Head Carpenter/On-set Carp",
+    "rates": [
+     38.46
+    ],
+    "roleId": "head-carpenter"
+   },
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Assistant Head Carpenter",
+    "rates": [
+     36.74
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Construction Department",
+    "departmentNote": null,
+    "position": "Carpenter",
+    "rates": [
+     35.96
+    ],
+    "roleId": "carpenter"
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Designer",
+    "rates": [
+     null
+    ],
+    "roleId": "costume-designer"
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Assistant Costume Designer",
+    "rates": [
+     38.46
+    ],
+    "roleId": "assistant-costume-designer"
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Supervisor",
+    "rates": [
+     38.46
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Set Supervisor",
+    "rates": [
+     38.46
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Assistant Costume Set Supervisor",
+    "rates": [
+     35.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Dresser/Sewer",
+    "rates": [
+     35.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Costume Department",
+    "departmentNote": null,
+    "position": "Costume Assistant",
+    "rates": [
+     32.09
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Head Lighting Technician",
+    "rates": [
+     38.46
+    ],
+    "roleId": "gaffer"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Second Lighting Technician",
+    "rates": [
+     35.96
+    ],
+    "roleId": "best-boy-electric"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Lighting Technician",
+    "rates": [
+     32.09
+    ],
+    "roleId": "lamp-operator"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Generator Operator",
+    "rates": [
+     34.5
+    ],
+    "roleId": "generator-operator"
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Head Rigging Lighting Technician",
+    "rates": [
+     38.46
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Second Rigging Lighting Tech.",
+    "rates": [
+     35.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Electric Department",
+    "departmentNote": null,
+    "position": "Rigging Lighting Technician",
+    "rates": [
+     32.09
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Key Grip",
+    "rates": [
+     38.46
+    ],
+    "roleId": "key-grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Assistant Key Grip",
+    "rates": [
+     35.96
+    ],
+    "roleId": "best-boy-grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Dolly Grip",
+    "rates": [
+     35.96
+    ],
+    "roleId": "dolly-grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Grip",
+    "rates": [
+     32.09
+    ],
+    "roleId": "grip"
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Key Rigging Grip",
+    "rates": [
+     38.46
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Assistant Rigging Grip",
+    "rates": [
+     35.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Grip Department",
+    "departmentNote": null,
+    "position": "Rigging Grip",
+    "rates": [
+     32.09
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Hair Department",
+    "departmentNote": null,
+    "position": "Head of Department",
+    "rates": [
+     null
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Hair Department",
+    "departmentNote": null,
+    "position": "Key Hair Stylist",
+    "rates": [
+     38.46
+    ],
+    "roleId": "key-hair"
+   },
+   {
+    "department": "Hair Department",
+    "departmentNote": null,
+    "position": "Assistant Hair Stylist",
+    "rates": [
+     38.46
+    ],
+    "roleId": "assistant-hair"
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Head of Department",
+    "rates": [
+     null
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Assistant Head of Department",
+    "rates": [
+     38.46
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Mould Maker",
+    "rates": [
+     35.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Production Labourer",
+    "rates": [
+     26.57
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Make-up Department",
+    "departmentNote": null,
+    "position": "Craft Service",
+    "rates": [
+     26.57
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Property Department",
+    "departmentNote": null,
+    "position": "Property Master/Buyer",
+    "rates": [
+     38.46
+    ],
+    "roleId": "property-master"
+   },
+   {
+    "department": "Property Department",
+    "departmentNote": null,
+    "position": "Assistant Property Master",
+    "rates": [
+     35.96
+    ],
+    "roleId": "assistant-property-master"
+   },
+   {
+    "department": "Property Department",
+    "departmentNote": null,
+    "position": "Prop Person",
+    "rates": [
+     32.09
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Key Scenic Artist",
+    "rates": [
+     null
+    ],
+    "roleId": "key-scenic-artist"
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Scenic Artist",
+    "rates": [
+     38.46
+    ],
+    "roleId": "scenic-painter"
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Head Painter/On-set Painter",
+    "rates": [
+     38.46
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Assistant Head Painter",
+    "rates": [
+     36.74
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Scenic/Paint Department",
+    "departmentNote": null,
+    "position": "Painter/Sign Writer",
+    "rates": [
+     35.96
+    ],
+    "roleId": "painter"
+   },
+   {
+    "department": "Script Department",
+    "departmentNote": null,
+    "position": "Script Supervisor",
+    "rates": [
+     38.46
+    ],
+    "roleId": "script-supervisor"
+   },
+   {
+    "department": "Script Department",
+    "departmentNote": null,
+    "position": "Script Assistant",
+    "rates": [
+     35.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Set Decorator/Buyer",
+    "rates": [
+     38.46
+    ],
+    "roleId": "set-decorator"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Assistant Set Decorator",
+    "rates": [
+     35.96
+    ],
+    "roleId": "assistant-set-decorator"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "On-Set Dresser",
+    "rates": [
+     38.46
+    ],
+    "roleId": "on-set-dresser"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Assistant On-Set Dresser",
+    "rates": [
+     35.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Set Dresser",
+    "rates": [
+     32.09
+    ],
+    "roleId": "set-dresser"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Key Greens-Person",
+    "rates": [
+     38.46
+    ],
+    "roleId": "head-greensperson"
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Assistant Greens-Person",
+    "rates": [
+     35.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Set Decorating",
+    "departmentNote": null,
+    "position": "Greens-Person",
+    "rates": [
+     32.09
+    ],
+    "roleId": "greensperson"
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Production Sound Mixer",
+    "rates": [
+     null
+    ],
+    "roleId": "production-sound-mixer"
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Boom Operator",
+    "rates": [
+     38.46
+    ],
+    "roleId": "boom-operator"
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Playback Operator",
+    "rates": [
+     35.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Sound Department",
+    "departmentNote": null,
+    "position": "Sound Utility",
+    "rates": [
+     32.09
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Coordinator",
+    "rates": [
+     null
+    ],
+    "roleId": "special-effects-coordinator"
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Head of Special Effects",
+    "rates": [
+     38.46
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Assistant Head of Special Effects",
+    "rates": [
+     35.96
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Special Effects Department",
+    "departmentNote": null,
+    "position": "Special Effects Technician",
+    "rates": [
+     32.09
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Coordinator",
+    "rates": [
+     33.84
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Transport Captain",
+    "rates": [
+     32.67
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Picture Vehicle Captain",
+    "rates": [
+     32.67
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Transport Co-Captain",
+    "rates": [
+     31.99
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Driver",
+    "rates": [
+     31.57
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Transportation Department",
+    "departmentNote": null,
+    "position": "Tractor Trailer Driver/Bus Driver",
+    "rates": [
+     32.07
+    ],
+    "roleId": null
+   }
+  ],
+  "ubcp-bcmpa-2026": [
+   {
+    "department": "Performers (B101)",
+    "departmentNote": null,
+    "position": "Principal Actor/Stunt Performer",
+    "rates": [
+     954.4,
+     119.3,
+     178.95,
+     238.6
+    ],
+    "roleId": "actor"
+   },
+   {
+    "department": "Performers (B101)",
+    "departmentNote": null,
+    "position": "Group Singers/Dancers",
+    "rates": [
+     714.92,
+     89.37,
+     134.06,
+     178.74
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Performers (B101)",
+    "departmentNote": null,
+    "position": "Actor",
+    "rates": [
+     642.34,
+     80.29,
+     120.44,
+     160.58
+    ],
+    "roleId": "actor"
+   },
+   {
+    "department": "Performers (B101)",
+    "departmentNote": null,
+    "position": "Variety Principal",
+    "rates": [
+     1429.78,
+     178.72,
+     268.08,
+     357.44
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Performers (B101)",
+    "departmentNote": null,
+    "position": "Chorus Performer",
+    "rates": [
+     928.98,
+     116.12,
+     174.18,
+     232.24
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Performers (B101)",
+    "departmentNote": null,
+    "position": "Stunt Coordinator",
+    "rates": [
+     1241.06,
+     155.13,
+     232.7,
+     310.26
+    ],
+    "roleId": "stunt-coordinator"
+   },
+   {
+    "department": "Performers (B101)",
+    "departmentNote": null,
+    "position": "Stunt Actor",
+    "rates": [
+     1426.16,
+     178.27,
+     267.41,
+     356.54
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Performers (B101)",
+    "departmentNote": null,
+    "position": "Choreographer",
+    "rates": [
+     1193,
+     149.13,
+     223.7,
+     298.26
+    ],
+    "roleId": "choreographer"
+   },
+   {
+    "department": "Performers (B101)",
+    "departmentNote": null,
+    "position": "Vocal/Dialogue Coach",
+    "rates": [
+     1426.16,
+     178.27,
+     267.41,
+     356.54
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (D101)",
+    "departmentNote": null,
+    "position": "General Background Performer",
+    "rates": [
+     270.3,
+     33.79,
+     50.69,
+     67.58
+    ],
+    "roleId": "background-performer"
+   },
+   {
+    "department": "Qualified background performers (D101)",
+    "departmentNote": null,
+    "position": "Stand-in",
+    "rates": [
+     293.86,
+     36.73,
+     55.1,
+     73.46
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (D101)",
+    "departmentNote": null,
+    "position": "Special Ability Background Performer",
+    "rates": [
+     362.75,
+     45.34,
+     68.01,
+     90.68
+    ],
+    "roleId": null
+   },
+   {
+    "department": "Qualified background performers (D101)",
+    "departmentNote": null,
+    "position": "Photographic Double",
+    "rates": [
+     270.3,
+     33.79,
+     50.69,
+     67.58
+    ],
+    "roleId": null
+   }
+  ]
+ }
+}
