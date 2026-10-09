@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import { Heading, Badge, Input, Card, Text, Button } from '../components/ui';
 import { CanadianProvince } from '../types';
-import { getAllUnions, resolveGuildsForRole, getDepartments } from '../services/union_engine';
+import { getAllUnions, resolveGuildsForRole, getDepartments } from '../services/engine';
 import { Search, Shield, ChevronRight, Mail, Landmark, Info, MapPin, Briefcase, LayoutGrid, BookOpen, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 

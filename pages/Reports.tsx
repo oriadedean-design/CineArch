@@ -38,17 +38,26 @@ export const Reports = () => {
   }, [jobs, user, stats]);
 
   const handleExportCSV = () => {
+    // Same column names the import understands, so an export can be re-imported.
     const rows = jobs.map(j => ({
       'Production': j.productionName,
+      'Production company': j.companyName || '',
       'Role': j.role,
-      'Status': j.status,
-      'Start Date': j.startDate,
+      'Date': j.startDate,
       'End Date': j.endDate || '',
-      'Gross Earnings': j.grossEarnings ?? 0,
-      'Total Hours': j.totalHours,
+      'Days': j.daysWorked ?? 1,
+      'Hours per day': j.hoursPerDay ?? '',
+      'Meal break': j.mealBreakMinutes ?? 0,
+      'Total hours': j.totalHours,
+      'Overtime hours': j.overtimeHours ?? 0,
+      'Hourly rate': j.hourlyRate ?? '',
+      'Union minimum': j.unionMinimumRate ?? '',
+      'Gross pay': j.grossEarnings ?? 0,
       'Union': j.isUnion ? (j.unionName || 'Union') : 'Non-Union',
+      'Production type': j.productionTier || '',
       'Province': j.province || '',
       'Department': j.department || '',
+      'Status': j.status,
       'Notes': j.notes || ''
     }));
 

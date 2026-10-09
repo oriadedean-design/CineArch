@@ -18,6 +18,8 @@ jobs:
       # services/database.types.ts is generated from the live schema (npm run db:types)
       # and committed, so a column rename that the code doesn't follow fails here.
       - run: npm run typecheck
+      # Pay calculator, union rate lookups and spreadsheet import.
+      - run: npm test
       - run: npm run build
         env:
           VITE_SUPABASE_URL: https://example.supabase.co

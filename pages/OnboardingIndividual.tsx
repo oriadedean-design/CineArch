@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, CanadianProvince, UserUnionTracking, ONTARIO_REGION_LABELS, type OntarioRegion } from '../types';
-import { resolveGuildsForRole, getUnionSpec, getUnionsForProvince, getDepartments } from '../services/union_engine';
+import { resolveGuildsForRole, getUnionSpec, getUnionsForProvince, getDepartments } from '../services/engine';
 import { api } from '../services/storage';
 import { Button, Input, Heading, Text, Select, Badge, Card } from '../components/ui';
 import { ArrowRight, MapPin, Sparkles, AlertTriangle } from 'lucide-react';

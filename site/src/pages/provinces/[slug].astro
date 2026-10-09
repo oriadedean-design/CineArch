@@ -21,7 +21,7 @@ const topNames = active.slice(0, 4).map(a => a.union.name).join(', ');
 <Base
   title={`Film & TV Unions in ${province.name}`}
   description={`Which union covers your film or TV job in ${province.name}? Department-by-department jurisdiction for ${topNames} and other locals.`}
-  crumbs={[{ name: 'Provinces', href: '/provinces/' }, { name: province.name, href: `/provinces/${province.slug}/` }]}
+  crumbs={[{ name: 'Provinces', href: '/guide/provinces/' }, { name: province.name, href: `/guide/provinces/${province.slug}/` }]}
 >
   <p class="eyebrow">Jurisdiction</p>
   <h1>Film &amp; TV unions in {province.name}</h1>
@@ -33,7 +33,7 @@ const topNames = active.slice(0, 4).map(a => a.union.name).join(', ');
   <h2>Active unions</h2>
   <div class="grid">
     {active.map(({ union, roles }) => (
-      <a class="card" href={`/unions/${union.slug}/`}>
+      <a class="card" href={`/guide/unions/${union.slug}/`}>
         <h3>{union.name}</h3>
         <p>{roles.length} roles in {province.name}</p>
       </a>
@@ -52,14 +52,14 @@ const topNames = active.slice(0, 4).map(a => a.union.name).join(', ');
           <tbody>
             {d.rows.map(({ role, byArea }) => (
               <tr>
-                <td><a href={`/roles/${role.slug}/`}>{role.name}</a></td>
+                <td><a href={`/guide/roles/${role.slug}/`}>{role.name}</a></td>
                 {byArea.map(cov => { const unions = cov.map(c => c.union); return <td>
                   {unions.length === 0 ? <span class="muted">Non-union / varies</span> : (
                     <>
-                      <a href={`/unions/${unions[0].slug}/`}>{unions[0].name}</a>
+                      <a href={`/guide/unions/${unions[0].slug}/`}>{unions[0].name}</a>
                       {unions.length > 1 && (
                         <span class="alt"> · also {unions.slice(1).map((u, i) => (
-                          <>{i > 0 && ', '}<a href={`/unions/${u.slug}/`}>{u.name}</a></>
+                          <>{i > 0 && ', '}<a href={`/guide/unions/${u.slug}/`}>{u.name}</a></>
                         ))}</span>
                       )}
                     </>

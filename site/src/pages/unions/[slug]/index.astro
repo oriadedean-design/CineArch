@@ -1,6 +1,6 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import { UNIONS, coverageForUnion, formatTier, formatPercent, rateScheduleFor } from '../../../lib/guide';
+import { UNIONS, coverageForUnion, formatTier, formatPercent, ratesFor } from '../../../lib/guide';
 import type { GuideUnion } from '../../../lib/guide';
 
 export function getStaticPaths() {
@@ -12,7 +12,7 @@ const coverage = coverageForUnion(union);
 const provinceNames = coverage.map(c => c.province.name);
 const firstTier = union.tiers[0];
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
-const rates = rateScheduleFor(union.id);
+const rates = ratesFor(union.id);
 const offices = union.jurisdictions.filter(j => j.notes || j.contactEmail || j.contactPhone);
 
 const description = [
@@ -24,7 +24,7 @@ const description = [
 <Base
   title={`${union.name}: Membership Requirements & Jurisdiction`}
   description={description}
-  crumbs={[{ name: 'Unions', href: '/unions/' }, { name: union.name, href: `/unions/${union.slug}/` }]}
+  crumbs={[{ name: 'Unions', href: '/guide/unions/' }, { name: union.name, href: `/guide/unions/${union.slug}/` }]}
   jsonLd={[{
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -108,8 +108,8 @@ const description = [
     <>
       <h2>Wage rates</h2>
       <p>
-        <a href={`/unions/${union.slug}/rates/`}>{union.name} rate schedule</a> — minimum rates for every department by
-        production budget tier, from the {rates.title}.
+        <a href={`/guide/unions/${union.slug}/rates/`}>{union.name} minimum rates</a> — the minimum for every position
+        {rates.schedules.length > 1 ? `, for ${rates.schedules.length} production types` : ''}{rates.payRule ? ', and when overtime starts' : ''}.
       </p>
     </>
   )}
@@ -130,9 +130,9 @@ const description = [
       <h2>Where {union.name} has jurisdiction</h2>
       {coverage.map(({ province, areas, roles }) => (
         <>
-          <h3><a href={`/provinces/${province.slug}/`}>{province.name}</a>{areas.length > 0 && areas.length < 3 && <span class="muted"> · {areas.join(', ')}</span>}</h3>
+          <h3><a href={`/guide/provinces/${province.slug}/`}>{province.name}</a>{areas.length > 0 && areas.length < 3 && <span class="muted"> · {areas.join(', ')}</span>}</h3>
           <ul class="chips">
-            {roles.map(r => <li><a href={`/roles/${r.slug}/`}>{r.name}</a></li>)}
+            {roles.map(r => <li><a href={`/guide/roles/${r.slug}/`}>{r.name}</a></li>)}
           </ul>
         </>
       ))}

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
 import { Job, User } from '../types';
 import { Heading, Text, Button, Badge } from '../components/ui';
-import { BulkJobUploadIndividual } from '../components/BulkJobUploadIndividual';
+import { BulkJobUpload } from '../components/BulkJobUpload';
 import { UploadCloud, Plus, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
@@ -39,7 +39,7 @@ export const JobsIndividual = () => {
         </div>
       </header>
 
-      {showIngest && <div className="animate-in slide-in-from-top-4 duration-500"><BulkJobUploadIndividual userId={user?.id || 'anon'} onComplete={() => { setShowIngest(false); refresh(); }} /></div>}
+      {showIngest && <div className="animate-in slide-in-from-top-4 duration-500"><BulkJobUpload userId={user?.id || 'anon'} onComplete={() => { setShowIngest(false); refresh(); }} /></div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0.5 md:gap-1">
         {jobs.map(job => (
@@ -50,8 +50,13 @@ export const JobsIndividual = () => {
             </div>
             <h3 className="text-3xl md:text-4xl font-serif italic text-white leading-tight min-h-[2.5em]">{job.productionName}</h3>
             <div className="pt-6 md:pt-8 border-t border-white/5">
-               <p className="text-xs md:text-[10px] font-black text-white/40 uppercase tracking-widest">{job.role}</p>
-               <p className="text-xl md:text-2xl font-serif italic text-white mt-1 md:mt-2">${(job.grossEarnings || 0).toLocaleString()}</p>
+               <p className="text-xs md:text-[10px] font-black text-white/40 uppercase tracking-widest">{job.role}{job.companyName && ` · ${job.companyName}`}</p>
+               <p className="text-xl md:text-2xl font-serif italic text-white mt-1 md:mt-2">${(job.grossEarnings || 0).toLocaleString('en-CA', { maximumFractionDigits: 2 })}</p>
+               <p className="text-xs text-white/40 italic mt-1">
+                 {(job.totalHours || 0).toLocaleString('en-CA', { maximumFractionDigits: 2 })}h{(job.daysWorked ?? 1) > 1 && ` over ${job.daysWorked} days`}
+                 {job.hourlyRate != null && ` · $${job.hourlyRate.toFixed(2)}/hr`}
+                 {job.isUnion && job.unionMinimumRate != null && job.hourlyRate != null && job.hourlyRate < job.unionMinimumRate - 0.004 && <span className="text-red-400"> · below scale</span>}
+               </p>
             </div>
           </div>
         ))}

@@ -1,11 +1,13 @@
 import { supabase } from './supabase';
-import { setEngineSnapshot, type EngineSnapshot } from './union_engine';
+import { setEngineSnapshot, setRateLineLoader, type EngineSnapshot, type RateLine } from './union_engine';
 
-// Loads the union engine from Supabase. The snapshot is cached in
+// The app's connection between the engine (services/engine.ts) and Supabase.
+// Loads the union engine snapshot. It is cached in
 // localStorage and only re-downloaded when union_engine_version() changes,
 // so a normal app start costs one tiny request.
 
-const CACHE_KEY = 'cinearch_union_engine_v1';
+// v2: snapshot carries pay rules; rate lines load separately.
+const CACHE_KEY = 'cinearch_union_engine_v2';
 
 const readCache = (): EngineSnapshot | null => {
   try {
@@ -51,3 +53,10 @@ export async function loadUnionEngine(): Promise<void> {
     console.error('Union engine failed to load:', err);
   }
 }
+
+// Rate lines come from rate_schedule_lines() when a job needs them.
+setRateLineLoader(async (scheduleIds) => {
+  const { data, error } = await supabase.rpc('rate_schedule_lines', { p_schedule_ids: scheduleIds });
+  if (error) throw error;
+  return data as unknown as Record<string, RateLine[]>;
+});

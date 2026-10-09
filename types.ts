@@ -141,8 +141,14 @@ export interface Job {
   productionTier?: string; 
   startDate: string; 
   endDate?: string;
-  totalHours: number;
+  totalHours: number;          // hours worked across all days, after unpaid meal breaks
   hourlyRate?: number;
+  daysWorked?: number;         // identical days logged together (default 1)
+  hoursPerDay?: number;        // call to wrap, per day
+  mealBreakMinutes?: number;   // unpaid, per day
+  overtimeHours?: number;      // across all days
+  unionMinimumRate?: number;   // union scale for the position when logged
+  ratePosition?: string;       // the rate-sheet position used
   grossEarnings?: number; 
   unionDeductions?: number; 
   notes?: string;

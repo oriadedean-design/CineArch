@@ -1,26 +1,47 @@
 // Public union & jurisdiction guide data.
 // Read from the union engine tables in Supabase at build time, through the
-// same engine module the web app uses, so the guide and the app's
-// eligibility logic can't drift apart.
+// same engine the web app uses (services/engine.ts), so the guide and the
+// app can't drift apart. This file is the guide's host: it feeds the engine.
 import {
-  setEngineSnapshot, getAllUnions, getDepartments, getRateSchedule, getCoverage,
-  type EngineSnapshot, type EngineUnion, type Coverage,
-} from '../../../services/union_engine';
+  setEngineSnapshot, setRateLineLoader, ensureRateLines, getAllUnions, getDepartments, getCurrentRateSchedules, getRateSections, getPayRules, getCoverage,
+  type EngineSnapshot, type EngineUnion, type Coverage, type RateLine, type RateSchedule, type RateSection, type PayRule,
+} from '../../../services/engine';
 import { CanadianProvince, ONTARIO_REGION_LABELS, type OntarioRegion } from '../../../types';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
 if (!supabaseUrl || !anonKey) throw new Error('Set SUPABASE_URL and SUPABASE_ANON_KEY to build the guide.');
 
-const res = await fetch(`${supabaseUrl}/rest/v1/rpc/union_engine_snapshot`, {
-  method: 'POST',
-  headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}`, 'Content-Type': 'application/json' },
-  body: '{}',
-});
-if (!res.ok) throw new Error(`Union engine snapshot failed: ${res.status} ${await res.text()}`);
-setEngineSnapshot(await res.json() as EngineSnapshot);
+const rpc = async (fn: string, args: object) => {
+  const res = await fetch(`${supabaseUrl}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(args),
+  });
+  if (!res.ok) throw new Error(`${fn} failed: ${res.status} ${await res.text()}`);
+  return res.json();
+};
 
-export const rateScheduleFor = (unionId: string) => getRateSchedule(unionId);
+setEngineSnapshot(await rpc('union_engine_snapshot', {}) as EngineSnapshot);
+
+// Rates in effect on the build date (or each union's latest, if none are).
+export const BUILD_DATE = new Date().toISOString().slice(0, 10);
+const currentSchedules = new Map(getAllUnions().map(u => [u.id, getCurrentRateSchedules(u.id, BUILD_DATE)]));
+setRateLineLoader(async ids => await rpc('rate_schedule_lines', { p_schedule_ids: ids }) as Record<string, RateLine[]>);
+await ensureRateLines([...currentSchedules.values()].flat().map(s => s.id));
+
+export interface UnionRates {
+  schedules: (RateSchedule & { sections: RateSection[] })[];
+  payRule?: PayRule;
+  departmentRules: PayRule[];   // e.g. 873 Transportation
+}
+
+export const ratesFor = (unionId: string): UnionRates | undefined => {
+  const schedules = (currentSchedules.get(unionId) ?? []).map(s => ({ ...s, sections: getRateSections(s) }));
+  if (schedules.length === 0) return undefined;
+  const rules = getPayRules(unionId);
+  return { schedules, payRule: rules.find(r => !r.departmentId), departmentRules: rules.filter(r => r.departmentId) };
+};
 
 export const slugify = (s: string) =>
   s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
