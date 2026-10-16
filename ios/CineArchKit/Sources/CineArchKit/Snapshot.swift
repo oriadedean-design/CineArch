@@ -9,6 +9,9 @@ public struct EngineSnapshot: Codable, Sendable {
     public var departments: [Department]
     public var rateSchedules: [RateSchedule]
     public var payRules: [PayRule]
+    /// [role or department id, province, region, union id, relationship, notes]
+    public var roleCoverage: [[String?]]? = nil
+    public var departmentCoverage: [[String?]]? = nil
 
     public static let empty = EngineSnapshot(version: 0, unions: [], departments: [], rateSchedules: [], payRules: [])
 }

@@ -2,12 +2,41 @@ import Foundation
 import Observation
 import Supabase
 
+// Your call sheet: the onboarding answers on public.profiles, shared with the website.
+struct Profile: Codable, Equatable {
+    var name: String?
+    var province: String?
+    var region: String?
+    var department: String?
+    var selectedRoles: [String]?
+    var memberStatus: String?        // ASPIRING or MEMBER
+    var hasAgentFee: Bool?
+    var agentFeePct: Double?
+    var isOnboarded: Bool = false
+    var isPremium: Bool = false
+
+    enum CodingKeys: String, CodingKey {
+        case name, province, region, department
+        case selectedRoles = "selected_roles", memberStatus = "member_status", hasAgentFee = "has_agent_fee"
+        case agentFeePct = "agent_fee_pct", isOnboarded = "is_onboarded", isPremium = "is_premium"
+    }
+
+    /// The columns a user may write (lock_profile_privileges), never is_premium.
+    struct Update: Encodable {
+        var province: String?; var region: String?; var department: String?; var selected_roles: [String]
+        var role: String?; var member_status: String; var has_agent_fee: Bool; var agent_fee_pct: Double; var is_onboarded = true
+    }
+}
+
 // The signed-in account: same logins as the website. Preview is a sample
 // A-List Pro account (Sample.swift) for looking around without signing in.
 @MainActor @Observable
 final class Session {
     private(set) var user: User?
     private(set) var isPremium = false
+    private(set) var profile: Profile?
+    /// Signed in for real, profile loaded, call sheet not filled in yet.
+    var needsOnboarding: Bool { !isPreview && user != nil && profile.map { !$0.isOnboarded } == true }
     /// Launch with `-cinearch.preview YES` (and `-cinearch.premium NO` for the free plan) to open in preview.
     private(set) var isPreview = UserDefaults.standard.bool(forKey: "cinearch.preview")
     var isSignedIn: Bool { user != nil || isPreview }
@@ -26,12 +55,19 @@ final class Session {
         }
     }
 
-    /// profiles.is_premium, set server-side when someone subscribes.
+    /// The profile, including profiles.is_premium (set server-side when someone subscribes).
     private func loadPlan() async {
-        guard let id = user?.id else { isPremium = false; return }
-        struct Row: Decodable { let is_premium: Bool }
-        let row: Row? = try? await Backend.client.from("profiles").select("is_premium").eq("id", value: id).single().execute().value
-        isPremium = row?.is_premium ?? false
+        guard let id = user?.id else { isPremium = false; profile = nil; return }
+        profile = try? await Backend.client.from("profiles")
+            .select("name, province, region, department, selected_roles, member_status, has_agent_fee, agent_fee_pct, is_onboarded, is_premium")
+            .eq("id", value: id).single().execute().value
+        isPremium = profile?.isPremium ?? false
+    }
+
+    func saveCallSheet(_ update: Profile.Update) async throws {
+        guard let id = user?.id else { return }
+        try await Backend.client.from("profiles").update(update).eq("id", value: id).execute()
+        await loadPlan()
     }
 
     func startPreview(premium: Bool = true) { isPreview = true; isPremium = premium }

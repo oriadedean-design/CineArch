@@ -3,6 +3,7 @@ import SwiftUI
 struct AccountView: View {
     @Environment(Session.self) private var session
     @State private var showAuth = false
+    @State private var showCallSheet = false
     @State private var showPlans = UserDefaults.standard.bool(forKey: "cinearch.plans")
     @State private var confirmDelete = false
     @State private var typed = ""
@@ -17,6 +18,14 @@ struct AccountView: View {
                 if session.isSignedIn {
                     Section(session.isPreview ? "Preview: \(Sample.name)" : "Signed in") {
                         LabeledContent("Email", value: session.displayEmail ?? "")
+                        if !session.isPreview {
+                            Button { showCallSheet = true } label: {
+                                LabeledContent("Your call sheet") {
+                                    Text(session.profile?.province ?? "Not filled in").foregroundStyle(.secondary)
+                                }
+                            }
+                            .foregroundStyle(.primary)
+                        }
                         NavigationLink { PlansView() } label: {
                             LabeledContent("Your plan") {
                                 Text(session.isPremium ? Plan.pro.name : Plan.indie.name)
@@ -54,6 +63,7 @@ struct AccountView: View {
             .navigationTitle("Account")
             .previewBadge()
             .navigationDestination(isPresented: $showPlans) { PlansView() }
+            .sheet(isPresented: $showCallSheet) { OnboardingView() }
             .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in with your CineArch account, or create one.") {} }
             .alert("Delete your account?", isPresented: $confirmDelete) {
                 TextField("Type DELETE", text: $typed).textInputAutocapitalization(.characters)

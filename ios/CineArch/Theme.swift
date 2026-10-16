@@ -8,6 +8,8 @@ enum Theme {
     static func serif(_ style: Font.TextStyle) -> Font { .system(style, design: .serif).italic() }
 
     static func applyNavigationStyle() {
+        // Every screen, sheet and full-screen cover uses signal yellow, not system blue.
+        UIWindow.appearance().tintColor = UIColor(named: "AccentColor")
         func serifItalic(_ style: UIFont.TextStyle, weight: UIFont.Weight = .regular) -> UIFont {
             let base = UIFontDescriptor.preferredFontDescriptor(withTextStyle: style)
             let d = (base.withDesign(.serif) ?? base).withSymbolicTraits(.traitItalic) ?? base
