@@ -4,19 +4,19 @@ import { UNIONS, PROVINCES, ROLES } from '../lib/guide';
 
 // Small static index (~100 entries) shipped inline; filtering happens in the browser.
 const index = [
-  ...UNIONS.map(u => ({ kind: 'Union', title: u.name, href: `/unions/${u.slug}/`, text: `${u.name} ${u.description}` })),
-  ...PROVINCES.map(p => ({ kind: 'Province', title: p.name, href: `/provinces/${p.slug}/`, text: `${p.name} ${p.code}` })),
-  ...ROLES.map(r => ({ kind: 'Role', title: r.name, href: `/roles/${r.slug}/`, text: `${r.name} ${r.department} ${r.description}` })),
+  ...UNIONS.map(u => ({ kind: 'Union', title: u.name, href: `/guide/unions/${u.slug}/`, text: `${u.name} ${u.description}` })),
+  ...PROVINCES.map(p => ({ kind: 'Province', title: p.name, href: `/guide/provinces/${p.slug}/`, text: `${p.name} ${p.code}` })),
+  ...ROLES.map(r => ({ kind: 'Role', title: r.name, href: `/guide/roles/${r.slug}/`, text: `${r.name} ${r.department} ${r.description}` })),
 ];
 ---
 <Base
   title="Search the Union Guide"
   description="Search Canadian film and TV unions, provinces and production roles."
-  crumbs={[{ name: 'Search', href: '/search/' }]}
+  crumbs={[{ name: 'Search', href: '/guide/search/' }]}
   noindex
 >
   <h1>Search the guide</h1>
-  <form role="search" action="/search/" method="get" onsubmit="return false">
+  <form role="search" action="/guide/search/" method="get" onsubmit="return false">
     <label for="q" class="muted">Union, province or job title</label>
     <input id="q" name="q" class="search-input" type="search" placeholder="e.g. grip ontario, IATSE 667, background performer" autocomplete="off" autofocus />
   </form>

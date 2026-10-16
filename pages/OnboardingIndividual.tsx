@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { User, CanadianProvince, UserUnionTracking } from '../types';
-import { INDUSTRY_DEPARTMENTS } from '../config/industry_roles';
-import { UNION_SPECS } from '../config/unions_data';
-import { resolveUnionsForRole } from '../config/jurisdiction_map';
+import { User, CanadianProvince, UserUnionTracking, ONTARIO_REGION_LABELS, type OntarioRegion } from '../types';
+import { resolveGuildsForRole, getUnionSpec, getUnionsForProvince, getDepartments } from '../services/engine';
 import { api } from '../services/storage';
 import { Button, Input, Heading, Text, Select, Badge, Card } from '../components/ui';
 import { ArrowRight, MapPin, Sparkles, AlertTriangle } from 'lucide-react';
@@ -104,6 +102,14 @@ const StepCoordinates = ({ formData, setFormData, onNext, onBack }: StepProps) =
           {Object.values(CanadianProvince).map(v => <option key={v} value={v} className="bg-black text-white">{v}</option>)}
         </Select>
       </div>
+      {formData.province === CanadianProvince.ON && (
+        <div className="md:col-span-2 space-y-3">
+          <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Ontario Region</label>
+          <Select value={formData.region} onChange={e => setFormData(f => ({...f, region: e.target.value as User['region']}))} className="h-24 text-2xl font-serif italic text-white">
+            {(Object.entries(ONTARIO_REGION_LABELS) as [OntarioRegion, string][]).map(([v, label]) => <option key={v} value={v} className="bg-black text-white">{label}</option>)}
+          </Select>
+        </div>
+      )}
     </div>
     <div className="flex justify-between pt-20 border-t border-white/5">
       <button onClick={onBack} className="text-xs font-black uppercase tracking-[0.5em] text-white hover:underline transition-colors">10-100</button>
@@ -128,7 +134,7 @@ const StepRoles = ({ formData, setFormData, onNext, onBack }: StepProps) => (
     </div>
 
     <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
-      {INDUSTRY_DEPARTMENTS.map(d => (
+      {getDepartments().map(d => (
         <button
           key={d.name}
           onClick={() => setFormData(f => ({...f, department: d.name}))}
@@ -144,8 +150,8 @@ const StepRoles = ({ formData, setFormData, onNext, onBack }: StepProps) => (
 
     {formData.department && (
       <div className="grid md:grid-cols-2 gap-1 pt-10 border-t border-white/10 animate-in fade-in duration-700">
-        {INDUSTRY_DEPARTMENTS.find(d => d.name === formData.department)?.roles.map(r => {
-          const resolvedUnionIds = resolveUnionsForRole(formData.province, r.name, formData.department);
+        {getDepartments().find(d => d.name === formData.department)?.roles.map(r => {
+          const resolvedUnionIds = resolveGuildsForRole(formData.province, r.name, formData.department, { region: formData.region });
           const isSelected = formData.selectedRoles.includes(r.name);
           return (
             <Card
@@ -163,12 +169,12 @@ const StepRoles = ({ formData, setFormData, onNext, onBack }: StepProps) => (
                 <h4 className="font-serif italic text-2xl leading-none">{r.name}</h4>
                 {resolvedUnionIds.length > 0 && (
                   <Badge color={isSelected ? "neutral" : "accent"} className="text-xs tracking-widest">
-                    {UNION_SPECS[resolvedUnionIds[0]]?.name}
+                    {getUnionSpec(resolvedUnionIds[0])?.name}
                   </Badge>
                 )}
               </div>
               <p className={clsx("text-xs leading-relaxed italic font-light", isSelected ? "text-black/60" : "text-white/40")}>
-                {r.description}
+                {r.description || 'Description coming soon'}
               </p>
             </Card>
           );
@@ -193,7 +199,14 @@ const StepGuilds = ({
   onComplete,
   isSaving,
   saveError
-}: StepProps & { suggestedUnionIds: string[]; onComplete: () => void; isSaving: boolean; saveError: string }) => (
+}: StepProps & { suggestedUnionIds: string[]; onComplete: () => void; isSaving: boolean; saveError: string }) => {
+  // Suggested first, then every other local that operates where they work.
+  const local = getUnionsForProvince(formData.province, formData.region);
+  const unions = [
+    ...suggestedUnionIds.map(id => getUnionSpec(id)).filter((u): u is NonNullable<typeof u> => !!u),
+    ...local.filter(u => !suggestedUnionIds.includes(u.id)),
+  ];
+  return (
   <div className="space-y-12 animate-in slide-in-from-right duration-500">
     <div className="space-y-2">
       <Text variant="caption">Scene 03 // Affiliation</Text>
@@ -211,7 +224,8 @@ const StepGuilds = ({
     </div>
 
     <div className="grid md:grid-cols-2 gap-1">
-      {Object.entries(UNION_SPECS).map(([id, u]) => {
+      {unions.map(u => {
+        const id = u.id;
         const isSuggested = suggestedUnionIds.includes(id);
         const isSelected = formData.selectedUnions.includes(id);
         return (
@@ -255,7 +269,8 @@ const StepGuilds = ({
       </Button>
     </div>
   </div>
-);
+  );
+};
 
 // ─── Main Orchestrator ───────────────────────────────────────────────────────
 
@@ -280,11 +295,11 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
   const suggestedUnionIds = useMemo(() => {
     const ids = new Set<string>();
     formData.selectedRoles.forEach(role => {
-      const resolved = resolveUnionsForRole(formData.province, role, formData.department);
+      const resolved = resolveGuildsForRole(formData.province, role, formData.department, { region: formData.region });
       resolved.forEach(id => ids.add(id));
     });
     return Array.from(ids);
-  }, [formData.selectedRoles, formData.province, formData.department]);
+  }, [formData.selectedRoles, formData.province, formData.region, formData.department]);
 
   useEffect(() => {
     if (step === 4) {
@@ -301,15 +316,17 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
         email: formData.email,
         phone: formData.phone,
         province: formData.province,
-        region: formData.region,
+        region: formData.province === CanadianProvince.ON ? formData.region : undefined,
         department: formData.department,
         selectedRoles: formData.selectedRoles,
         isOnboarded: true,
         role: formData.selectedRoles[0] || 'Film Professional'
       };
 
-      const newTrackings: UserUnionTracking[] = formData.selectedUnions.map(id => {
-        const spec = UNION_SPECS[id];
+      const newTrackings: UserUnionTracking[] = formData.selectedUnions.flatMap(id => {
+        const spec = getUnionSpec(id);
+        // Unions without a published tier (e.g. requirements not yet sourced) can't be tracked yet.
+        if (!spec || spec.tiers.length === 0) return [];
         return {
           id: `track_${id}_${Date.now()}`,
           userId: user.id,

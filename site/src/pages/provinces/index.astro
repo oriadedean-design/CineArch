@@ -7,7 +7,7 @@ const rows = PROVINCES.map(p => ({ province: p, unions: unionsInProvince(p).map(
 <Base
   title="Film & TV Union Jurisdiction by Province"
   description="Which film and TV unions cover crew and performers in each Canadian province and territory, from Ontario and BC to Quebec, Alberta and the Atlantic provinces."
-  crumbs={[{ name: 'Provinces', href: '/provinces/' }]}
+  crumbs={[{ name: 'Provinces', href: '/guide/provinces/' }]}
 >
   <p class="eyebrow">Jurisdiction</p>
   <h1>Union jurisdiction by province</h1>
@@ -18,7 +18,7 @@ const rows = PROVINCES.map(p => ({ province: p, unions: unionsInProvince(p).map(
 
   <div class="grid">
     {rows.map(({ province, unions }) => (
-      <a class="card" href={`/provinces/${province.slug}/`}>
+      <a class="card" href={`/guide/provinces/${province.slug}/`}>
         <h3>{province.name}</h3>
         <p>{unions.slice(0, 5).join(', ')}{unions.length > 5 ? '…' : ''}</p>
       </a>

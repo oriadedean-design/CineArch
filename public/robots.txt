@@ -1,6 +1,8 @@
-# The CineArch web app is private to signed-in users. Every response carries
-# "X-Robots-Tag: noindex" (vercel.json), so crawling is allowed on purpose:
-# crawlers must be able to fetch pages to see the noindex.
-# The public union & jurisdiction guide is the separate site in site/.
+# The web app is private to signed-in users: its responses carry
+# "X-Robots-Tag: noindex" (vercel.json), so crawling stays allowed for
+# crawlers to see it. The public guide (site/, served at /guide/) is indexed.
 User-agent: *
 Allow: /
+Disallow: /guide/search/
+
+Sitemap: https://cine-arch.vercel.app/guide/sitemap-index.xml

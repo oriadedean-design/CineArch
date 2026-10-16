@@ -1,6 +1,6 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import { UNIONS, coverageForUnion, formatTier, formatPercent, rateScheduleFor } from '../../../lib/guide';
+import { UNIONS, coverageForUnion, formatTier, formatPercent, ratesFor } from '../../../lib/guide';
 import type { GuideUnion } from '../../../lib/guide';
 
 export function getStaticPaths() {
@@ -12,7 +12,8 @@ const coverage = coverageForUnion(union);
 const provinceNames = coverage.map(c => c.province.name);
 const firstTier = union.tiers[0];
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://cine-arch.vercel.app';
-const rates = rateScheduleFor(union.id);
+const rates = ratesFor(union.id);
+const offices = union.jurisdictions.filter(j => j.notes || j.contactEmail || j.contactPhone);
 
 const description = [
   `How to join ${union.name}`,
@@ -23,7 +24,7 @@ const description = [
 <Base
   title={`${union.name}: Membership Requirements & Jurisdiction`}
   description={description}
-  crumbs={[{ name: 'Unions', href: '/unions/' }, { name: union.name, href: `/unions/${union.slug}/` }]}
+  crumbs={[{ name: 'Unions', href: '/guide/unions/' }, { name: union.name, href: `/guide/unions/${union.slug}/` }]}
   jsonLd={[{
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -40,24 +41,31 @@ const description = [
     {union.tiers.map(t => (
       <div><dt>{t.name}</dt><dd>{formatTier(t)}</dd></div>
     ))}
-    {union.applicationFee != null && <div><dt>Application fee</dt><dd>${union.applicationFee.toLocaleString('en-CA')}</dd></div>}
-    <div><dt>Typical dues</dt><dd>{formatPercent(union.defaultDuesRate)} of earnings</dd></div>
+    <div><dt>Application fee</dt><dd>{union.applicationFee != null ? `$${union.applicationFee.toLocaleString('en-CA')}` : 'Not yet added'}</dd></div>
+    {union.defaultDuesRate != null && <div><dt>Typical dues</dt><dd>{formatPercent(union.defaultDuesRate)} of earnings</dd></div>}
     <div><dt>Operates in</dt><dd>{union.regions ? (union.regions.length > 3 ? `${union.regions.length} provinces & territories` : union.regions.join(', ')) : 'Across Canada'}</dd></div>
   </dl>
 
   <h2>How to qualify</h2>
-  <ul>
-    {union.tiers.map(t => (
-      <li><strong>{t.name}:</strong> {formatTier(t)}. {t.description}{t.requiresDepartment && ' Requirements vary by department.'}</li>
-    ))}
-  </ul>
+  {union.tiers.length > 0 ? (
+    <ul>
+      {union.tiers.map(t => (
+        <li><strong>{t.name}:</strong> {formatTier(t)}. {t.description}{t.requiresDepartment && ' Requirements vary by department.'}</li>
+      ))}
+    </ul>
+  ) : (!union.joiningRequirements?.length && <p class="muted">Membership requirements not yet added. Contact the union directly.</p>)}
   {union.joiningRequirements && union.joiningRequirements.length > 0 && (
     <>
       <h3>Requirements</h3>
       <ul>{union.joiningRequirements.map(req => <li>{req}</li>)}</ul>
     </>
   )}
+  {union.applicationFeeNotes && <p class="note"><strong>Application fee:</strong> {union.applicationFeeNotes}</p>}
   {union.residencyRule && <p class="note"><strong>Residency:</strong> {union.residencyRule}</p>}
+  {union.duesNotes && <p class="note"><strong>Dues:</strong> {union.duesNotes}</p>}
+  {union.needsVerification && union.needsVerification.length > 0 && (
+    <p class="note"><strong>Awaiting confirmation:</strong> {union.needsVerification.join('; ')}. Check with the union before relying on it.</p>
+  )}
   {union.jurisdictionalNotes && <p class="note">{union.jurisdictionalNotes}</p>}
 
   {union.applicationProcess && union.applicationProcess.length > 0 && (
@@ -67,13 +75,25 @@ const description = [
     </>
   )}
 
-  {(union.contactEmail || union.contactPhone) && (
+  {(union.contactEmail || union.contactPhone || union.website || offices.length > 0) && (
     <>
       <h2>Contact</h2>
       <p>
+        {union.website && <>Website: <a href={union.website} rel="noopener">{union.website.replace(/^https?:\/\//, '')}</a><br /></>}
         {union.contactEmail && <>Email: <a href={`mailto:${union.contactEmail}`}>{union.contactEmail}</a><br /></>}
         {union.contactPhone && <>Phone: <a href={`tel:+1${union.contactPhone.replace(/\D/g, '')}`}>{union.contactPhone}</a></>}
       </p>
+      {offices.length > 0 && (
+        <ul>
+          {offices.map(j => (
+            <li>
+              <strong>{j.province}</strong>{j.notes && <> · {j.notes}</>}
+              {j.contactEmail && <> · <a href={`mailto:${j.contactEmail}`}>{j.contactEmail}</a></>}
+              {j.contactPhone && <> · <a href={`tel:+1${j.contactPhone.replace(/\D/g, '')}`}>{j.contactPhone}</a></>}
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   )}
 
@@ -88,8 +108,8 @@ const description = [
     <>
       <h2>Wage rates</h2>
       <p>
-        <a href={`/unions/${union.slug}/rates/`}>{union.name} rate schedule</a> — minimum rates for every department by
-        production budget tier, from the {rates.title}.
+        <a href={`/guide/unions/${union.slug}/rates/`}>{union.name} minimum rates</a> — the minimum for every position
+        {rates.schedules.length > 1 ? `, for ${rates.schedules.length} production types` : ''}{rates.payRule ? ', and when overtime starts' : ''}.
       </p>
     </>
   )}
@@ -108,15 +128,22 @@ const description = [
   {coverage.length > 0 && (
     <>
       <h2>Where {union.name} has jurisdiction</h2>
-      {coverage.map(({ province, roles }) => (
+      {coverage.map(({ province, areas, roles }) => (
         <>
-          <h3><a href={`/provinces/${province.slug}/`}>{province.name}</a></h3>
+          <h3><a href={`/guide/provinces/${province.slug}/`}>{province.name}</a>{areas.length > 0 && areas.length < 3 && <span class="muted"> · {areas.join(', ')}</span>}</h3>
           <ul class="chips">
-            {roles.map(r => <li><a href={`/roles/${r.slug}/`}>{r.name}</a></li>)}
+            {roles.map(r => <li><a href={`/guide/roles/${r.slug}/`}>{r.name}</a></li>)}
           </ul>
         </>
       ))}
     </>
+  )}
+
+  {union.sourceUrls.length > 0 && (
+    <p class="muted">
+      Sources: {union.sourceUrls.map((u, i) => <>{i > 0 && ', '}<a href={u} rel="noopener nofollow">{new URL(u).hostname.replace(/^www\./, '')}</a></>)}
+      {union.lastVerified && <> · checked {union.lastVerified}</>}
+    </p>
   )}
 
   <h2>Track your progress to {union.name}</h2>

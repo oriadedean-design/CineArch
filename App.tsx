@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-d
 import { Layout } from './components/Layout';
 import { api } from './services/storage';
 import { supabase, openedFromRecoveryLink, authLinkError } from './services/supabase';
+import { loadUnionEngine } from './services/engine_loader';
 import { isDemoMode, DEMO_USER } from './services/demo';
 import { User } from './types';
 
@@ -48,12 +49,15 @@ const MainApp = () => {
 
   useEffect(() => {
     const hydrateSession = async () => {
+      // Union data is needed by every screen (welcome, onboarding, jobs); load it alongside the session.
+      const engineReady = loadUnionEngine();
       const { data: { session } } = await supabase.auth.getSession();
       if (session && await api.auth.verifySession()) {
         const u = await api.auth.getUser();
         setUser(u);
         setShowWelcome(false);
       }
+      await engineReady;
       setLoading(false);
     };
 

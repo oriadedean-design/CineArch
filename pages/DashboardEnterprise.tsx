@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/storage';
 import { Job, User, UserUnionTracking } from '../types';
-import { Heading, Badge, Card, Button } from '../components/ui';
+import { Heading, Badge, Card, Button, ProgressBar } from '../components/ui';
+import { assessCareer } from '../services/engine';
 import { GanttChartSquare, Zap, Users, Briefcase, Plus, ShieldOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
@@ -37,6 +38,11 @@ export const DashboardEnterprise = () => {
     loadRoster();
   }, []);
 
+  // Each client's standing, from the same engine the personal dashboard uses.
+  const standings = useMemo(() => roster.map(m => ({ ...m, career: assessCareer(m.jobs, m.tracks) })), [roster]);
+  const unitLabel = { HOURS: 'hours', DAYS: 'days', CREDITS: 'credits', EARNINGS: '$' } as const;
+  const fmt = (n: number) => n.toLocaleString('en-CA', { maximumFractionDigits: 1 });
+
   const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
   return (
@@ -55,6 +61,64 @@ export const DashboardEnterprise = () => {
            <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.3em] mt-4 italic">Personnel Verified</p>
         </div>
       </header>
+
+      <section className="space-y-8">
+         <div className="flex items-center gap-6">
+            <Users className="text-accent" size={24} />
+            <h3 className="font-serif italic text-5xl text-white">Roster Standing</h3>
+         </div>
+         <Card className="p-0 overflow-x-auto border-white/10 bg-transparent">
+            <table className="w-full min-w-[860px] text-left">
+               <thead>
+                  <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-white/30">
+                     <th className="p-6">Client</th>
+                     <th className="p-6">Closest union goal</th>
+                     <th className="p-6 text-right">Union hours</th>
+                     <th className="p-6 text-right">Non-union hours</th>
+                     <th className="p-6 text-right">Earnings</th>
+                     <th className="p-6">Last job</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-white/5">
+                  {standings.map(({ client, career }) => {
+                     const goal = career.primary;
+                     const unit = goal ? unitLabel[goal.track.targetType] : '';
+                     return (
+                        <tr key={client.id} className="hover:bg-white/[0.02]">
+                           <td className="p-6 font-serif italic text-white text-lg">{client.name}</td>
+                           <td className="p-6 min-w-[240px]">
+                              {goal ? (
+                                 <div className="space-y-2">
+                                    <div className="flex justify-between text-xs text-white/60">
+                                       <span>{goal.track.unionName} · {goal.track.tierLabel}</span>
+                                       <span>{Math.round(goal.percent)}%</span>
+                                    </div>
+                                    <ProgressBar progress={goal.percent} />
+                                    <div className="text-[11px] text-white/30 italic">
+                                       {unit === '$' ? `$${fmt(goal.remaining)}` : `${fmt(goal.remaining)} ${unit}`} to go
+                                    </div>
+                                 </div>
+                              ) : <span className="text-xs text-white/30 italic">No union goal set</span>}
+                           </td>
+                           <td className="p-6 text-right font-mono text-white/80">{fmt(career.hours.union)}</td>
+                           <td className="p-6 text-right font-mono text-white/50">{fmt(career.hours.nonUnion)}</td>
+                           <td className="p-6 text-right font-mono text-white/80">${fmt(career.earnings.total)}</td>
+                           <td className="p-6 text-xs text-white/50">
+                              {career.lastJob ? `${career.lastJob.productionName} · ${career.lastJob.startDate}` : '—'}
+                              {career.belowScale.length > 0 && (
+                                 <div className="mt-2"><Badge color="danger">{career.belowScale.length} below scale</Badge></div>
+                              )}
+                           </td>
+                        </tr>
+                     );
+                  })}
+                  {standings.length === 0 && (
+                     <tr><td colSpan={6} className="p-10 text-center text-white/30 italic">No active clients yet.</td></tr>
+                  )}
+               </tbody>
+            </table>
+         </Card>
+      </section>
 
       <section className="space-y-12">
          <div className="flex items-center justify-between">

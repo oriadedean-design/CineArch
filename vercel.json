@@ -1,7 +1,8 @@
 {
+  "buildCommand": "npm run build:vercel",
   "rewrites": [
     {
-      "source": "/((?!assets|icons|sw.js|manifest.json).*)",
+      "source": "/((?!assets|icons|guide|sw.js|manifest.json|robots.txt).*)",
       "destination": "/index.html"
     }
   ],
@@ -50,7 +51,12 @@
         {
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(), geolocation=()"
-        },
+        }
+      ]
+    },
+    {
+      "source": "/((?!guide).*)",
+      "headers": [
         {
           "key": "X-Robots-Tag",
           "value": "noindex, nofollow"

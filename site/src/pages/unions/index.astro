@@ -7,7 +7,7 @@ const rows = UNIONS.map(u => ({ union: u, provinces: coverageForUnion(u).map(c =
 <Base
   title="Canadian Film & TV Unions and Guilds"
   description="Every major Canadian film and TV union — IATSE locals, DGC, ACTRA, UBCP, WGC, Teamsters, NABET and AQTIS — with membership requirements and the provinces they cover."
-  crumbs={[{ name: 'Unions', href: '/unions/' }]}
+  crumbs={[{ name: 'Unions', href: '/guide/unions/' }]}
 >
   <p class="eyebrow">Directory</p>
   <h1>Film &amp; TV unions in Canada</h1>
@@ -18,7 +18,7 @@ const rows = UNIONS.map(u => ({ union: u, provinces: coverageForUnion(u).map(c =
 
   <div class="grid">
     {rows.map(({ union, provinces }) => (
-      <a class="card" href={`/unions/${union.slug}/`}>
+      <a class="card" href={`/guide/unions/${union.slug}/`}>
         <h3>{union.name}</h3>
         <p>{union.description}</p>
         {provinces.length > 0 && <p class="alt" style="margin-top:8px">{provinces.join(', ')}</p>}
