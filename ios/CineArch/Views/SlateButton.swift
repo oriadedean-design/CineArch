@@ -16,7 +16,7 @@ struct SlateButton: View {
                 .foregroundStyle(.black)
                 .symbolEffect(.bounce, value: claps)
                 .frame(width: 60, height: 60)
-                .background(Theme.accent, in: Circle())
+                .background(Theme.accent)   // square: film frames, sensors and slates are
                 .shadow(color: Theme.accent.opacity(0.35), radius: 12, y: 4)
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: claps)
