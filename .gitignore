@@ -27,3 +27,11 @@ dist-ssr
 *.sw?
 .vercel
 .env*
+
+# iPhone app: local Supabase settings and build output
+ios/Config/Secrets.xcconfig
+ios/build/
+ios/CineArchKit/.build/
+ios/CineArchKit/.swiftpm/
+ios/CineArch.xcodeproj/xcuserdata/
+ios/CineArch.xcodeproj/project.xcworkspace/xcuserdata/

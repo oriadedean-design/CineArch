@@ -375,6 +375,24 @@ export const api = {
       window.location.reload();
     },
 
+    // Permanently deletes the account: files first (Storage rows can't be
+    // removed from SQL), then the login and all data via delete_my_account().
+    async deleteAccount() {
+      const userId = await requireUserId();
+      for (const bucket of [DOCUMENTS_BUCKET, 'avatars']) {
+        const { data: files } = await supabase.storage.from(bucket).list(userId, { limit: 1000 });
+        const paths = (files || []).map(f => `${userId}/${f.name}`);
+        if (paths.length) {
+          const { error } = await supabase.storage.from(bucket).remove(paths);
+          if (error) throw error;
+        }
+      }
+      const { error } = await supabase.rpc('delete_my_account');
+      if (error) throw error;
+      await supabase.auth.signOut({ scope: 'local' });
+      Object.keys(localStorage).filter(k => k.startsWith('cinearch_')).forEach(k => localStorage.removeItem(k));
+    },
+
     // Manage active client context for agents
     switchClient: async (clientId: string | null): Promise<void> => {
       if (clientId) localStorage.setItem(ACTIVE_CLIENT_KEY, clientId);

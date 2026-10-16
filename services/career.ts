@@ -2,7 +2,8 @@
 // progress toward each union they're tracking, hours (union and not),
 // earnings, and union jobs paid below scale. Pure, so the personal
 // dashboard and Agency Mode (one call per client) read it the same way.
-import type { Job, UserUnionTracking } from '../types';
+import type { Job, UnionTier, UserUnionTracking } from '../types';
+import { findRole, getUnionSpec } from './union_engine';
 
 export interface TrackProgress {
   track: UserUnionTracking;
@@ -37,12 +38,50 @@ export const workedDays = (job: Job): number => {
 export const isBelowScale = (job: Job) =>
   job.isUnion && job.unionMinimumRate != null && job.hourlyRate != null && job.hourlyRate < job.unionMinimumRate - 0.004;
 
-// Progress toward one union tier. Only that union's jobs count.
-export function trackProgress(track: UserUnionTracking, jobs: Job[]): TrackProgress {
+export const quarterHours = (h: number) => Math.round(h * 4) / 4;
+
+// ACTRA Toronto background hours for one day: you claim at least the 8 you
+// were paid for; past 8, an hour comes off for lunch; quarter hours (six-minute
+// marks round to the nearest quarter, e.g. :12 → .25, :54 → the next hour).
+export const actraBackgroundDayHours = (onSetHours: number) =>
+  onSetHours > 8 ? Math.max(8, quarterHours(onSetHours - 1)) : 8;
+
+// The first day that still counts toward a tier with a time window.
+export const windowStart = (months: number, today: Date) => {
+  const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - months, today.getUTCDate()));
+  return d.toISOString().slice(0, 10);
+};
+
+// The catalog role a job's role names ("Background Performer", "BG"), else its slug.
+const roleId = (role: string) => findRole(role)?.id ?? role.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+const tierFor = (track: UserUnionTracking): UnionTier | undefined =>
+  getUnionSpec(track.unionTypeId)?.tiers.find(t => t.name === track.tierLabel);
+
+// Hours a job adds under a tier's hours rule.
+const ruleHours = (j: Job, tier?: UnionTier) => {
+  if (tier?.hoursRule !== 'actra_background') return j.totalHours || 0;
+  const days = workedDays(j);
+  const onSet = j.hoursPerDay ?? (j.totalHours || 0) / days;
+  return days * (j.hoursPerDay != null ? actraBackgroundDayHours(onSet) : Math.max(8, quarterHours(onSet)));
+};
+
+// Progress toward one union tier. Only that union's jobs count, whether or
+// not you're a member yet. A tier can narrow that further: one province, some
+// roles (background work for ACTRA's AABP) or a recent window (the last 12 months).
+export function trackProgress(
+  track: UserUnionTracking, jobs: Job[],
+  { tier = tierFor(track), today = new Date() }: { tier?: UnionTier; today?: Date } = {},
+): TrackProgress {
+  const since = tier?.windowMonths ? windowStart(tier.windowMonths, today) : undefined;
+  const roles = tier?.roleIds?.length ? new Set(tier.roleIds) : undefined;
   const relevant = jobs.filter(j =>
-    j.isUnion && ((track.unionTypeId && j.unionTypeId === track.unionTypeId) || j.unionName === track.unionName));
+    j.isUnion && ((track.unionTypeId && j.unionTypeId === track.unionTypeId) || j.unionName === track.unionName)
+    && (!tier?.province || !j.province || j.province === tier.province)
+    && (!roles || roles.has(roleId(j.role)))
+    && (!since || j.startDate >= since));
   const measure = (j: Job) =>
-    track.targetType === 'HOURS' ? j.totalHours || 0
+    track.targetType === 'HOURS' ? ruleHours(j, tier)
     : track.targetType === 'EARNINGS' ? j.grossEarnings || 0
     : track.targetType === 'DAYS' ? workedDays(j)
     : 1;  // CREDITS: one per job

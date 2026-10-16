@@ -13,7 +13,10 @@
     "db:test:engine": "supabase db query --linked -f supabase/tests/union_engine_smoke.sql",
     "test": "vitest run",
     "test:live": "LIVE=1 vitest run tests/live",
-    "build:vercel": "vite build && npm ci --prefix site && npm run build --prefix site && cp -R site/dist dist/guide"
+    "build:vercel": "vite build && npm ci --prefix site && npm run build --prefix site && cp -R site/dist dist/guide",
+    "ios:config": "node scripts/ios-config.mjs",
+    "ios:project": "cd ios && xcodegen",
+    "ios:test": "cd ios/CineArchKit && swift test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",

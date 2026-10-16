@@ -57,7 +57,7 @@ export const DashboardIndividual = () => {
     <div className="space-y-12 md:space-y-24 animate-in fade-in duration-1000">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 md:gap-12 pb-8 md:pb-16 border-b border-white/10 relative">
         <div className="space-y-4 md:space-y-6">
-          <Badge color="accent" className="uppercase tracking-widest text-xs px-4 md:px-6 italic">Your Principal Dashboard</Badge>
+          <Badge color="accent" className="uppercase tracking-widest text-xs px-4 md:px-6 italic">Today's Call Sheet</Badge>
           <h1 className="heading-huge text-white uppercase italic">YOUR <br className="hidden md:block" /><span className="text-accent">WRAP.</span></h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full md:w-auto">
@@ -65,16 +65,16 @@ export const DashboardIndividual = () => {
             <BookOpen size={14} className="mr-3 md:mr-4 text-accent" /> Your Manual
           </Button>
           <Button onClick={() => navigate('/jobs/new')} className="h-14 md:h-20 px-8 md:px-12 text-xs md:text-sm font-black tracking-[0.4em] md:tracking-[0.5em] bg-white text-black hover:bg-accent shadow-glow flex justify-center items-center">
-            Mark Slate <ArrowUpRight className="ml-3 md:ml-4" size={14}/>
+            Mark the slate <ArrowUpRight className="ml-3 md:ml-4" size={14}/>
           </Button>
         </div>
       </header>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-0.5 md:gap-1">
-        <DashStat label="Guild Alignment" value={`${Math.round(eligibilityPercent)}%`} subtext={primaryTrack ? `${primaryTrack.unionName}` : 'IDLE'} highlight />
-        <DashStat label="YTD Scale" value={`$${((financeStats?.grossIncomeYTD || 0) / 1000).toFixed(1)}k`} subtext="Yield" />
-        <DashStat label="Vault" value={vaultLabel} subtext="Proofs" />
-        <DashStat label="GST" value={`${Math.round(gstProgress)}%`} subtext="Sync" />
+        <DashStat label="Getting Your Card" value={`${Math.round(eligibilityPercent)}%`} subtext={primaryTrack ? `${primaryTrack.unionName}` : 'No union picked'} highlight />
+        <DashStat label="Earned This Year" value={`$${((financeStats?.grossIncomeYTD || 0) / 1000).toFixed(1)}k`} subtext="Before tax" />
+        <DashStat label="Vault" value={vaultLabel} subtext="Pay stubs & proof" />
+        <DashStat label="GST/HST" value={`${Math.round(gstProgress)}%`} subtext="Of the $30k line" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
@@ -82,10 +82,10 @@ export const DashboardIndividual = () => {
           <div className="flex items-center justify-between border-b border-white/5 pb-6 md:pb-8">
             <div className="flex items-center gap-4 md:gap-6">
               <Radar className="text-accent animate-pulse" size={18} />
-              <h3 className="font-serif italic text-2xl md:text-4xl text-white">Your Targets</h3>
+              <h3 className="font-serif italic text-2xl md:text-4xl text-white">Your Road to the Union</h3>
             </div>
             <div className="flex items-center gap-3 md:gap-4 text-xs font-black uppercase text-white/20 italic cursor-help" title="View Registry Descriptions">
-              Specs <HelpCircle size={10} onClick={() => navigate('/manual')} />
+              How it works <HelpCircle size={10} onClick={() => navigate('/manual')} />
             </div>
           </div>
           <div className="space-y-10 md:space-y-16">
@@ -103,7 +103,7 @@ export const DashboardIndividual = () => {
             })}
             {tracking.length === 0 && (
               <div className="py-12 text-center border border-dashed border-white/5 opacity-30 italic text-sm">
-                No active targets calibrated.
+                Nothing in the can yet. Pick a union in Your Config to start counting your days.
               </div>
             )}
           </div>
@@ -113,24 +113,24 @@ export const DashboardIndividual = () => {
           <Card className="p-6 md:p-10 border-accent/20 bg-accent/5 space-y-6 md:space-y-10">
             <div className="flex items-center gap-3 md:gap-4">
               <Landmark size={18} className="text-accent" />
-              <h4 className="text-xs font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-accent italic">Regional Hub</h4>
+              <h4 className="text-xs font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-accent italic">Your Home Base</h4>
             </div>
             <div className="space-y-4 md:space-y-6">
               <p className="text-sm md:text-base text-white/60 italic leading-relaxed">
-                Personnel coordinates set to **{user.province}**. National standards apply.
+                You're based in <span className="text-white">{user.province}</span>. Working union sets before you're a member? Those days count toward joining too.
               </p>
               <div className="p-4 md:p-6 bg-white/5 border border-white/5 space-y-3 md:space-y-4">
-                <span className="text-xs font-black uppercase tracking-widest text-white/20 flex items-center gap-2 italic"><Info size={10} /> Hub Alert</span>
-                <p className="text-xs text-white/80 leading-relaxed italic">Verified residency proof required for primary continuity.</p>
+                <span className="text-xs font-black uppercase tracking-widest text-white/20 flex items-center gap-2 italic"><Info size={10} /> Heads up</span>
+                <p className="text-xs text-white/80 leading-relaxed italic">Most unions ask for proof you live in the province. Keep a copy in your Vault.</p>
               </div>
             </div>
-            <Button variant="outline" className="w-full text-xs h-12 md:h-14 border-accent/20 text-accent hover:bg-accent hover:text-black flex justify-center items-center" onClick={() => navigate('/manual')}>View Protocol</Button>
+            <Button variant="outline" className="w-full text-xs h-12 md:h-14 border-accent/20 text-accent hover:bg-accent hover:text-black flex justify-center items-center" onClick={() => navigate('/manual')}>Read the manual</Button>
           </Card>
 
           <div className="p-6 md:p-8 glass-ui border-white/5 flex items-center justify-between group cursor-pointer" onClick={() => navigate('/finance')}>
             <div className="space-y-1">
               <span className="text-xs font-black uppercase tracking-widest text-white/20 italic">Your Wallet</span>
-              <p className="text-lg md:text-xl font-serif italic text-white">Fiscal Integrity</p>
+              <p className="text-lg md:text-xl font-serif italic text-white">Income, expenses and GST/HST</p>
             </div>
             <ArrowUpRight className="text-accent group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
           </div>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { assessCareer, trackProgress } from '../services/engine';
+import { actraBackgroundDayHours, assessCareer, quarterHours, trackProgress } from '../services/engine';
+import type { UnionTier } from '../types';
 import type { Job, UserUnionTracking } from '../types';
 
 const job = (p: Partial<Job>): Job => ({
@@ -29,6 +30,51 @@ describe('trackProgress', () => {
     const jobs = [job({ totalHours: 60, grossEarnings: 3402 })];
     expect(trackProgress({ ...track, targetType: 'HOURS', startingValue: 0 }, jobs).current).toBe(60);
     expect(trackProgress({ ...track, targetType: 'EARNINGS', startingValue: 0 }, jobs).current).toBe(3402);
+  });
+});
+
+describe('ACTRA Toronto background (AABP)', () => {
+  const bg = (p: Partial<Job>) => job({ role: 'Background Performer', unionTypeId: 'u-actra', unionName: 'ACTRA', province: 'Ontario', ...p });
+  const aabp: UnionTier = { name: 'Additional Background Performer (AABP)', targetType: 'DAYS', targetValue: 15, description: '',
+    province: 'Ontario', roleIds: ['background-performer'], windowMonths: 12 };
+  const route: UnionTier = { name: 'Apprentice credit (background route)', targetType: 'HOURS', targetValue: 1600, description: '',
+    province: 'Ontario', roleIds: ['background-performer'], hoursRule: 'actra_background' };
+  const actra = (t: UnionTier): UserUnionTracking => ({ id: 't2', userId: 'u1', unionTypeId: 'u-actra', unionName: 'ACTRA',
+    tierLabel: t.name, targetType: t.targetType, targetValue: t.targetValue, startingValue: 0 });
+  const today = new Date('2026-10-16T12:00:00Z');
+
+  it('rounds to the quarter hour the way ACTRA Toronto lists it', () => {
+    // :06 → .00, :12 → .25, :18 → .25, :24 → .50, :30 → .50, :36 → .50, :42 → .75, :48 → .75, :54 → 1
+    expect([6, 12, 18, 24, 30, 36, 42, 48, 54].map(m => quarterHours(10 + m / 60) - 10)).toEqual([0, .25, .25, .5, .5, .5, .75, .75, 1]);
+  });
+
+  it('claims the paid 8 on short days and takes an hour off for lunch past 8', () => {
+    expect(actraBackgroundDayHours(5)).toBe(8);
+    expect(actraBackgroundDayHours(8)).toBe(8);
+    expect(actraBackgroundDayHours(8.5)).toBe(8);
+    expect(actraBackgroundDayHours(11.2)).toBe(10.25);   // 11h12 on set → 10h12 → 10.25
+    expect(actraBackgroundDayHours(14)).toBe(13);
+  });
+
+  it('counts only union background days in the last 12 months toward AABP', () => {
+    const p = trackProgress(actra(aabp), [
+      bg({ startDate: '2026-03-02', daysWorked: 10 }),
+      bg({ startDate: '2025-10-17' }),                                     // inside the window
+      bg({ startDate: '2025-10-15' }),                                     // 12 months and a day ago
+      bg({ startDate: '2026-04-01', isUnion: false, unionTypeId: undefined, unionName: undefined }),  // non-union
+      bg({ startDate: '2026-05-01', role: 'Actor' }),                      // principal work
+      bg({ startDate: '2026-06-01', province: 'British Columbia' }),       // UBCP territory
+    ], { tier: aabp, today });
+    expect(p).toMatchObject({ current: 11, remaining: 4, jobs: 2 });
+  });
+
+  it('adds up background hours by ACTRA\'s rules toward the Apprentice credit', () => {
+    const p = trackProgress(actra(route), [
+      bg({ daysWorked: 3, hoursPerDay: 12, totalHours: 33 }),   // 3 × 11
+      bg({ hoursPerDay: 6, totalHours: 6 }),                     // paid the 8
+      bg({ totalHours: 9.4 }),                                   // no call-to-wrap logged: 9.5
+    ], { tier: route, today });
+    expect(p.current).toBe(33 + 8 + 9.5);
   });
 });
 

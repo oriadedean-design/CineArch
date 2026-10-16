@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
+import { DeleteAccount } from '../components/DeleteAccount';
 import { User, EntityType, CanadianProvince } from '../types';
 import { Heading, Text, Button, Input, Select, Card, Badge } from '../components/ui';
 import { Landmark, Users, GraduationCap, Building, FolderSync, Percent, Briefcase, UserMinus } from 'lucide-react';
@@ -56,7 +57,7 @@ export const SettingsEnterprise = () => {
                   <Landmark className="text-accent" size={24} />
                   <span className="text-[10px] font-black uppercase tracking-widest text-accent italic">Status: Showrunner</span>
                </div>
-               <h3 className="text-4xl font-serif italic text-white leading-[0.8]">Master <br/>Integrity.</h3>
+               <h3 className="text-4xl font-serif italic text-white leading-[0.8]">Account <br/>Health.</h3>
                <p className="text-xs text-white/40 leading-relaxed font-light">Global settings for your roster members. Changes here affect compliance logic across the entire aggregate ledger.</p>
             </Card>
 
@@ -143,6 +144,7 @@ export const SettingsEnterprise = () => {
             <div className="pt-12 border-t border-white/5 flex justify-end">
                <Button onClick={handleSave} className="h-16 px-16 font-black uppercase tracking-[0.5em]">Synchronize Base</Button>
             </div>
+         <DeleteAccount isAgent />
          </main>
       </div>
     </div>

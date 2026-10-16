@@ -570,6 +570,7 @@ export type Database = {
       union_engine_snapshot: { Args: never; Returns: Json }
       union_engine_version: { Args: never; Returns: number }
       is_agent_of: { Args: { p_client: string }; Returns: boolean }
+      delete_my_account: { Args: never; Returns: undefined }
       leave_agency: { Args: never; Returns: undefined }
       my_agency: {
         Args: never

@@ -162,7 +162,7 @@ export const Reports = () => {
     <div className="space-y-24 animate-in fade-in duration-1000">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 pb-16 border-b border-white/10">
         <div className="space-y-6">
-          <Badge color="accent" className="italic tracking-widest uppercase">Personnel Registry // Analytics</Badge>
+          <Badge color="accent" className="italic tracking-widest uppercase">Your Numbers</Badge>
           <h1 className="text-8xl md:text-9xl font-serif text-white uppercase tracking-tighter italic leading-[0.75]">THE <br/><span className="text-accent">AUDIT.</span></h1>
         </div>
         <div className="flex flex-wrap gap-4">
@@ -209,7 +209,7 @@ export const Reports = () => {
               <div className="w-10 h-10 bg-accent/10 border border-accent/20 flex items-center justify-center">
                 <Target size={18} className="text-accent" />
               </div>
-              <h3 className="font-serif italic text-5xl text-white">Guild Continuity</h3>
+              <h3 className="font-serif italic text-5xl text-white">Your Road to the Union</h3>
               <div className="flex-1 h-[1px] bg-white/5"></div>
             </div>
 
@@ -232,7 +232,7 @@ export const Reports = () => {
                 );
               }) : (
                 <div className="py-24 text-center border border-dashed border-white/5 bg-white/[0.01]">
-                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic">No guild objectives detected in the archive.</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic">No union picked yet. Choose one in Your Config.</p>
                 </div>
               )}
             </div>
