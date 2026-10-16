@@ -13,17 +13,13 @@
 
 /* Begin PBXFileReference section */
 		AE5AF9E49A8F72D6A7B5238F /* App.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = App.xcconfig; sourceTree = "<group>"; };
-		BADBFCDA859124AC441790A7 /* CineArchKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CineArchKit; path = CineArchKit; sourceTree = SOURCE_ROOT; };
-		F3FB97BF488BA4A374128AE7 /* CineArch.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CineArch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BADBFCDA859124AC441790A7 /* CineArchKit */ = {isa = PBXFileReference; lastKnownFileType = folder; path = CineArchKit; sourceTree = SOURCE_ROOT; };
+		F3FB97BF488BA4A374128AE7 /* CineArch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CineArch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		EFA1A6A77B5024E05A685722 /* CineArch */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
 			path = CineArch;
 			sourceTree = "<group>";
 		};

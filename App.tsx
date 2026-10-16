@@ -13,6 +13,7 @@ import { Welcome } from './pages/Welcome';
 import { OnboardingIndividual } from './pages/OnboardingIndividual';
 import { OnboardingEnterprise } from './pages/OnboardingEnterprise';
 import { ResetPassword } from './pages/ResetPassword';
+import { SyncOnline } from './pages/SyncOnline';
 
 // Route-split: each page becomes its own JS chunk, dramatically reducing
 // the initial bundle from ~1MB to ~200KB for the critical path.
@@ -126,6 +127,8 @@ const MainApp = () => {
       if (showWelcome) return <Welcome onEnter={handleWelcomeEnter} />;
       return <Auth onLogin={handleLogin} onBack={handleAuthBack} initialAgentMode={authAgentMode} />;
     }
+    // The website is a second device: free accounts keep their data on their phone.
+    if (user.accountType !== 'AGENT' && !user.isPremium) return <SyncOnline user={user} onLogout={handleLogout} />;
     if (!user.isOnboarded) {
       return user.accountType === 'AGENT'
         ? <OnboardingEnterprise user={user} onComplete={() => setUser({ ...user, isOnboarded: true })} />

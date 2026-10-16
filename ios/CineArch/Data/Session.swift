@@ -41,7 +41,13 @@ final class Session {
     private(set) var isPreview = UserDefaults.standard.bool(forKey: "cinearch.preview")
     var isSignedIn: Bool { user != nil || isPreview }
     /// Changes whenever the account on screen changes, so views reload.
-    var identity: String? { isPreview ? "preview-\(isPremium)" : user?.id.uuidString }
+    var identity: String? { isPreview ? "preview-\(isPremium)" : user.map { "\($0.id)-\(isPremium)" } }
+    /// Where this account's jobs and unions live: free on this phone, Pro synced online.
+    var place: DataPlace {
+        if isPreview { return .preview }
+        guard let id = user?.id else { return .none }
+        return isPremium ? .online(id) : .phone(id)
+    }
     var displayEmail: String? { isPreview ? Sample.email : user?.email }
 
     init() {
@@ -50,24 +56,28 @@ final class Session {
 
     func watch() async {
         for await (_, session) in Backend.client.auth.authStateChanges {
+            // The plan decides where data lives (phone or online), so it's known before the account shows.
+            if !isPreview { await loadPlan(session?.user.id) }
             user = session?.user
-            if !isPreview { await loadPlan() }
         }
     }
 
     /// The profile, including profiles.is_premium (set server-side when someone subscribes).
-    private func loadPlan() async {
-        guard let id = user?.id else { isPremium = false; profile = nil; return }
+    /// Offline, the last plan seen on this phone stands, so a Pro account never saves to the phone by mistake.
+    private func loadPlan(_ id: UUID?) async {
+        guard let id else { isPremium = false; profile = nil; return }
         profile = try? await Backend.client.from("profiles")
             .select("name, province, region, department, selected_roles, member_status, has_agent_fee, agent_fee_pct, is_onboarded, is_premium")
             .eq("id", value: id).single().execute().value
-        isPremium = profile?.isPremium ?? false
+        let key = "cinearch.pro.\(id.uuidString.lowercased())"
+        if let profile { UserDefaults.standard.set(profile.isPremium, forKey: key) }
+        isPremium = profile?.isPremium ?? UserDefaults.standard.bool(forKey: key)
     }
 
     func saveCallSheet(_ update: Profile.Update) async throws {
         guard let id = user?.id else { return }
         try await Backend.client.from("profiles").update(update).eq("id", value: id).execute()
-        await loadPlan()
+        await loadPlan(id)
     }
 
     func startPreview(premium: Bool = true) { isPreview = true; isPremium = premium }
@@ -102,6 +112,7 @@ final class Session {
             if !paths.isEmpty { _ = try await Backend.client.storage.from(bucket).remove(paths: paths) }
         }
         try await Backend.client.rpc("delete_my_account").execute()
+        if let user { OnDevice.removeAll(user: user.id) }
         try? await Backend.client.auth.signOut(scope: .local)
     }
 }

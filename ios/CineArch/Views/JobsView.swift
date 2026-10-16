@@ -25,7 +25,7 @@ struct JobsView: View {
             .previewBadge()
             .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to see your slate.") {} }
             .task(id: session.identity) {
-                if session.isPreview { jobs.usePreview() } else if session.isSignedIn { await jobs.load() } else { jobs.clear() }
+                await jobs.use(session.place)
             }
         }
     }

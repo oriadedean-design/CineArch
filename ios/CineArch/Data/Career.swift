@@ -85,52 +85,77 @@ struct SignInNeeded: LocalizedError {
 @MainActor @Observable
 final class TrackingStore {
     private(set) var tracks: [TrackedUnion] = []
-    private(set) var isPreview = false
+    private(set) var place = DataPlace.none
     var error: String?
 
-    func usePreview() { isPreview = true; tracks = Sample.tracks; error = nil }
+    /// Switches to an account's unions: the sample, this phone (free) or online (Pro).
+    func use(_ newPlace: DataPlace) async {
+        if newPlace != place { place = newPlace; tracks = []; error = nil }
+        switch place {
+        case .none: tracks = []
+        case .preview: tracks = Sample.tracks
+        case .phone, .online: await load()
+        }
+    }
 
     func load() async {
-        guard !isPreview else { return }
         do {
-            tracks = try await Backend.client.from("union_tracking").select().order("created_at").execute().value
+            switch place {
+            case .phone(let user):
+                if !OnDevice.exists("unions", user: user) { try OnDevice.write(try await fetchOnline(), "unions", user: user) }
+                tracks = OnDevice.read("unions", user: user) ?? []
+            case .online(let user):
+                if let local: [TrackedUnion] = OnDevice.read("unions", user: user), !local.isEmpty {
+                    let rows = local.map { var t = $0; t.id = nil; t.userId = user; return t }
+                    try await Backend.client.from("union_tracking").upsert(rows, onConflict: "user_id,union_type_id").execute()
+                }
+                OnDevice.remove("unions", user: user)
+                tracks = try await fetchOnline()
+            default: return
+            }
             error = nil
         } catch {
             self.error = "Couldn't load your unions."
         }
     }
 
+    private func fetchOnline() async throws -> [TrackedUnion] {
+        try await Backend.client.from("union_tracking").select().order("created_at").execute().value
+    }
+
     /// One row per union per person; tracking a union again updates it.
     func save(_ track: TrackedUnion) async throws {
         var track = track
-        if isPreview {
-            tracks.removeAll { $0.unionTypeId == track.unionTypeId }
-            track.id = UUID()
-            tracks.append(track)
-            return
+        switch place {
+        case .none: throw SignInNeeded()
+        case .preview: track.id = UUID()
+        case .phone(let user):
+            track.id = tracks.first { $0.unionTypeId == track.unionTypeId }?.id ?? UUID()
+            track.userId = user
+            try OnDevice.write(tracks.filter { $0.unionTypeId != track.unionTypeId } + [track], "unions", user: user)
+        case .online(let user):
+            track.userId = user
+            track.id = nil
+            track = try await Backend.client.from("union_tracking")
+                .upsert(track, onConflict: "user_id,union_type_id").select().single().execute().value
         }
-        // Without a live sign-in the row would go up with no owner and the
-        // database refuses it, so say so plainly instead.
-        guard let session = try? await Backend.client.auth.session else { throw SignInNeeded() }
-        track.userId = session.user.id
-        track.id = nil
-        let saved: TrackedUnion = try await Backend.client.from("union_tracking")
-            .upsert(track, onConflict: "user_id,union_type_id").select().single().execute().value
-        tracks.removeAll { $0.unionTypeId == saved.unionTypeId }
-        tracks.append(saved)
+        tracks.removeAll { $0.unionTypeId == track.unionTypeId }
+        tracks.append(track)
     }
 
     func remove(_ track: TrackedUnion) async {
-        if isPreview { tracks.removeAll { $0.unionTypeId == track.unionTypeId }; return }
-        guard let userId = Backend.client.auth.currentUser?.id else { return }
+        let remaining = tracks.filter { $0.unionTypeId != track.unionTypeId }
         do {
-            try await Backend.client.from("union_tracking").delete()
-                .eq("user_id", value: userId).eq("union_type_id", value: track.unionTypeId).execute()
-            tracks.removeAll { $0.unionTypeId == track.unionTypeId }
+            switch place {
+            case .phone(let user): try OnDevice.write(remaining, "unions", user: user)
+            case .online(let user):
+                try await Backend.client.from("union_tracking").delete()
+                    .eq("user_id", value: user).eq("union_type_id", value: track.unionTypeId).execute()
+            default: break
+            }
+            tracks = remaining
         } catch {
             self.error = "Couldn't stop tracking \(track.unionName)."
         }
     }
-
-    func clear() { tracks = []; isPreview = false }
 }

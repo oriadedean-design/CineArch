@@ -16,8 +16,8 @@ rate cards for 4 unions, pay rules for 3).
 | --- | --- | --- | --- |
 | Indie Log | Union guide and rate cards for every province | Partly | The guide covers all 13 provinces and territories. Rate cards exist for 4 unions only: ACTRA, IATSE 212, IATSE 873, UBCP/ACTRA. |
 | Indie Log | Pay calculator with overtime and minimum calls | Partly | Overtime and minimum calls apply for ACTRA, IATSE 873 and UBCP/ACTRA (the unions with pay rules). Other unions are rate × hours. |
-| Indie Log | Your Slate: mark every day you work | True | Web and iPhone. |
-| Indie Log | Your Wrap: count your days toward your union card | True | Web and iPhone. Days on union sets count before membership. |
+| Indie Log | Your Slate: mark every day you work | True | iPhone app, kept on the phone. Free accounts can't use the website (Sync Online is Pro). |
+| Indie Log | Your Wrap: count your days toward your union card | True | iPhone app, kept on the phone. Days on union sets count before membership. |
 | A-List Pro | Everything in Indie Log | True | |
 | A-List Pro | Wrap Wallet: an income and expense ledger with Canadian tax rules | Partly | Ledger on web and iPhone; locked to Pro in the database. Rules applied: meals 50% deductible, fines not deductible. The GST/HST suggestion is 5% in every province. |
 | A-List Pro | Your $30k GST/HST line, tracked as you earn | Partly | Tracks income entered in the ledger. Job pay is not added automatically. |
@@ -29,5 +29,7 @@ rate cards for 4 unions, pay rules for 3).
 | Agency Command | Your Roster: every client's days and progress in one place | True | Website only (Your Roster). |
 | Agency Command | Bulk upload for the whole roster | True | Website only. |
 | Agency Command | Priority support | Not built | No support channel or queue exists. |
+
+**Not on the list yet:** Sync Online (the website, iPad or another phone), Pro-only since 2026-10-17 and enforced in the database. It's the main thing free accounts can't do, but no A-List Pro benefit names it. Wording is Dean's call.
 
 Payments: no plan can be bought yet. Upgrade buttons say "Upgrades open soon".
