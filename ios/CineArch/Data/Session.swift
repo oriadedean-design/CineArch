@@ -12,19 +12,21 @@ struct Profile: Codable, Equatable {
     var memberStatus: String?        // ASPIRING or MEMBER
     var hasAgentFee: Bool?
     var agentFeePct: Double?
+    var earningGoal: Double?         // what they want to earn from film work this year (CAD)
     var isOnboarded: Bool = false
     var isPremium: Bool = false
 
     enum CodingKeys: String, CodingKey {
         case name, province, region, department
         case selectedRoles = "selected_roles", memberStatus = "member_status", hasAgentFee = "has_agent_fee"
-        case agentFeePct = "agent_fee_pct", isOnboarded = "is_onboarded", isPremium = "is_premium"
+        case agentFeePct = "agent_fee_pct", isOnboarded = "is_onboarded", isPremium = "is_premium", earningGoal = "earning_goal"
     }
 
     /// The columns a user may write (lock_profile_privileges), never is_premium.
     struct Update: Encodable {
         var province: String?; var region: String?; var department: String?; var selected_roles: [String]
-        var role: String?; var member_status: String; var has_agent_fee: Bool; var agent_fee_pct: Double; var is_onboarded = true
+        var role: String?; var member_status: String; var has_agent_fee: Bool; var agent_fee_pct: Double; var earning_goal: Double?
+        var is_onboarded = true
     }
 }
 
@@ -67,7 +69,7 @@ final class Session {
     private func loadPlan(_ id: UUID?) async {
         guard let id else { isPremium = false; profile = nil; return }
         profile = try? await Backend.client.from("profiles")
-            .select("name, province, region, department, selected_roles, member_status, has_agent_fee, agent_fee_pct, is_onboarded, is_premium")
+            .select("name, province, region, department, selected_roles, member_status, has_agent_fee, agent_fee_pct, earning_goal, is_onboarded, is_premium")
             .eq("id", value: id).single().execute().value
         let key = "cinearch.pro.\(id.uuidString.lowercased())"
         if let profile { UserDefaults.standard.set(profile.isPremium, forKey: key) }
@@ -77,6 +79,13 @@ final class Session {
     func saveCallSheet(_ update: Profile.Update) async throws {
         guard let id = user?.id else { return }
         try await Backend.client.from("profiles").update(update).eq("id", value: id).execute()
+        await loadPlan(id)
+    }
+
+    /// One profile field changed from Account (name, earning goal); `.null` clears it.
+    func saveProfileField(_ column: String, _ value: AnyJSON) async throws {
+        guard let id = user?.id else { throw SignInNeeded() }
+        try await Backend.client.from("profiles").update([column: value]).eq("id", value: id).execute()
         await loadPlan(id)
     }
 

@@ -403,6 +403,7 @@ export type Database = {
         Row: {
           account_type: string
           agent_fee_pct: number | null
+          earning_goal: number | null
           business_structure: string | null
           career_focus: string | null
           cohort_year: string | null
@@ -436,6 +437,7 @@ export type Database = {
         Insert: {
           account_type?: string
           agent_fee_pct?: number | null
+          earning_goal?: number | null
           business_structure?: string | null
           career_focus?: string | null
           cohort_year?: string | null
@@ -469,6 +471,7 @@ export type Database = {
         Update: {
           account_type?: string
           agent_fee_pct?: number | null
+          earning_goal?: number | null
           business_structure?: string | null
           career_focus?: string | null
           cohort_year?: string | null

@@ -21,6 +21,7 @@ interface FormData {
   memberStatus: 'ASPIRING' | 'MEMBER';
   hasAgent: boolean;
   agentPct: string;
+  earningGoal: string;
 }
 
 interface StepProps {
@@ -71,10 +72,10 @@ const ProductionCallOverlay = ({ onComplete }: { onComplete: () => void }) => {
 
 const StepWelcome = ({ onNext }: { onNext: () => void }) => (
   <div className="text-center space-y-12">
-    <Badge color="accent" className="tracking-[0.4em]">Your call sheet · 4 questions</Badge>
-    <h1 className="heading-huge text-white">LOCK IT UP.</h1>
+    <Badge color="accent" className="tracking-[0.4em]">Setting the Scene · 4 questions</Badge>
+    <h1 className="heading-huge text-white">SETTING THE SCENE.</h1>
     <Text className="max-w-xl mx-auto text-2xl text-white font-light italic leading-relaxed">
-      Before we roll: where you're based, what you do, who's on your team and which unions you're working toward. You can change any of it later in Your Trailer.
+      Give us the context, so we can shape CineArch around you: where you're based, what you do, who's in your corner and what you're working toward. You can change any of it later in Your Trailer.
     </Text>
     <div className="pt-16">
       <Button onClick={onNext} className="h-14 px-10 text-xs tracking-[0.6em] font-black">Start: where you're based</Button>
@@ -232,7 +233,7 @@ const StepTeam = ({ formData, setFormData, onNext, onBack }: StepProps) => (
     </div>
     <div className="flex justify-between pt-20 border-t border-white/5">
       <button onClick={onBack} className="text-xs font-black uppercase tracking-[0.5em] text-white hover:underline transition-colors">Back</button>
-      <Button onClick={onNext} className="h-14 px-10 text-xs tracking-[0.4em] font-black">Next: your unions <ArrowRight size={14} className="ml-4" /></Button>
+      <Button onClick={onNext} className="h-14 px-10 text-xs tracking-[0.4em] font-black">Next: your goals <ArrowRight size={14} className="ml-4" /></Button>
     </div>
   </div>
 );
@@ -257,9 +258,18 @@ const StepGuilds = ({
   return (
   <div className="space-y-12 animate-in slide-in-from-right duration-500">
     <div className="space-y-2">
-      <Text variant="caption">Scene 04 // Your unions</Text>
-      <Heading level={2} className="text-white">Your unions.</Heading>
+      <Text variant="caption">Scene 04 // Your goals</Text>
+      <Heading level={2} className="text-white">What you're working toward.</Heading>
     </div>
+
+    <div className="space-y-3 max-w-sm">
+      <label htmlFor="earning-goal" className="text-xs font-black uppercase tracking-[0.4em] text-white">Earning goal for {new Date().getFullYear()} ($)</label>
+      <Input id="earning-goal" type="number" min={0} step={1000} inputMode="numeric" value={formData.earningGoal}
+        onChange={e => setFormData(f => ({ ...f, earningGoal: e.target.value }))} placeholder="Optional, e.g. 40000" className="h-16 text-2xl font-serif italic text-white" />
+      <p className="text-xs text-white/50 italic">What you'd like to earn from film work this year, before tax. Your Wrap shows how close you are.</p>
+    </div>
+
+    <label className="block text-xs font-black uppercase tracking-[0.4em] text-white pt-4">Union goals</label>
 
     <div className="p-10 bg-accent/5 border border-accent/20 glass-ui mb-8 flex items-start gap-8">
       <Sparkles className="text-accent shrink-0" size={28} />
@@ -341,6 +351,7 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
     memberStatus: user.memberStatus === 'MEMBER' ? 'MEMBER' : 'ASPIRING',
     hasAgent: !!user.hasAgentFee,
     agentPct: user.agentFeePercentage != null ? String(user.agentFeePercentage) : '',
+    earningGoal: user.earningGoal != null ? String(user.earningGoal) : '',
   });
 
   const suggestedUnionIds = useMemo(() => {
@@ -374,6 +385,7 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
         memberStatus: formData.memberStatus,
         hasAgentFee: formData.hasAgent,
         agentFeePercentage: formData.hasAgent && formData.agentPct !== '' ? Number(formData.agentPct) : 0,
+        earningGoal: formData.earningGoal !== '' ? Number(formData.earningGoal) : undefined,
         role: formData.selectedRoles[0] || 'Film Professional'
       };
 

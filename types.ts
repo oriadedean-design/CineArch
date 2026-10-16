@@ -29,6 +29,7 @@ export interface User {
   // Agent Fee Configuration
   hasAgentFee?: boolean;
   agentFeePercentage?: number;
+  earningGoal?: number;          // what they want to earn from film work this year (CAD)
 
   // Enterprise Specifics
   entityType?: EntityType;

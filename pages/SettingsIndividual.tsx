@@ -136,6 +136,14 @@ export const SettingsIndividual = () => {
               </div>
             </div>
             <div className="space-y-4">
+              <label htmlFor="earning-goal" className="text-xs font-black uppercase tracking-[0.4em] text-white">Earning goal for {new Date().getFullYear()} ($)</label>
+              <Input id="earning-goal" type="number" min={0} step={1000} inputMode="numeric" placeholder="Not set"
+                value={profileForm.earningGoal ?? ''}
+                onChange={e => setProfileForm({ ...profileForm, earningGoal: e.target.value === '' ? undefined : Number(e.target.value) })}
+                className="h-20 text-2xl font-serif italic" />
+              <p className="text-xs text-white/50 italic">From film work, before tax. Your Wrap shows how close you are.</p>
+            </div>
+            <div className="space-y-4">
               <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Email</label>
               <Input value={profileForm.email || ''} disabled className="h-20 opacity-30 cursor-not-allowed font-serif italic" />
             </div>
