@@ -82,7 +82,7 @@ struct WrapView: View {
 
             Section("Your year on set") { JobTimeline(jobs: jobs.jobs) }
             Section("Income this year") {
-                IncomeChart(jobs: jobs.jobs, showGSTLine: session.isPremium)
+                IncomeChart(jobs: jobs.jobs, showGSTLine: session.isPremium, goal: session.profile?.earningGoal)
                 ProNudge(id: "gst-line", title: "You've earned \(earnedThisYear.money) this year.",
                          detail: "\(Plan.pro.name) tracks it against the $30k GST/HST line and estimates what to set aside for CPP and income tax.")
             }

@@ -143,7 +143,7 @@ export const DashboardIndividual = () => {
       <JobTimeline jobs={jobs} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
         <div className="space-y-4">
-          <IncomeChart jobs={jobs} showGSTLine={!!user.isPremium} />
+          <IncomeChart jobs={jobs} showGSTLine={!!user.isPremium} goal={user.earningGoal} />
           <ProNudge id="gst-line" user={user}
             title={`You've earned ${jobs.filter(j => j.status !== 'TENTATIVE' && j.startDate.startsWith(String(new Date().getFullYear()))).reduce((s, j) => s + (j.grossEarnings || 0), 0).toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })} this year.`}
             detail={`${PLANS.pro.label} tracks it against the $30k GST/HST line and estimates what to set aside for CPP and income tax.`} />

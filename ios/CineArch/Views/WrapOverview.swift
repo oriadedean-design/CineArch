@@ -49,6 +49,7 @@ struct JobTimeline: View {
 struct IncomeChart: View {
     let jobs: [Job]
     let showGSTLine: Bool
+    var goal: Double? = nil
 
     private var points: [(month: Date, total: Double)] {
         let cal = Calendar.current
@@ -73,6 +74,10 @@ struct IncomeChart: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(total.money).font(Theme.serif(.title2)).monospacedDigit()
                 Text("so far this year").font(.caption).foregroundStyle(.secondary)
+                if let goal, goal > 0 {
+                    Spacer()
+                    Text("\(Int((total / goal * 100).rounded()))% of \(goal.money)").font(.caption.bold()).foregroundStyle(Theme.accent)
+                }
             }
             Chart {
                 ForEach(pts, id: \.month) { p in
@@ -80,6 +85,11 @@ struct IncomeChart: View {
                         .foregroundStyle(Theme.accent).interpolationMethod(.stepEnd)
                     PointMark(x: .value("Month", p.month, unit: .month), y: .value("Earned", p.total))
                         .foregroundStyle(Theme.accent).symbolSize(20)
+                }
+                if let goal, goal > 0 {
+                    RuleMark(y: .value("Your goal", goal))
+                        .foregroundStyle(Theme.accent.opacity(0.6)).lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 4]))
+                        .annotation(position: .top, alignment: .trailing) { Text("Your goal").font(.caption2).foregroundStyle(Theme.accent) }
                 }
                 if showGSTLine {
                     RuleMark(y: .value("GST/HST line", Ledger.smallSupplierThreshold))

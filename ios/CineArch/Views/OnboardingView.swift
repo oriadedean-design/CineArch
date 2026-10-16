@@ -1,8 +1,8 @@
 import SwiftUI
 import CineArchKit
 
-// Your call sheet: four questions, the same as the website's onboarding.
-// Where you're based → what you do → your team → your unions.
+// Setting the Scene: four questions, the same as the website's onboarding.
+// Where you're based → what you do → your team → your goals (unions and earnings).
 struct OnboardingView: View {
     @Environment(EngineStore.self) private var store
     @Environment(Session.self) private var session
@@ -25,6 +25,7 @@ struct OnboardingView: View {
     @State private var hasAgent = false
     @State private var agentPct = ""
     @State private var unions: Set<String> = []
+    @State private var goalText = ""
     @State private var saving = false
     @State private var error: String?
 
@@ -42,8 +43,13 @@ struct OnboardingView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Scene \(step.rawValue) of \(Step.allCases.count)").font(.caption.weight(.heavy)).tracking(1.5).foregroundStyle(Theme.accent)
-                        .listRowBackground(Color.clear)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Setting the Scene · \(step.rawValue) of \(Step.allCases.count)").font(.caption.weight(.heavy)).tracking(1.5).foregroundStyle(Theme.accent)
+                        if step == .base {
+                            Text("Give us the context, so we can shape CineArch around you.").font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    }
+                    .listRowBackground(Color.clear)
                 }
                 switch step {
                 case .base: base
@@ -71,7 +77,7 @@ struct OnboardingView: View {
         case .base: "Your home base"
         case .work: "What you do"
         case .team: "Your team"
-        case .unions: "Your unions"
+        case .unions: "Your goals"
         }
     }
 
@@ -137,6 +143,14 @@ struct OnboardingView: View {
     }
 
     @ViewBuilder private var unionStep: some View {
+        Section {
+            HStack {
+                Text("$").foregroundStyle(.secondary)
+                TextField("Optional, e.g. 40000", text: $goalText).keyboardType(.numberPad)
+            }
+        } header: { Text("Earning goal for \(String(Calendar.current.component(.year, from: Date())))") } footer: {
+            Text("What you'd like to earn from film work this year, before tax. Your Wrap shows how close you are.")
+        }
         let picked = suggested.compactMap { engine.union($0) }.filter { !$0.tiers.isEmpty }
         if !picked.isEmpty {
             Section {
@@ -176,7 +190,7 @@ struct OnboardingView: View {
         switch step {
         case .base: "Next: what you do"
         case .work: roles.isEmpty ? "Pick at least one role" : "Next: your team"
-        case .team: "Next: your unions"
+        case .team: "Next: your goals"
         case .unions: saving ? "Saving…" : "Save and open Your Wrap"
         }
     }
@@ -208,6 +222,7 @@ struct OnboardingView: View {
         isMember = p.memberStatus == "MEMBER"
         hasAgent = p.hasAgentFee ?? false
         if let pct = p.agentFeePct, pct > 0 { agentPct = pct.formatted(.number.grouping(.never)) }
+        if let g = p.earningGoal, g > 0 { goalText = g.formatted(.number.grouping(.never)) }
         unions = Set(tracking.tracks.map(\.unionTypeId))
     }
 
@@ -220,7 +235,8 @@ struct OnboardingView: View {
             try await session.saveCallSheet(Profile.Update(
                 province: province, region: province == "Ontario" ? region : nil, department: department,
                 selected_roles: roles, role: roles.first, member_status: isMember ? "MEMBER" : "ASPIRING",
-                has_agent_fee: hasAgent, agent_fee_pct: hasAgent ? Double(agentPct.replacingOccurrences(of: ",", with: ".")) ?? 0 : 0))
+                has_agent_fee: hasAgent, agent_fee_pct: hasAgent ? Double(agentPct.replacingOccurrences(of: ",", with: ".")) ?? 0 : 0,
+                earning_goal: Double(goalText.filter(\.isNumber))))
             for id in unions where !tracking.tracks.contains(where: { $0.unionTypeId == id }) {
                 guard let u = engine.union(id), let t = u.tiers.first else { continue }
                 try await tracking.save(TrackedUnion(unionTypeId: u.id, unionName: u.name, tierLabel: t.name,

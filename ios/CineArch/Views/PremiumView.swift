@@ -54,26 +54,48 @@ struct UpgradeButton: View {
 }
 
 // Shown in place of Wrap Wallet on the free plan.
-struct WalletLocked: View {
+/// Wrap Wallet on the free plan: the total from your Slate, and each thing
+/// A-List Pro adds, shown locked so it's clear what a tap will open.
+struct FreeWallet: View {
+    @Environment(JobsStore.self) private var jobs
+    @Environment(Session.self) private var session
+
+    private static let locked: [(String, String)] = [
+        ("plus.square", "Add income and expenses"),
+        ("checkmark.seal", "Back each entry with proof (Green Lit)"),
+        ("doc.viewfinder", "Scan receipts with your camera"),
+        ("tablecells", "Export a spreadsheet"),
+        ("percent", "Your GST/HST line and what to set aside"),
+    ]
+
     var body: some View {
+        let year = String(Calendar.current.component(.year, from: Date()))
+        let earned = jobs.jobs.filter { $0.status != "TENTATIVE" && $0.startDate.hasPrefix(year) }.reduce(0) { $0 + ($1.grossEarnings ?? 0) }
         List {
             Section {
-                VStack(alignment: .leading, spacing: 10) {
-                    Image(systemName: "lock.fill").font(.title).foregroundStyle(Theme.accent)
-                    Text("Wrap Wallet comes with A-List Pro").font(Theme.serif(.title2))
-                    Text("Your film money in one place: what you earned, what you spent, your GST/HST line and what to set aside for tax.")
-                        .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(earned.money).font(Theme.serif(.largeTitle)).monospacedDigit()
+                    Text("earned in \(year), from the pay on your Slate").font(.caption).foregroundStyle(.secondary)
                 }
-                .padding(.vertical, 6)
-            }
-            Section("What comes with \(Plan.pro.name) · \(Plan.pro.price)") {
-                ForEach(Plan.pro.includes.dropFirst(), id: \.self) { Label($0, systemImage: "checkmark").font(.subheadline) }
-                UpgradeButton()
-            }
+                .padding(.vertical, 4)
+            } header: { Text("Your total") }
+
             Section {
-                NavigationLink("Compare plans") { PlansView() }
+                ForEach(Self.locked, id: \.1) { icon, text in
+                    NavigationLink { PlansView() } label: {
+                        HStack {
+                            Label(text, systemImage: icon)
+                            Spacer()
+                            Image(systemName: "lock.fill").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                UpgradeButton()
+            } header: { Text("With \(Plan.pro.name) · \(Plan.pro.price)") } footer: {
+                Text("Wrap Wallet keeps your receipts and records online, so it comes with \(Plan.pro.name).")
             }
         }
+        .task(id: session.identity) { await jobs.use(session.place) }
     }
 }
 

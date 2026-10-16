@@ -58,7 +58,7 @@ export const JobTimeline = ({ jobs }: { jobs: Job[] }) => {
   );
 };
 
-export const IncomeChart = ({ jobs, showGSTLine }: { jobs: Job[]; showGSTLine: boolean }) => {
+export const IncomeChart = ({ jobs, showGSTLine, goal }: { jobs: Job[]; showGSTLine: boolean; goal?: number }) => {
   const now = new Date(), year = now.getFullYear();
   const byMonth = new Array(12).fill(0);
   for (const j of jobs) {
@@ -69,7 +69,7 @@ export const IncomeChart = ({ jobs, showGSTLine }: { jobs: Job[]; showGSTLine: b
   let run = 0;
   const pts = byMonth.slice(0, now.getMonth() + 1).map((v, m) => ({ m, total: (run += v) }));
   const total = run;
-  const top = Math.max(showGSTLine ? 32_000 : 0, total * 1.15, 1000);
+  const top = Math.max(showGSTLine ? 32_000 : 0, goal ? goal * 1.08 : 0, total * 1.15, 1000);
   const W = 1000, H = 260, padL = 56, padB = 28;
   const x = (m: number) => padL + (m / 11) * (W - padL - 10);
   const y = (v: number) => (H - padB) - (v / top) * (H - padB - 10);
@@ -78,10 +78,11 @@ export const IncomeChart = ({ jobs, showGSTLine }: { jobs: Job[]; showGSTLine: b
 
   return (
     <Panel title="Income This Year" footer="From the pay on your Slate, by the month each job started.">
-      <p><span className="font-serif italic text-4xl text-white">{money(total)}</span> <span className="text-xs text-white/40 italic">so far this year</span></p>
+      <p><span className="font-serif italic text-4xl text-white">{money(total)}</span> <span className="text-xs text-white/40 italic">so far this year{goal ? ` · ${Math.round((total / goal) * 100)}% of your ${money(goal)} goal` : ''}</span></p>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={`Income this year: ${money(total)}`}>
         {yTicks.map(v => <g key={v}><line x1={padL} x2={W} y1={y(v)} y2={y(v)} stroke="rgba(255,255,255,0.08)" /><text x={padL - 8} y={y(v) + 5} fill="rgba(255,255,255,0.4)" fontSize="15" textAnchor="end">{v >= 1000 ? `$${v / 1000}k` : `$${v}`}</text></g>)}
         {[0, 2, 4, 6, 8, 10].map(m => <text key={m} x={x(m)} y={H - 6} fill="rgba(255,255,255,0.4)" fontSize="15" textAnchor="middle">{monthLabel(new Date(year, m, 1))}</text>)}
+        {goal ? <g><line x1={padL} x2={W} y1={y(goal)} y2={y(goal)} stroke="var(--accent)" strokeOpacity="0.6" strokeDasharray="2 6" /><text x={W - 6} y={y(goal) - 8} fill="var(--accent)" fontSize="15" textAnchor="end">Your goal {money(goal)}</text></g> : null}
         {showGSTLine && <g><line x1={padL} x2={W} y1={y(30_000)} y2={y(30_000)} stroke="#f87171" strokeDasharray="6 5" /><text x={padL + 6} y={y(30_000) - 8} fill="#f87171" fontSize="15">$30k GST/HST line</text></g>}
         <path d={path} fill="none" stroke="var(--accent)" strokeWidth="3" />
         {pts.map(p => <rect key={p.m} x={x(p.m) - 4} y={y(p.total) - 4} width="8" height="8" fill="var(--accent)" />)}

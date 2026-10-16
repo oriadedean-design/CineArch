@@ -29,6 +29,7 @@ export interface User {
   // Agent Fee Configuration
   hasAgentFee?: boolean;
   agentFeePercentage?: number;
+  earningGoal?: number;          // what they want to earn from film work this year (CAD)
 
   // Enterprise Specifics
   entityType?: EntityType;
@@ -277,6 +278,7 @@ export interface FinanceTransaction {
   deductibleAmount?: number;
   addBackAmount?: number;
   ruleTags?: string[]; 
+  proofPath?: string;            // receipt, pay stub or invoice; with proof the entry is Green Lit
 }
 
 export interface FinanceStats {
