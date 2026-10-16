@@ -9,6 +9,11 @@ public struct EngineSnapshot: Codable, Sendable {
     public var departments: [Department]
     public var rateSchedules: [RateSchedule]
     public var payRules: [PayRule]
+    /// [role or department id, province, region, union id, relationship, notes]
+    public var roleCoverage: [[String?]]? = nil
+    public var departmentCoverage: [[String?]]? = nil
+    /// Tax and union dates, each with its source (public.deadlines).
+    public var deadlines: [Deadline]? = nil
 
     public static let empty = EngineSnapshot(version: 0, unions: [], departments: [], rateSchedules: [], payRules: [])
 }
@@ -113,5 +118,28 @@ public struct PayRule: Codable, Sendable, Identifiable, Hashable {
         self.minimumCallHours = minimumCallHours; self.overtimeAfter = overtimeAfter
         self.overtimeMultipliers = overtimeMultipliers; self.incrementMinutes = incrementMinutes
         self.mealBreakNotes = mealBreakNotes; self.notes = notes; self.needsVerification = needsVerification; self.sourceUrl = sourceUrl
+    }
+}
+
+public struct Deadline: Codable, Sendable, Identifiable, Hashable {
+    public var id: String
+    public var title: String
+    public var month: Int
+    public var day: Int
+    public var appliesTo: String     // self_employed, instalments, gst_registered, union_member
+    public var province: String?
+    public var unionId: String?
+    public var detail: String?
+    public var sourceUrl: String
+    public var checkedOn: String
+
+    /// The next time this date comes round, today included.
+    public func next(after today: Date, calendar: Calendar = .current) -> Date? {
+        let y = calendar.component(.year, from: today)
+        for year in [y, y + 1] {
+            if let d = calendar.date(from: DateComponents(year: year, month: month, day: day)),
+               d >= calendar.startOfDay(for: today) { return d }
+        }
+        return nil
     }
 }

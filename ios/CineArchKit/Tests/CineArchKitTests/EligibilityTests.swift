@@ -28,3 +28,15 @@ struct EligibilityTests {
         #expect(Eligibility.windowStart(months: 12, today: today) == "2025-10-16")
     }
 }
+
+struct DeadlineTests {
+    @Test func nextOccurrence() {
+        var cal = Calendar(identifier: .gregorian); cal.timeZone = TimeZone(identifier: "UTC")!
+        let d = Deadline(id: "x", title: "File", month: 6, day: 15, appliesTo: "self_employed", province: nil, unionId: nil,
+                         detail: nil, sourceUrl: "https://example.com", checkedOn: "2026-10-17")
+        let oct = cal.date(from: DateComponents(year: 2026, month: 10, day: 17))!
+        let jun15 = cal.date(from: DateComponents(year: 2026, month: 6, day: 15))!
+        #expect(cal.component(.year, from: d.next(after: oct, calendar: cal)!) == 2027)
+        #expect(d.next(after: jun15, calendar: cal) == jun15)
+    }
+}

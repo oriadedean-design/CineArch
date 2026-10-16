@@ -100,6 +100,18 @@ final class JobsStore {
         jobs.sort { $0.startDate > $1.startDate }
     }
 
+    /// A pencilled-in job that happened: mark it worked so its days count.
+    func confirm(_ id: UUID) async {
+        guard let i = jobs.firstIndex(where: { $0.id == id }) else { return }
+        if isPreview { jobs[i].status = "CONFIRMED"; return }
+        do {
+            try await Backend.client.from("jobs").update(["status": "CONFIRMED"]).eq("id", value: id).execute()
+            jobs[i].status = "CONFIRMED"
+        } catch {
+            self.error = "Couldn't confirm that job."
+        }
+    }
+
     /// The most recent day logged, for the slate's "same as last day".
     var lastJob: Job? { jobs.first }
 

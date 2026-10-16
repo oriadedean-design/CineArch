@@ -28,8 +28,11 @@ struct CineArchApp: App {
 // Your Wrap, Your Slate, Guide (middle), Wrap Wallet, Account, with the clapperboard floating
 // above every tab. The pay calculator opens from the clapperboard.
 struct RootView: View {
+    @Environment(Session.self) private var session
     // `-cinearch.tab wallet` opens on that tab (for screenshots).
     @State private var tab = Tab(rawValue: UserDefaults.standard.string(forKey: "cinearch.tab") ?? "") ?? .wrap
+    /// `-cinearch.onboarding YES` opens the call sheet (for screenshots).
+    static let showOnboarding = UserDefaults.standard.bool(forKey: "cinearch.onboarding")
     enum Tab: String { case wrap, jobs, ledger = "wallet", guide, account }
 
     var body: some View {
@@ -40,9 +43,16 @@ struct RootView: View {
             LedgerView().tabItem { Label("Wallet", systemImage: "wallet.bifold") }.tag(Tab.ledger)
             AccountView().tabItem { Label("Account", systemImage: "person.crop.circle") }.tag(Tab.account)
         }
-        .tint(Theme.accent)
         .overlay(alignment: .bottomTrailing) {
             SlateButton().padding(.trailing, 20).padding(.bottom, 84)
+        }
+        // Outermost, so every screen, sheet and cover gets them: signal yellow,
+        // and square corners (film frames, sensors, slates and strips are square).
+        .tint(Theme.accent)
+        .listStyle(.grouped)
+        .buttonBorderShape(.roundedRectangle(radius: 0))
+        .fullScreenCover(isPresented: .constant(session.needsOnboarding || Self.showOnboarding)) {
+            OnboardingView().tint(Theme.accent).listStyle(.grouped).buttonBorderShape(.roundedRectangle(radius: 0))
         }
     }
 }

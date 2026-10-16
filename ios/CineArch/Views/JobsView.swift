@@ -43,6 +43,12 @@ struct JobsView: View {
             if jobs.jobs.isEmpty && !jobs.isLoading {
                 Section { Text("Nothing in the can yet. Tap the clapperboard to mark your first day.").foregroundStyle(.secondary) }
             }
+            if jobs.jobs.count >= 10 {
+                Section {
+                    ProNudge(id: "ledger-reports", title: "\(jobs.jobs.count) jobs on your Slate.",
+                             detail: "Your Ledger turns them into a PDF or spreadsheet for union applications and tax time. \(Plan.pro.name), on the website.")
+                }
+            }
             Section {
                 ForEach(jobs.jobs) { j in JobRow(job: j) }
                     .onDelete { idx in

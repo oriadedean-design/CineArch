@@ -11,6 +11,7 @@ struct WrapView: View {
     @State private var showAuth = false
     @State private var editing: TrackedUnion?
     @State private var showAdd = false
+    @State private var showNotes = UserDefaults.standard.bool(forKey: "cinearch.notes")   // `-cinearch.notes YES` for screenshots
 
     var body: some View {
         NavigationStack {
@@ -19,6 +20,13 @@ struct WrapView: View {
             }
             .navigationTitle("Your Wrap")
             .previewBadge()
+            .toolbar {
+                if session.isSignedIn {
+                    ToolbarItem(placement: .topBarTrailing) { NotesBell(count: visibleNotes.count) { showNotes = true } }
+                }
+            }
+            .sheet(isPresented: $showNotes) { NotesView(notes: notes) }
+            .task(id: notes.map(\.id)) { await Notes.scheduleReminders(notes) }
             .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to track your days toward union membership.") {} }
             .sheet(isPresented: $showAdd) { TrackUnionSheet(existing: nil) }
             .sheet(item: $editing) { TrackUnionSheet(existing: $0) }
@@ -33,6 +41,15 @@ struct WrapView: View {
             }
         }
     }
+
+    private var notes: [Note] {
+        session.isSignedIn ? Notes.make(jobs: jobs.jobs, tracks: tracking.tracks, engine: store.engine) : []
+    }
+    private var earnedThisYear: Double {
+        let year = String(Calendar.current.component(.year, from: Date()))
+        return jobs.jobs.filter { $0.status != "TENTATIVE" && $0.startDate.hasPrefix(year) }.reduce(0) { $0 + ($1.grossEarnings ?? 0) }
+    }
+    private var visibleNotes: [Note] { notes.filter { !Notes.dismissed.contains($0.id) } }
 
     private var signedOut: some View {
         ContentUnavailableView {
@@ -50,7 +67,7 @@ struct WrapView: View {
         let unionHours = confirmed.filter(\.isUnion).reduce(0) { $0 + $1.totalHours }
         let otherHours = confirmed.filter { !$0.isUnion }.reduce(0) { $0 + $1.totalHours }
         let belowScale = confirmed.filter(\.isBelowScale).count
-        return List {
+        return ScrollViewReader { proxy in List {
             Section {
                 ForEach(progress) { p in
                     Button { editing = p.track } label: { TrackRow(progress: p) }
@@ -67,6 +84,18 @@ struct WrapView: View {
                 Text("Days on a union set count toward that union even before you're a member. When you mark the slate, pick the union whose set it was.")
             }
 
+            Section("Your year on set") { JobTimeline(jobs: jobs.jobs) }
+            Section("Income this year") {
+                IncomeChart(jobs: jobs.jobs, showGSTLine: session.isPremium)
+                ProNudge(id: "gst-line", title: "You've earned \(earnedThisYear.money) this year.",
+                         detail: "\(Plan.pro.name) tracks it against the $30k GST/HST line and estimates what to set aside for CPP and income tax.")
+            }
+            .id("income")
+            Section {
+                ComingUp(deadlines: store.engine.snapshot.deadlines ?? [], progress: progress, jobs: jobs.jobs, engine: store.engine)
+            } header: { Text("Coming up") } footer: { Text("Tap a tax date to open its source.") }
+            .id("coming-up")
+
             Section("Your hours") {
                 LabeledContent("On union sets", value: unionHours.hours)
                 LabeledContent("Non-union", value: otherHours.hours)
@@ -80,6 +109,9 @@ struct WrapView: View {
             if let e = tracking.error ?? jobs.error { Section { Text(e).foregroundStyle(.red) } }
         }
         .refreshable { await jobs.load(); await tracking.load() }
+        // `-cinearch.scrollTo coming-up` opens scrolled down (for screenshots).
+        .onAppear { if let id = UserDefaults.standard.string(forKey: "cinearch.scrollTo") { proxy.scrollTo(id, anchor: .top) } }
+        }
     }
 }
 
@@ -97,7 +129,7 @@ struct TrackRow: View {
                 Text("\(Int((progress.fraction * 100).rounded()))%")
                     .font(Theme.serif(.title)).foregroundStyle(Theme.accent).monospacedDigit()
             }
-            ProgressView(value: progress.fraction).tint(Theme.accent)
+            SquareProgress(value: progress.fraction)
             HStack {
                 Text("\(t.format(progress.current)) of \(t.format(t.targetValue)) \(t.unit)\(progress.windowMonths.map { " in \($0) months" } ?? "")\(t.countsFrom.map { " since \($0)" } ?? "")")
                 Spacer()
@@ -132,7 +164,7 @@ struct TrackUnionSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
                 Section {
                     Picker("Union", selection: $unionId) {
                         Text("Choose…").tag("")

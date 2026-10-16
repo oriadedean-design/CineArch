@@ -18,6 +18,9 @@ interface FormData {
   department: string;
   selectedRoles: string[];
   selectedUnions: string[];
+  memberStatus: 'ASPIRING' | 'MEMBER';
+  hasAgent: boolean;
+  agentPct: string;
 }
 
 interface StepProps {
@@ -32,10 +35,10 @@ interface StepProps {
 const ProductionCallOverlay = ({ onComplete }: { onComplete: () => void }) => {
   const [stage, setStage] = useState(0);
   const sequence = [
-    "Pictures up. Calibrating Hub...",
-    "Syncing Jurisdictional Rules...",
-    "Assigning Guild Continuity...",
-    "Director: Action."
+    "Roll sound…",
+    "Speed. Roll camera…",
+    "Marker.",
+    "Action."
   ];
 
   useEffect(() => {
@@ -68,13 +71,13 @@ const ProductionCallOverlay = ({ onComplete }: { onComplete: () => void }) => {
 
 const StepWelcome = ({ onNext }: { onNext: () => void }) => (
   <div className="text-center space-y-12">
-    <Badge color="accent" className="tracking-[0.8em]">JURISDICTIONAL ENGINE v0.5</Badge>
+    <Badge color="accent" className="tracking-[0.4em]">Your call sheet · 4 questions</Badge>
     <h1 className="heading-huge text-white">LOCK IT UP.</h1>
     <Text className="max-w-xl mx-auto text-2xl text-white font-light italic leading-relaxed">
-      Establishing jurisdictional coordinates. National standards apply, but provincial peculiarities drive your eligibility.
+      Before we roll: where you're based, what you do, who's on your team and which unions you're working toward. You can change any of it later in Your Trailer.
     </Text>
     <div className="pt-16">
-      <Button onClick={onNext} className="h-14 px-10 text-xs tracking-[0.6em] font-black">Begin Calibration</Button>
+      <Button onClick={onNext} className="h-14 px-10 text-xs tracking-[0.6em] font-black">Start: where you're based</Button>
     </div>
   </div>
 );
@@ -84,8 +87,8 @@ const StepWelcome = ({ onNext }: { onNext: () => void }) => (
 const StepCoordinates = ({ formData, setFormData, onNext, onBack }: StepProps) => (
   <div className="space-y-12 animate-in slide-in-from-right duration-500">
     <div className="space-y-2">
-      <Text variant="caption">Scene 01 // Coordinates</Text>
-      <Heading level={2} className="text-white">Principal Hub.</Heading>
+      <Text variant="caption">Scene 01 // Where you're based</Text>
+      <Heading level={2} className="text-white">Your home base.</Heading>
     </div>
     <div className="grid md:grid-cols-2 gap-4">
       <div className="space-y-3">
@@ -97,14 +100,15 @@ const StepCoordinates = ({ formData, setFormData, onNext, onBack }: StepProps) =
         <Input value={formData.lastName} onChange={e => setFormData(f => ({...f, lastName: e.target.value}))} className="h-24 text-2xl font-serif italic text-white" />
       </div>
       <div className="md:col-span-2 space-y-3 pt-6">
-        <label className="text-xs font-black uppercase tracking-[0.4em] text-white flex items-center gap-4"><MapPin size={12} className="text-accent" /> Base Jurisdiction</label>
+        <label className="text-xs font-black uppercase tracking-[0.4em] text-white flex items-center gap-4"><MapPin size={12} className="text-accent" /> Province or territory</label>
+        <p className="text-xs text-white/50 italic">This decides which unions and rules apply to you.</p>
         <Select value={formData.province} onChange={e => setFormData(f => ({...f, province: e.target.value as any}))} className="h-24 text-2xl font-serif italic text-white">
           {Object.values(CanadianProvince).map(v => <option key={v} value={v} className="bg-black text-white">{v}</option>)}
         </Select>
       </div>
       {formData.province === CanadianProvince.ON && (
         <div className="md:col-span-2 space-y-3">
-          <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Ontario Region</label>
+          <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Region in Ontario</label>
           <Select value={formData.region} onChange={e => setFormData(f => ({...f, region: e.target.value as User['region']}))} className="h-24 text-2xl font-serif italic text-white">
             {(Object.entries(ONTARIO_REGION_LABELS) as [OntarioRegion, string][]).map(([v, label]) => <option key={v} value={v} className="bg-black text-white">{label}</option>)}
           </Select>
@@ -112,8 +116,8 @@ const StepCoordinates = ({ formData, setFormData, onNext, onBack }: StepProps) =
       )}
     </div>
     <div className="flex justify-between pt-20 border-t border-white/5">
-      <button onClick={onBack} className="text-xs font-black uppercase tracking-[0.5em] text-white hover:underline transition-colors">10-100</button>
-      <Button onClick={onNext} className="h-14 px-10 text-xs tracking-[0.4em] font-black">Assign Dept <ArrowRight size={14} className="ml-4" /></Button>
+      <button onClick={onBack} className="text-xs font-black uppercase tracking-[0.5em] text-white hover:underline transition-colors">Back</button>
+      <Button onClick={onNext} className="h-14 px-10 text-xs tracking-[0.4em] font-black">Next: your work <ArrowRight size={14} className="ml-4" /></Button>
     </div>
   </div>
 );
@@ -124,8 +128,8 @@ const StepRoles = ({ formData, setFormData, onNext, onBack }: StepProps) => (
   <div className="space-y-12 animate-in slide-in-from-right duration-500">
     <div className="flex justify-between items-end">
       <div className="space-y-2">
-        <Text variant="caption">Scene 02 // Department</Text>
-        <Heading level={2} className="text-white">Role Selection.</Heading>
+        <Text variant="caption">Scene 02 // Your work</Text>
+        <Heading level={2} className="text-white">What do you do on set?</Heading>
       </div>
       <div className="flex items-center gap-6">
         <Badge color="neutral" className="opacity-40 italic">{formData.province} Rules Active</Badge>
@@ -183,13 +187,57 @@ const StepRoles = ({ formData, setFormData, onNext, onBack }: StepProps) => (
     )}
 
     <div className="flex justify-between pt-20 border-t border-white/5">
-      <button onClick={onBack} className="text-xs font-black uppercase tracking-[0.5em] text-white hover:underline transition-colors">Back to Ones</button>
-      <Button onClick={onNext} className="h-14 px-10 text-xs tracking-[0.4em] font-black" disabled={formData.selectedRoles.length === 0}>Identify Guilds <ArrowRight size={14} className="ml-4" /></Button>
+      <button onClick={onBack} className="text-xs font-black uppercase tracking-[0.5em] text-white hover:underline transition-colors">Back</button>
+      <Button onClick={onNext} className="h-14 px-10 text-xs tracking-[0.4em] font-black" disabled={formData.selectedRoles.length === 0}>Next: your team <ArrowRight size={14} className="ml-4" /></Button>
     </div>
   </div>
 );
 
-// ─── Step 4: Guilds ──────────────────────────────────────────────────────────
+// ─── Step 4: Your team ───────────────────────────────────────────────────────
+
+const Choice = ({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) => (
+  <button onClick={onClick} aria-pressed={on}
+    className={clsx("px-6 py-4 text-xs font-black uppercase tracking-widest border transition-all", on ? "bg-accent text-black border-accent" : "text-white/60 border-white/10 hover:border-white/30")}>
+    {children}
+  </button>
+);
+
+const StepTeam = ({ formData, setFormData, onNext, onBack }: StepProps) => (
+  <div className="space-y-12 animate-in slide-in-from-right duration-500">
+    <div className="space-y-2">
+      <Text variant="caption">Scene 03 // Your team</Text>
+      <Heading level={2} className="text-white">Who's in your corner?</Heading>
+    </div>
+    <div className="space-y-4">
+      <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Are you a union member yet?</label>
+      <div className="flex flex-wrap gap-2">
+        <Choice on={formData.memberStatus === 'ASPIRING'} onClick={() => setFormData(f => ({ ...f, memberStatus: 'ASPIRING' }))}>Not yet</Choice>
+        <Choice on={formData.memberStatus === 'MEMBER'} onClick={() => setFormData(f => ({ ...f, memberStatus: 'MEMBER' }))}>Yes, I'm a member</Choice>
+      </div>
+    </div>
+    <div className="space-y-4">
+      <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Do you have an agent?</label>
+      <div className="flex flex-wrap gap-2">
+        <Choice on={!formData.hasAgent} onClick={() => setFormData(f => ({ ...f, hasAgent: false }))}>No</Choice>
+        <Choice on={formData.hasAgent} onClick={() => setFormData(f => ({ ...f, hasAgent: true }))}>Yes</Choice>
+      </div>
+      {formData.hasAgent && (
+        <div className="space-y-3 max-w-xs">
+          <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Their commission (%)</label>
+          <Input type="number" min={0} max={100} step={0.5} inputMode="decimal" value={formData.agentPct}
+            onChange={e => setFormData(f => ({ ...f, agentPct: e.target.value }))} placeholder="%" className="h-16 text-2xl font-serif italic text-white" />
+        </div>
+      )}
+      <p className="text-xs text-white/50 italic">Saved to your profile. You can change it any time in Your Trailer.</p>
+    </div>
+    <div className="flex justify-between pt-20 border-t border-white/5">
+      <button onClick={onBack} className="text-xs font-black uppercase tracking-[0.5em] text-white hover:underline transition-colors">Back</button>
+      <Button onClick={onNext} className="h-14 px-10 text-xs tracking-[0.4em] font-black">Next: your unions <ArrowRight size={14} className="ml-4" /></Button>
+    </div>
+  </div>
+);
+
+// ─── Step 5: Unions ──────────────────────────────────────────────────────────
 
 const StepGuilds = ({
   formData,
@@ -209,16 +257,16 @@ const StepGuilds = ({
   return (
   <div className="space-y-12 animate-in slide-in-from-right duration-500">
     <div className="space-y-2">
-      <Text variant="caption">Scene 03 // Affiliation</Text>
-      <Heading level={2} className="text-white">Guild Intelligence.</Heading>
+      <Text variant="caption">Scene 04 // Your unions</Text>
+      <Heading level={2} className="text-white">Your unions.</Heading>
     </div>
 
     <div className="p-10 bg-accent/5 border border-accent/20 glass-ui mb-8 flex items-start gap-8">
       <Sparkles className="text-accent shrink-0" size={28} />
       <div className="space-y-3">
-        <p className="text-xs font-black uppercase tracking-[0.5em] text-accent">Intelligent Suggestions</p>
+        <p className="text-xs font-black uppercase tracking-[0.5em] text-accent">Picked for you</p>
         <p className="text-lg text-white font-light italic leading-relaxed">
-          Based on your role selection and <b>{formData.province}</b> residency, the matrix has resolved the following guild trajectories.
+          These unions cover your roles in <b>{formData.province}</b>. Tap the ones you're working toward: days on their sets will count, member or not.
         </p>
       </div>
     </div>
@@ -243,12 +291,12 @@ const StepGuilds = ({
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-4xl font-serif italic block">{u.name}</span>
-                {isSuggested && <Badge color={isSelected ? "neutral" : "accent"}>Matched</Badge>}
+                {isSuggested && <Badge color={isSelected ? "neutral" : "accent"}>Covers your role</Badge>}
               </div>
               <span className="text-xs uppercase tracking-widest leading-relaxed opacity-60 italic">{u.description}</span>
             </div>
             <div className="pt-6 border-t border-white/5">
-              <span className="text-xs font-black uppercase tracking-widest text-white/20">Protocol Coverage</span>
+              <span className="text-xs font-black uppercase tracking-widest text-white/20">{isSelected ? 'Tracking ✓' : 'Tap to track'}</span>
             </div>
           </button>
         );
@@ -263,9 +311,9 @@ const StepGuilds = ({
     )}
 
     <div className="flex justify-between pt-20 border-t border-white/5">
-      <button onClick={onBack} className="text-xs font-black uppercase tracking-[0.5em] text-white hover:underline transition-colors">Adjust Roles</button>
+      <button onClick={onBack} className="text-xs font-black uppercase tracking-[0.5em] text-white hover:underline transition-colors">Back</button>
       <Button onClick={onComplete} disabled={isSaving} className="h-14 px-10 text-xs tracking-[0.4em] font-black disabled:opacity-40">
-        {isSaving ? 'Preparing...' : 'Action // Roll Sound'}
+        {isSaving ? 'Saving…' : 'Save and open Your Wrap'}
       </Button>
     </div>
   </div>
@@ -289,7 +337,10 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
     region: 'TORONTO' as User['region'],
     department: 'Camera Department',
     selectedRoles: [] as string[],
-    selectedUnions: [] as string[]
+    selectedUnions: [] as string[],
+    memberStatus: user.memberStatus === 'MEMBER' ? 'MEMBER' : 'ASPIRING',
+    hasAgent: !!user.hasAgentFee,
+    agentPct: user.agentFeePercentage != null ? String(user.agentFeePercentage) : '',
   });
 
   const suggestedUnionIds = useMemo(() => {
@@ -302,7 +353,7 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
   }, [formData.selectedRoles, formData.province, formData.region, formData.department]);
 
   useEffect(() => {
-    if (step === 4) {
+    if (step === 5) {
       setFormData(prev => ({ ...prev, selectedUnions: suggestedUnionIds }));
     }
   }, [step, suggestedUnionIds]);
@@ -320,6 +371,9 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
         department: formData.department,
         selectedRoles: formData.selectedRoles,
         isOnboarded: true,
+        memberStatus: formData.memberStatus,
+        hasAgentFee: formData.hasAgent,
+        agentFeePercentage: formData.hasAgent && formData.agentPct !== '' ? Number(formData.agentPct) : 0,
         role: formData.selectedRoles[0] || 'Film Professional'
       };
 
@@ -370,7 +424,8 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
         {step === 1 && <StepWelcome onNext={stepProps.onNext} />}
         {step === 2 && <StepCoordinates {...stepProps} />}
         {step === 3 && <StepRoles {...stepProps} />}
-        {step === 4 && (
+        {step === 4 && <StepTeam {...stepProps} />}
+        {step === 5 && (
           <StepGuilds
             {...stepProps}
             suggestedUnionIds={suggestedUnionIds}

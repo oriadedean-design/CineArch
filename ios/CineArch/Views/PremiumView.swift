@@ -76,3 +76,43 @@ struct WalletLocked: View {
         }
     }
 }
+
+/// A quiet, inline reason to try A-List Pro, built from the person's own
+/// numbers. Says only what Pro does today (docs/plan-benefits.md).
+/// "Not now" hides it for 7 days on this device.
+struct ProNudge: View {
+    @Environment(Session.self) private var session
+    let id: String
+    let title: String
+    let detail: String
+    @AppStorage private var hiddenUntil: Double
+    @State private var showPlans = false
+
+    init(id: String, title: String, detail: String) {
+        self.id = id; self.title = title; self.detail = detail
+        _hiddenUntil = AppStorage(wrappedValue: 0, "cinearch.nudge.\(id)")
+    }
+
+    var body: some View {
+        if session.isSignedIn && !session.isPremium && Date().timeIntervalSince1970 > hiddenUntil {
+            VStack(alignment: .leading, spacing: 8) {
+                Label(Plan.pro.name, systemImage: "star.fill").font(.caption.weight(.heavy)).foregroundStyle(Theme.accent)
+                Text(title).font(.subheadline.weight(.semibold))
+                Text(detail).font(.caption).foregroundStyle(.secondary)
+                HStack(spacing: 10) {
+                    Button("See what's in \(Plan.pro.name)") { showPlans = true }
+                        .buttonStyle(.borderedProminent).buttonBorderShape(.roundedRectangle(radius: 0)).foregroundStyle(.black)
+                    Button("Not now") { hiddenUntil = Date().addingTimeInterval(7 * 86_400).timeIntervalSince1970 }
+                        .buttonStyle(.bordered).buttonBorderShape(.roundedRectangle(radius: 0))
+                }
+                .font(.caption.bold())
+            }
+            .padding(.vertical, 4)
+            .sheet(isPresented: $showPlans) {
+                NavigationStack {
+                    PlansView().toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { showPlans = false } } }
+                }
+            }
+        }
+    }
+}

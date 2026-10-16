@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { actraBackgroundDayHours, assessCareer, quarterHours, trackProgress } from '../services/engine';
+import { actraBackgroundDayHours, assessCareer, nextOccurrence, quarterHours, trackProgress } from '../services/engine';
 import type { UnionTier } from '../types';
 import type { Job, UserUnionTracking } from '../types';
 
@@ -111,5 +111,13 @@ describe('assessCareer', () => {
     expect(summary.lastJob?.startDate).toBe('2026-09-20');
     expect(summary.jobCount).toBe(3);
     expect(summary.primary?.track.id).toBe('t1');
+  });
+});
+
+describe('deadlines', () => {
+  it('finds the next time a date comes round', () => {
+    expect(nextOccurrence({ month: 6, day: 15 }, new Date(2026, 9, 17))).toEqual(new Date(2027, 5, 15));
+    expect(nextOccurrence({ month: 12, day: 15 }, new Date(2026, 9, 17))).toEqual(new Date(2026, 11, 15));
+    expect(nextOccurrence({ month: 10, day: 17 }, new Date(2026, 9, 17, 15))).toEqual(new Date(2026, 9, 17));
   });
 });
