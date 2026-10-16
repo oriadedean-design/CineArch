@@ -55,7 +55,7 @@ struct Job: Codable, Identifiable, Hashable {
 final class JobsStore {
     private(set) var jobs: [Job] = []
     private(set) var isLoading = false
-    private(set) var isPreview = false
+    private(set) var place = DataPlace.none
     var error: String?
 
     var totals: (hours: Double, union: Double, earnings: Double) {
@@ -71,42 +71,75 @@ final class JobsStore {
         return jobs.filter { seen.insert($0.productionName.lowercased()).inserted }
     }
 
-    func usePreview() { isPreview = true; jobs = Sample.jobs; error = nil }
+    /// Switches to an account's data: the sample, this phone (free) or online (Pro).
+    func use(_ newPlace: DataPlace) async {
+        if newPlace != place { place = newPlace; jobs = []; error = nil }
+        switch place {
+        case .none: jobs = []
+        case .preview: jobs = Sample.jobs
+        case .phone, .online: await load()
+        }
+    }
 
     func load() async {
-        guard !isPreview else { return }
         isLoading = true
         defer { isLoading = false }
         do {
-            jobs = try await Backend.client.from("jobs").select()
-                .order("start_date", ascending: false).execute().value
+            switch place {
+            case .phone(let user):
+                // First time on the phone (new account, or no longer Pro): bring down what's online.
+                if !OnDevice.exists("jobs", user: user) { try persist(await fetchOnline(), user: user) }
+                jobs = (OnDevice.read("jobs", user: user) ?? []).sorted { $0.startDate > $1.startDate }
+            case .online(let user):
+                // Just went Pro: send up what was kept on this phone, then it lives online.
+                if let local: [Job] = OnDevice.read("jobs", user: user), !local.isEmpty {
+                    let rows = local.map { var j = $0; j.userId = user; return j }
+                    try await Backend.client.from("jobs").upsert(rows, onConflict: "id").execute()
+                }
+                OnDevice.remove("jobs", user: user)
+                jobs = try await fetchOnline()
+            default: return
+            }
             error = nil
         } catch {
             self.error = "Couldn't load your jobs. Pull to try again."
         }
     }
 
+    private func fetchOnline() async throws -> [Job] {
+        try await Backend.client.from("jobs").select().order("start_date", ascending: false).execute().value
+    }
+
+    private func persist(_ list: [Job], user: UUID) throws { try OnDevice.write(list, "jobs", user: user) }
+
     func add(_ job: Job) async throws {
         var job = job
-        if isPreview {
-            job.id = UUID()
-            jobs.insert(job, at: 0)
-            jobs.sort { $0.startDate > $1.startDate }
-            return
+        switch place {
+        case .none: throw SignInNeeded()
+        case .preview: job.id = UUID()
+        case .phone(let user):
+            job.id = UUID(); job.userId = user
+            try persist([job] + jobs, user: user)
+        case .online(let user):
+            job.userId = user
+            job = try await Backend.client.from("jobs").insert(job).select().single().execute().value
         }
-        job.userId = Backend.client.auth.currentUser?.id
-        let saved: Job = try await Backend.client.from("jobs").insert(job).select().single().execute().value
-        jobs.insert(saved, at: 0)
+        jobs.insert(job, at: 0)
         jobs.sort { $0.startDate > $1.startDate }
     }
 
     /// A pencilled-in job that happened: mark it worked so its days count.
     func confirm(_ id: UUID) async {
         guard let i = jobs.firstIndex(where: { $0.id == id }) else { return }
-        if isPreview { jobs[i].status = "CONFIRMED"; return }
+        var updated = jobs
+        updated[i].status = "CONFIRMED"
         do {
-            try await Backend.client.from("jobs").update(["status": "CONFIRMED"]).eq("id", value: id).execute()
-            jobs[i].status = "CONFIRMED"
+            switch place {
+            case .phone(let user): try persist(updated, user: user)
+            case .online: try await Backend.client.from("jobs").update(["status": "CONFIRMED"]).eq("id", value: id).execute()
+            default: break
+            }
+            jobs = updated
         } catch {
             self.error = "Couldn't confirm that job."
         }
@@ -117,14 +150,16 @@ final class JobsStore {
 
     func delete(_ job: Job) async {
         guard let id = job.id else { return }
-        if isPreview { jobs.removeAll { $0.id == id }; return }
+        let remaining = jobs.filter { $0.id != id }
         do {
-            try await Backend.client.from("jobs").delete().eq("id", value: id).execute()
-            jobs.removeAll { $0.id == id }
+            switch place {
+            case .phone(let user): try persist(remaining, user: user)
+            case .online: try await Backend.client.from("jobs").delete().eq("id", value: id).execute()
+            default: break
+            }
+            jobs = remaining
         } catch {
             self.error = "Couldn't delete that job."
         }
     }
-
-    func clear() { jobs = []; isPreview = false }
 }

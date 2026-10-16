@@ -17,8 +17,8 @@ struct AccountView: View {
         NavigationStack {
             List {
                 if session.isSignedIn {
-                    Section(session.isPreview ? "Preview: \(Sample.name)" : "Signed in") {
-                        LabeledContent("Email", value: session.displayEmail ?? "")
+                    Section {
+                        LabeledContent(session.isPreview ? "Preview" : "Signed in as", value: session.displayEmail ?? "")
                         if !session.isPreview {
                             Button { showCallSheet = true } label: {
                                 LabeledContent("Your call sheet") {
@@ -33,7 +33,19 @@ struct AccountView: View {
                                     .foregroundStyle(session.isPremium ? Theme.accent : .secondary)
                             }
                         }
+                        NavigationLink { PlansView() } label: {
+                            LabeledContent("Sync Online") {
+                                Text(session.isPremium ? "On" : "Off · this iPhone only")
+                                    .foregroundStyle(session.isPremium ? Theme.accent : .secondary)
+                            }
+                        }
                         Button(session.isPreview ? "Leave preview" : "Sign out") { Task { await session.signOut() } }
+                    } footer: {
+                        if !session.isPreview {
+                            Text(session.isPremium
+                                 ? "Your Slate and Wrap are saved online, so they show on the website and your other devices."
+                                 : "Your Slate and Wrap are saved on this iPhone only. To see them on the website, an iPad or another phone, go \(Plan.pro.name).")
+                        }
                     }
                 } else {
                     Section {
@@ -66,7 +78,7 @@ struct AccountView: View {
                         Button("Delete account", role: .destructive) { typed = ""; confirmDelete = true }
                             .disabled(working)
                     } footer: {
-                        Text("Permanently deletes your account and everything in it: jobs, union progress, documents and finance records. This can't be undone.")
+                        Text("Permanently deletes your account and everything in it, on this iPhone and online: jobs, union progress, documents and finance records. This can't be undone.")
                     }
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }

@@ -69,15 +69,16 @@ begin
   exception when insufficient_privilege then v_checks := v_checks + 1;
   end;
 
-  -- Job with only the fields the app's form sends (no company_name)
-  insert into public.jobs (user_id, production_name, role, start_date, total_hours, gross_earnings, client_id)
-  values (v_bob, 'Smoke Feature', 'Camera Trainee', current_date, 12, 900, 'device-1')
-  returning id into v_job;
-  v_checks := v_checks + 1;
-
+  -- Sync Online is A-List Pro: a free account keeps jobs and unions on the phone.
   begin
-    insert into public.jobs (user_id, production_name, role, start_date) values (v_cara, 'Forged', 'Grip', current_date);
-    raise exception 'FAIL: user inserted a job owned by someone else';
+    insert into public.jobs (user_id, production_name, role, start_date) values (v_bob, 'Free plan', 'Grip', current_date);
+    raise exception 'FAIL: free account saved a job online';
+  exception when insufficient_privilege then v_checks := v_checks + 1;
+  end;
+  begin
+    insert into public.union_tracking (user_id, union_type_id, union_name, tier_label, target_type, target_value)
+    values (v_bob, 'u-873', 'IATSE 873', 'Member', 'DAYS', 30);
+    raise exception 'FAIL: free account saved union tracking online';
   exception when insufficient_privilege then v_checks := v_checks + 1;
   end;
 
@@ -101,6 +102,18 @@ begin
   perform set_config('role', 'authenticated', true);
   if not public.has_pro() then raise exception 'FAIL: has_pro() false for a Pro account'; end if;
   v_checks := v_checks + 1;
+
+  -- Job with only the fields the app's form sends (no company_name)
+  insert into public.jobs (user_id, production_name, role, start_date, total_hours, gross_earnings, client_id)
+  values (v_bob, 'Smoke Feature', 'Camera Trainee', current_date, 12, 900, 'device-1')
+  returning id into v_job;
+  v_checks := v_checks + 1;
+
+  begin
+    insert into public.jobs (user_id, production_name, role, start_date) values (v_cara, 'Forged', 'Grip', current_date);
+    raise exception 'FAIL: user inserted a job owned by someone else';
+  exception when insufficient_privilege then v_checks := v_checks + 1;
+  end;
 
   insert into public.finance_transactions (user_id, type, date_incurred, description, category, amount_before_tax, tax_amount, total_amount, deductible_amount)
   values
@@ -140,7 +153,10 @@ begin
   if v_n <> 1 then raise exception 'FAIL: Cara can see % profiles (expected only her own)', v_n; end if;
   v_checks := v_checks + 3;
 
-  -- Same device-generated client_id as Bob is fine (unique per user)
+  -- Same device-generated client_id as Bob is fine (unique per user); Cara is Pro for this.
+  execute 'reset role';
+  update public.profiles set is_premium = true, plan = 'pro' where id = v_cara;
+  perform set_config('role', 'authenticated', true);
   insert into public.jobs (user_id, production_name, role, start_date, client_id)
   values (v_cara, 'Cara Short', 'Grip', current_date, 'device-1');
   v_checks := v_checks + 1;

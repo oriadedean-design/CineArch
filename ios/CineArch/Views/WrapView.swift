@@ -31,13 +31,9 @@ struct WrapView: View {
             .sheet(isPresented: $showAdd) { TrackUnionSheet(existing: nil) }
             .sheet(item: $editing) { TrackUnionSheet(existing: $0) }
             .task(id: session.identity) {
-                if session.isPreview {
-                    jobs.usePreview(); tracking.usePreview()
-                } else if session.isSignedIn {
-                    async let a: Void = jobs.load()
-                    async let b: Void = tracking.load()
-                    _ = await (a, b)
-                } else { jobs.clear(); tracking.clear() }
+                async let a: Void = jobs.use(session.place)
+                async let b: Void = tracking.use(session.place)
+                _ = await (a, b)
             }
         }
     }
