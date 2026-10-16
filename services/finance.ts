@@ -84,7 +84,8 @@ const rowToTransaction = (row: Tables<'finance_transactions'>): FinanceTransacti
   businessUsePercent: row.business_use_percent,
   deductibleAmount: row.deductible_amount,
   addBackAmount: row.add_back_amount,
-  ruleTags: row.rule_tags || []
+  ruleTags: row.rule_tags || [],
+  proofPath: row.proof_path ?? undefined,
 });
 
 export const financeApi = {
@@ -129,6 +130,37 @@ export const financeApi = {
 
     if (error) throw error;
     return { ...tx, id: data.id, deductibleAmount: deductible, addBackAmount: addBack, ruleTags: tags };
+  },
+
+  // Back an entry with proof: the file goes to documents/<user>/proof/, then the entry points at it (Green Lit).
+  attachProof: async (tx: FinanceTransaction, file: File): Promise<string> => {
+    const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+    const path = `${tx.userId}/proof/${tx.id}-${Date.now()}.${ext}`;
+    const up = await supabase.storage.from('documents').upload(path, file, { contentType: file.type || undefined });
+    if (up.error) throw up.error;
+    const { error } = await supabase.from('finance_transactions').update({ proof_path: path }).eq('id', tx.id);
+    if (error) throw error;
+    if (tx.proofPath) await supabase.storage.from('documents').remove([tx.proofPath]);
+    return path;
+  },
+
+  // A link to look at an entry's proof, good for 5 minutes.
+  proofUrl: async (tx: FinanceTransaction): Promise<string | null> => {
+    if (!tx.proofPath) return null;
+    const { data } = await supabase.storage.from('documents').createSignedUrl(tx.proofPath, 300);
+    return data?.signedUrl ?? null;
+  },
+
+  // Entries as a spreadsheet (CSV), same columns as the iPhone export.
+  toCsv: (rows: FinanceTransaction[]): string => {
+    const cell = (s: string) => `"${s.replace(/"/g, '""')}"`;
+    const head = 'Date,Type,Category,Description,Amount before tax,GST/HST,Total,Deductible,Proof';
+    const lines = rows.map(t => [
+      t.dateIncurred, t.type === 'INCOME' ? 'Income' : 'Expense', cell(t.category.replace(/_/g, ' ')), cell(t.description),
+      t.amountBeforeTax.toFixed(2), t.taxAmount.toFixed(2), t.totalAmount.toFixed(2),
+      (t.type === 'INCOME' ? 0 : t.deductibleAmount ?? t.amountBeforeTax).toFixed(2), t.proofPath ? 'Green Lit' : 'Needs proof',
+    ].join(','));
+    return [head, ...lines].join('\n') + '\n';
   },
 
   delete: async (id: string): Promise<void> => {

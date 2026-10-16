@@ -147,6 +147,7 @@ export type Database = {
           description: string
           id: string
           job_id: string | null
+          proof_path: string | null
           rule_tags: string[] | null
           synced_at: string | null
           tax_amount: number
@@ -168,6 +169,7 @@ export type Database = {
           description: string
           id?: string
           job_id?: string | null
+          proof_path?: string | null
           rule_tags?: string[] | null
           synced_at?: string | null
           tax_amount?: number
@@ -189,6 +191,7 @@ export type Database = {
           description?: string
           id?: string
           job_id?: string | null
+          proof_path?: string | null
           rule_tags?: string[] | null
           synced_at?: string | null
           tax_amount?: number

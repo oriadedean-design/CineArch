@@ -1,14 +1,22 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Heading, Text, Card, Button, Input, Select, Badge, ProgressBar } from '../components/ui';
-import { Lock, Crown, Plus, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Calculator, PieChart, FileText, Landmark, Wallet } from 'lucide-react';
+import { Lock, Crown, Plus, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Calculator, PieChart, FileText, Landmark, Wallet, BadgeCheck, Upload, Sheet } from 'lucide-react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
 import { User, FinanceTransaction, FinanceStats, UserUnionTracking, PLANS } from '../types';
 import { findUnion } from '../services/engine';
 import { clsx } from 'clsx';
 
+type Filter = 'ALL' | 'INCOME' | 'EXPENSE' | 'NEEDS_PROOF';
+const FILTERS: [Filter, string][] = [['ALL', 'All'], ['INCOME', 'Income'], ['EXPENSE', 'Expenses'], ['NEEDS_PROOF', 'Needs proof']];
+
 export const Finance = () => {
+  const [filter, setFilter] = useState<Filter>('ALL');
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [proofError, setProofError] = useState('');
+  const fileInput = useRef<HTMLInputElement>(null);
+  const proofFor = useRef<FinanceTransaction | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<(FinanceStats & { estCPP: number; estIncomeTax: number }) | null>(null);
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
@@ -38,6 +46,33 @@ export const Finance = () => {
   }, []);
 
   const isPremium = user?.isPremium;
+  const lit = transactions.filter(t => t.proofPath).length;
+  const shown = transactions.filter(t =>
+    filter === 'ALL' ? true : filter === 'NEEDS_PROOF' ? !t.proofPath : t.type === filter);
+
+  const chooseProof = (tx: FinanceTransaction) => { proofFor.current = tx; setProofError(''); fileInput.current?.click(); };
+  const onProofChosen = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; const tx = proofFor.current;
+    e.target.value = '';
+    if (!file || !tx) return;
+    setUploading(tx.id);
+    try {
+      const path = await financeApi.attachProof(tx, file);
+      setTransactions(ts => ts.map(t => t.id === tx.id ? { ...t, proofPath: path } : t));
+    } catch (err: any) {
+      setProofError(`Couldn't upload: ${err.message || 'unknown error'}`);
+    } finally { setUploading(null); }
+  };
+  const viewProof = async (tx: FinanceTransaction) => {
+    const url = await financeApi.proofUrl(tx);
+    if (url) window.open(url, '_blank', 'noopener');
+  };
+  const exportCsv = () => {
+    const blob = new Blob([financeApi.toCsv(transactions)], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'CineArch Wrap Wallet.csv'; a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
   const refreshData = async () => {
     if (!user?.id) return;
@@ -202,63 +237,72 @@ export const Finance = () => {
       </div>
 
       {/* Transaction List */}
-      <div className="space-y-10">
-        <h3 className="font-serif italic text-3xl md:text-4xl text-white">Ledger</h3>
+      <div className="space-y-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h3 className="font-serif italic text-3xl md:text-4xl text-white">Ledger</h3>
+          <button onClick={exportCsv} disabled={transactions.length === 0}
+            className="h-11 px-5 border border-white/20 text-[10px] font-black uppercase tracking-[0.3em] text-white hover:border-accent hover:text-accent disabled:opacity-30 flex items-center gap-2">
+            <Sheet size={14} /> Export spreadsheet
+          </button>
+        </div>
 
-        {/* Mobile: card list */}
-        <div className="md:hidden space-y-2">
-          {transactions.length === 0 && (
-            <p className="py-16 text-center text-white/20 italic uppercase font-black tracking-widest text-sm">Nothing in the can yet</p>
+        {transactions.length > 0 && (
+          <div className="glass-ui p-5 flex flex-wrap items-center gap-4" role="status">
+            <BadgeCheck size={28} className={lit === transactions.length ? 'text-green-400' : 'text-white/30'} />
+            <div className="flex-1 min-w-[12rem]">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-green-400">Green Lit</p>
+              <p className="text-white">{lit} of {transactions.length} backed with proof</p>
+            </div>
+            {lit < transactions.length && (
+              <button onClick={() => setFilter('NEEDS_PROOF')} className="h-10 px-4 bg-accent/20 text-accent text-xs font-black uppercase tracking-widest hover:bg-accent hover:text-black">
+                {transactions.length - lit} need proof
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Filter the ledger">
+          {FILTERS.map(([id, label]) => (
+            <button key={id} role="tab" aria-selected={filter === id} onClick={() => setFilter(id)}
+              className={clsx("h-10 px-4 text-xs font-black uppercase tracking-widest border", filter === id ? "bg-white text-black border-white" : "text-white/60 border-white/10 hover:border-white/30")}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <input ref={fileInput} type="file" accept="image/*,application/pdf" className="hidden" onChange={onProofChosen} />
+        {proofError && <p className="text-xs text-red-400">{proofError}</p>}
+
+        <div className="border border-white/5 divide-y divide-white/5">
+          {shown.length === 0 && (
+            <p className="py-16 text-center text-white/20 italic uppercase font-black tracking-widest text-sm">
+              {transactions.length === 0 ? 'Nothing in the can yet' : filter === 'NEEDS_PROOF' ? 'Every entry is backed with proof' : 'Nothing here'}
+            </p>
           )}
-          {transactions.map(tx => (
-            <div key={tx.id} className="glass-ui p-5 flex justify-between items-start gap-4">
-              <div className="flex-1 min-w-0">
-                <p className="font-serif italic text-base text-white truncate">{tx.description}</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">{tx.category.replace(/_/g, ' ')} · {tx.dateIncurred}</p>
-                {tx.ruleTags && tx.ruleTags.length > 0 && (
-                  <Badge color="accent" className="text-[9px] mt-2">{tx.ruleTags[0].replace('MEALS_50_LIMIT', '50% Rule')}</Badge>
-                )}
+          {shown.map(tx => (
+            <div key={tx.id} className="p-5 flex flex-wrap items-center gap-4 hover:bg-white/[0.02]">
+              <div className="flex-1 min-w-[12rem]">
+                <p className="font-serif italic text-lg text-white truncate">{tx.description}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">
+                  {tx.category.replace(/_/g, ' ')} · {tx.dateIncurred}{tx.ruleTags?.includes('MEALS_50_LIMIT') ? ' · 50% rule' : ''}
+                </p>
               </div>
               <span className={clsx("font-serif italic text-lg shrink-0", tx.type === 'INCOME' ? "text-accent" : "text-white")}>
                 {tx.type === 'INCOME' ? '+' : '-'}${tx.totalAmount.toFixed(2)}
               </span>
+              {tx.proofPath ? (
+                <span className="flex items-center gap-3 shrink-0">
+                  <button onClick={() => viewProof(tx)} className="text-[10px] font-black uppercase tracking-widest text-green-400 flex items-center gap-1 hover:underline"><BadgeCheck size={14} /> Green Lit · view</button>
+                  <button onClick={() => chooseProof(tx)} className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white">Replace</button>
+                </span>
+              ) : (
+                <button onClick={() => chooseProof(tx)} disabled={uploading === tx.id}
+                  className="shrink-0 h-10 px-4 border border-accent/40 text-accent text-[10px] font-black uppercase tracking-widest hover:bg-accent hover:text-black disabled:opacity-40 flex items-center gap-2">
+                  <Upload size={12} /> {uploading === tx.id ? 'Uploading…' : 'Back it with proof'}
+                </button>
+              )}
             </div>
           ))}
-        </div>
-
-        {/* Desktop: full table */}
-        <div className="hidden md:block overflow-x-auto border border-white/5">
-          <table className="w-full text-left text-sm font-sans">
-            <thead className="bg-white/[0.02] border-b border-white/5">
-              <tr className="text-xs font-black uppercase tracking-widest text-white/40">
-                <th className="p-6">Date</th>
-                <th className="p-6">What</th>
-                <th className="p-6">Category</th>
-                <th className="p-6 text-right">Amount</th>
-                <th className="p-6 text-center">Rule</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {transactions.length === 0 && (
-                <tr><td colSpan={5} className="p-20 text-center text-white/20 italic uppercase font-black tracking-widest">Nothing in the can yet</td></tr>
-              )}
-              {transactions.map(tx => (
-                <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors group">
-                  <td className="p-6 font-mono text-[10px] text-white/30">{tx.dateIncurred}</td>
-                  <td className="p-6 font-serif italic text-lg text-white">{tx.description}</td>
-                  <td className="p-6 text-[10px] font-black uppercase tracking-widest text-white/20">{tx.category.replace(/_/g, ' ')}</td>
-                  <td className={clsx("p-6 text-right font-serif italic text-lg", tx.type === 'INCOME' ? "text-accent" : "text-white")}>
-                    {tx.type === 'INCOME' ? '+' : '-'}${tx.totalAmount.toFixed(2)}
-                  </td>
-                  <td className="p-6 text-center">
-                    {tx.ruleTags && tx.ruleTags.length > 0 && (
-                      <Badge color="accent" className="text-xs">{tx.ruleTags[0].replace('MEALS_50_LIMIT', '50% Rule')}</Badge>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
 

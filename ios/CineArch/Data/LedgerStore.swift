@@ -19,15 +19,19 @@ struct LedgerEntry: Codable, Identifiable, Hashable {
     var deductibleAmount: Double?
     var addBackAmount: Double?
     var ruleTags: [String]?
+    var proofPath: String?           // receipt, pay stub or invoice in documents/<user>/proof/
 
     enum CodingKeys: String, CodingKey {
         case id, type, category, description
         case userId = "user_id", jobId = "job_id", amountBeforeTax = "amount_before_tax", taxAmount = "tax_amount"
         case totalAmount = "total_amount", dateIncurred = "date_incurred", businessUsePercent = "business_use_percent"
         case deductibleAmount = "deductible_amount", addBackAmount = "add_back_amount", ruleTags = "rule_tags"
+        case proofPath = "proof_path"
     }
 
     var isIncome: Bool { type == "INCOME" }
+    /// Backed with proof.
+    var isGreenLit: Bool { proofPath != nil }
     var categoryName: String { Ledger.categoryName(category) }
 }
 
@@ -103,7 +107,12 @@ final class LedgerStore {
     private(set) var isPreview = false
     var error: String?
 
-    func usePreview() { isPreview = true; entries = Sample.entries; stats = LedgerStats(entries: entries); error = nil }
+    func usePreview() {
+        isPreview = true; error = nil
+        // Most sample entries are backed with proof; two still need it.
+        entries = Sample.entries.enumerated().map { i, e in var e = e; if i != 2 && i != 8 { e.proofPath = "preview/proof/\(i)" }; return e }
+        stats = LedgerStats(entries: entries)
+    }
 
     func load() async {
         guard !isPreview else { return }
@@ -123,7 +132,9 @@ final class LedgerStore {
         }
     }
 
-    func add(_ entry: LedgerEntry) async throws {
+    /// Saves an entry and returns it, so the next step can ask for its proof.
+    @discardableResult
+    func add(_ entry: LedgerEntry) async throws -> LedgerEntry {
         var entry = entry
         entry.userId = Backend.client.auth.currentUser?.id
         entry.totalAmount = entry.amountBeforeTax + entry.taxAmount
@@ -133,10 +144,46 @@ final class LedgerStore {
             entries.append(entry)
             entries.sort { $0.dateIncurred > $1.dateIncurred }
             stats = LedgerStats(entries: entries)
-            return
+            return entry
         }
-        _ = try await Backend.client.from("finance_transactions").insert(entry).execute()
+        let saved: LedgerEntry = try await Backend.client.from("finance_transactions").insert(entry).select().single().execute().value
         await load()
+        return saved
+    }
+
+    /// Backs an entry with proof: the file goes to documents/<user>/proof/, then the entry points at it.
+    func attachProof(to entry: LedgerEntry, data: Data, fileExtension ext: String, contentType: String) async throws {
+        guard let id = entry.id else { return }
+        if isPreview { setProof(id, "preview/proof/\(id)"); return }
+        guard let user = try? await Backend.client.auth.session.user.id else { throw SignInNeeded() }
+        let path = "\(user.uuidString.lowercased())/proof/\(id.uuidString.lowercased())-\(Int(Date().timeIntervalSince1970)).\(ext)"
+        try await Backend.client.storage.from("documents").upload(path, data: data, options: FileOptions(contentType: contentType))
+        try await Backend.client.from("finance_transactions").update(["proof_path": path]).eq("id", value: id).execute()
+        if let old = entry.proofPath { _ = try? await Backend.client.storage.from("documents").remove(paths: [old]) }
+        setProof(id, path)
+    }
+
+    /// A link to look at an entry's proof, good for 5 minutes.
+    func proofURL(_ entry: LedgerEntry) async -> URL? {
+        guard let path = entry.proofPath, !isPreview else { return nil }
+        return try? await Backend.client.storage.from("documents").createSignedURL(path: path, expiresIn: 300)
+    }
+
+    private func setProof(_ id: UUID, _ path: String) {
+        if let i = entries.firstIndex(where: { $0.id == id }) { entries[i].proofPath = path }
+    }
+
+    /// The year's entries as a spreadsheet (CSV), for an accountant or tax time.
+    func csv() -> String {
+        func cell(_ s: String) -> String { "\"" + s.replacingOccurrences(of: "\"", with: "\"\"") + "\"" }
+        let head = "Date,Type,Category,Description,Amount before tax,GST/HST,Total,Deductible,Proof"
+        let rows = entries.map { e in
+            [e.dateIncurred, e.isIncome ? "Income" : "Expense", cell(e.categoryName), cell(e.description),
+             String(format: "%.2f", e.amountBeforeTax), String(format: "%.2f", e.taxAmount), String(format: "%.2f", e.totalAmount),
+             String(format: "%.2f", e.isIncome ? 0 : e.deductibleAmount ?? e.amountBeforeTax), e.isGreenLit ? "Green Lit" : "Needs proof"]
+                .joined(separator: ",")
+        }
+        return ([head] + rows).joined(separator: "\n") + "\n"
     }
 
     func delete(_ entry: LedgerEntry) async {
