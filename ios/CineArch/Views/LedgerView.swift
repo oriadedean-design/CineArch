@@ -30,13 +30,7 @@ struct LedgerView: View {
             Group {
                 if session.isSignedIn && !session.isPremium { FreeWallet() }
                 else if session.isSignedIn { content } else {
-                    ContentUnavailableView {
-                        Label("Wrap Wallet", systemImage: "wallet.bifold.fill")
-                    } description: {
-                        Text("Your film money in one place: income, expenses, GST/HST and what to set aside for tax.")
-                    } actions: {
-                        Button("Sign in or create account") { showAuth = true }.buttonStyle(.borderedProminent).foregroundStyle(.black)
-                    }
+                    LookAroundWallet { showAuth = true }
                 }
             }
             .navigationTitle("Wrap Wallet")
@@ -70,7 +64,7 @@ struct LedgerView: View {
                 }
             }
             .navigationDestination(isPresented: $showPlans) { PlansView() }
-            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to keep your ledger.") {} }
+            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in or create an account to see your Wrap Wallet: income, expenses, GST/HST and proof.") {} }
             .sheet(isPresented: $showNew, onDismiss: { if let e = justAdded { justAdded = nil; proofFor = e } }) {
                 LedgerEntrySheet { justAdded = $0 }
             }

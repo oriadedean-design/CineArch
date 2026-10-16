@@ -253,6 +253,8 @@ struct AuthSheet: View {
     @Environment(Session.self) private var session
     @Environment(\.dismiss) private var dismiss
     let reason: String
+    /// Something to do without an account instead (e.g. the pay calculator).
+    var alternative: (String, AnyView)? = nil
     var onSignedIn: () -> Void
 
     @State private var creating = false
@@ -294,6 +296,9 @@ struct AuthSheet: View {
                     }
                 }
                 if let message { Section { Text(message) } }
+                if let alternative {
+                    Section { NavigationLink(alternative.0) { alternative.1 } }
+                }
             }
             .navigationTitle(creating ? "Create account" : "Sign in")
             .navigationBarTitleDisplayMode(.inline)

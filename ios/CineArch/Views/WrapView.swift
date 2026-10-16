@@ -27,7 +27,7 @@ struct WrapView: View {
             }
             .sheet(isPresented: $showNotes) { NotesView(notes: notes) }
             .task(id: notes.map(\.id)) { await Notes.scheduleReminders(notes) }
-            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to track your days toward union membership.") {} }
+            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in or create an account to track your days toward your union card.") {} }
             .sheet(isPresented: $showAdd) { TrackUnionSheet(existing: nil) }
             .sheet(item: $editing) { TrackUnionSheet(existing: $0) }
             .task(id: session.identity) {
@@ -47,15 +47,7 @@ struct WrapView: View {
     }
     private var visibleNotes: [Note] { notes.filter { !Notes.dismissed.contains($0.id) } }
 
-    private var signedOut: some View {
-        ContentUnavailableView {
-            Label("Track your way in", systemImage: "chart.bar.fill")
-        } description: {
-            Text("Working union sets before you're a member? Log those days and see how close you are to joining. Permit and non-member days on a union production count.")
-        } actions: {
-            Button("Sign in or create account") { showAuth = true }.buttonStyle(.borderedProminent).foregroundStyle(.black)
-        }
-    }
+    private var signedOut: some View { LookAroundWrap { showAuth = true } }
 
     private var content: some View {
         let progress = tracking.tracks.map { TrackProgress(track: $0, jobs: jobs.jobs, engine: store.engine) }

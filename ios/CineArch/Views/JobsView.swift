@@ -13,13 +13,7 @@ struct JobsView: View {
         NavigationStack {
             Group {
                 if !session.isSignedIn {
-                    ContentUnavailableView {
-                        Label("Your Slate", systemImage: "list.bullet.rectangle")
-                    } description: {
-                        Text("Sign in to mark the slate on every day you work, see your hours and earnings, and pick up where you left off on the website.")
-                    } actions: {
-                        Button("Sign in or create account") { showAuth = true }.buttonStyle(.borderedProminent).foregroundStyle(.black)
-                    }
+                    LookAroundSlate { showAuth = true }
                 } else {
                     list
                 }
@@ -39,7 +33,7 @@ struct JobsView: View {
             .navigationDestination(isPresented: $showPlans) { PlansView() }
             .sheet(isPresented: $showBulk) { BulkPayStubsView() }
             .sheet(item: $proofFor) { JobProofSheet(job: $0) }
-            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to see your slate.") {} }
+            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in or create an account to mark the slate on every day you work.") {} }
             .task(id: session.identity) {
                 await jobs.use(session.place)
             }
