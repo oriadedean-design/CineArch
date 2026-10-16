@@ -31,7 +31,7 @@ The engine never fetches data itself. A host connects it: `services/engine_loade
 |---|---|
 | `unions` | One union, guild or local: name, description, website, contact, application fee and notes, dues rate (`0.0225` = 2.25%) and notes, residency rule, `needs_verification`, `source_urls`, `last_verified`. Set `is_active = false` to hide a union without deleting its history. |
 | `union_jurisdictions` | Where a union operates: one row per province, plus `region` for Ontario sub-regions (`TORONTO`, `NORTHERN_ON`, `OTTAWA`). Holds district council or branch contacts. |
-| `union_tiers` | Membership steps in order (Permittee → Member), each with a target: `HOURS`, `DAYS`, `CREDITS` or `EARNINGS`. Progress tracking counts toward the first tier. |
+| `union_tiers` | Membership steps in order (Permittee → Member), each with a target: `HOURS`, `DAYS`, `CREDITS` or `EARNINGS`. Progress tracking counts toward the first tier. A tier can narrow what counts: `province` (one branch), `role_ids` (only those roles, e.g. background for ACTRA's AABP), `window_months` (only recent work) and `hours_rule` (`actra_background`: paid 8-hour minimum, an hour off for lunch past 8, quarter hours). The rules live in `services/career.ts` and `ios/CineArchKit/Sources/CineArchKit/Eligibility.swift`. |
 | `union_requirements` | Requirements (`kind = requirement`) and application steps (`kind = application_step`). `province` and `caucus` scope an item, such as DGC BC permittee rules or the 411 Craftservice caucus. |
 | `union_departments` | Departments as the union lists them, shown on its guide page. |
 | `departments`, `roles` | The role catalog people pick from. `roles.aliases` catch other titles for the same job. |

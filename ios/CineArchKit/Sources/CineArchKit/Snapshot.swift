@@ -39,6 +39,10 @@ public struct Union: Codable, Sendable, Identifiable, Hashable {
         public var targetType: String
         public var targetValue: Double
         public var description: String?
+        public var province: String?         // the branch it applies to (nil = everywhere)
+        public var roleIds: [String]?        // only jobs in these roles count (empty = any)
+        public var windowMonths: Int?        // only work in the last N months counts
+        public var hoursRule: String?        // "actra_background"
     }
     public struct Requirement: Codable, Sendable, Hashable {
         public var kind: String

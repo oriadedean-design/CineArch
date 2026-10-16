@@ -76,6 +76,10 @@ export interface UnionTier {
   targetValue: number;
   description: string;
   requiresDepartment?: boolean; 
+  province?: string | null;      // the branch it applies to (null = everywhere)
+  roleIds?: string[];            // only jobs in these roles count (empty = any)
+  windowMonths?: number | null;  // only work in the last N months counts
+  hoursRule?: 'actra_background' | null;
   initiationFee?: number;
   annualDues?: number;
   requiredCertificates?: string[];
