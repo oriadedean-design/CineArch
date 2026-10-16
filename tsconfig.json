@@ -27,6 +27,7 @@
     "noEmit": true
   },
   "exclude": [
+    "ios",
     "node_modules",
     "dist",
     "site"

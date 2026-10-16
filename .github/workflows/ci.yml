@@ -35,3 +35,10 @@ jobs:
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+
+  ios-engine:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift engine tests (same fixture as the web tests)
+        run: cd ios/CineArchKit && swift test

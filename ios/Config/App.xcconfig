@@ -1,0 +1,7 @@
+// Build settings for the app. Supabase settings come from Secrets.xcconfig,
+// which npm run ios:config writes from .env.local (it is not committed).
+// The anon key is public (the website ships it too); row security protects data.
+#include? "Secrets.xcconfig"
+
+// Your Apple developer team (Xcode > Settings > Accounts). Change it here or in Signing & Capabilities.
+DEVELOPMENT_TEAM = Z56S35C583
