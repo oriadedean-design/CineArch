@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -54,6 +54,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      department_coverage: {
+        Row: {
+          department_id: string
+          id: number
+          notes: string | null
+          province: string
+          region: string | null
+          relationship: string
+          sort_order: number
+          union_id: string
+          updated_at: string
+        }
+        Insert: {
+          department_id: string
+          id?: never
+          notes?: string | null
+          province: string
+          region?: string | null
+          relationship?: string
+          sort_order?: number
+          union_id: string
+          updated_at?: string
+        }
+        Update: {
+          department_id?: string
+          id?: never
+          notes?: string | null
+          province?: string
+          region?: string | null
+          relationship?: string
+          sort_order?: number
+          union_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_coverage_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_coverage_union_id_fkey"
+            columns: ["union_id"]
+            isOneToOne: false
+            referencedRelation: "unions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          code: string | null
+          description: string | null
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          description?: string | null
+          id: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       finance_transactions: {
         Row: {
@@ -142,8 +220,8 @@ export type Database = {
           company_name: string
           created_at: string
           credit_type: string | null
-          department: string | null
           days_worked: number
+          department: string | null
           document_ids: string[] | null
           end_date: string | null
           genre: string | null
@@ -178,8 +256,8 @@ export type Database = {
           company_name?: string
           created_at?: string
           credit_type?: string | null
-          department?: string | null
           days_worked?: number
+          department?: string | null
           document_ids?: string[] | null
           end_date?: string | null
           genre?: string | null
@@ -214,8 +292,8 @@ export type Database = {
           company_name?: string
           created_at?: string
           credit_type?: string | null
-          department?: string | null
           days_worked?: number
+          department?: string | null
           document_ids?: string[] | null
           end_date?: string | null
           genre?: string | null
@@ -251,6 +329,72 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pay_rules: {
+        Row: {
+          department_id: string | null
+          id: string
+          increment_minutes: number | null
+          meal_break_notes: string | null
+          minimum_call_hours: number | null
+          needs_verification: string[]
+          notes: string | null
+          overtime_after: number[]
+          overtime_multipliers: number[]
+          sort_order: number
+          source_url: string | null
+          title: string
+          union_id: string
+          updated_at: string
+        }
+        Insert: {
+          department_id?: string | null
+          id: string
+          increment_minutes?: number | null
+          meal_break_notes?: string | null
+          minimum_call_hours?: number | null
+          needs_verification?: string[]
+          notes?: string | null
+          overtime_after?: number[]
+          overtime_multipliers?: number[]
+          sort_order?: number
+          source_url?: string | null
+          title: string
+          union_id: string
+          updated_at?: string
+        }
+        Update: {
+          department_id?: string | null
+          id?: string
+          increment_minutes?: number | null
+          meal_break_notes?: string | null
+          minimum_call_hours?: number | null
+          needs_verification?: string[]
+          notes?: string | null
+          overtime_after?: number[]
+          overtime_multipliers?: number[]
+          sort_order?: number
+          source_url?: string | null
+          title?: string
+          union_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pay_rules_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pay_rules_union_id_fkey"
+            columns: ["union_id"]
+            isOneToOne: false
+            referencedRelation: "unions"
             referencedColumns: ["id"]
           },
         ]
@@ -365,6 +509,113 @@ export type Database = {
           },
         ]
       }
+      rate_lines: {
+        Row: {
+          department: string
+          department_note: string | null
+          id: number
+          position: string
+          rates: number[]
+          role_id: string | null
+          schedule_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          department: string
+          department_note?: string | null
+          id?: never
+          position: string
+          rates: number[]
+          role_id?: string | null
+          schedule_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          department?: string
+          department_note?: string | null
+          id?: never
+          position?: string
+          rates?: number[]
+          role_id?: string | null
+          schedule_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rate_lines_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rate_lines_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "rate_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rate_schedules: {
+        Row: {
+          columns: string[]
+          daily_column: string | null
+          effective_from: string
+          effective_to: string | null
+          hourly_column: string | null
+          id: string
+          notes: string | null
+          production_type: string | null
+          rate_unit: string
+          source_url: string | null
+          title: string
+          union_id: string
+          updated_at: string
+        }
+        Insert: {
+          columns: string[]
+          daily_column?: string | null
+          effective_from: string
+          effective_to?: string | null
+          hourly_column?: string | null
+          id: string
+          notes?: string | null
+          production_type?: string | null
+          rate_unit?: string
+          source_url?: string | null
+          title: string
+          union_id: string
+          updated_at?: string
+        }
+        Update: {
+          columns?: string[]
+          daily_column?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          hourly_column?: string | null
+          id?: string
+          notes?: string | null
+          production_type?: string | null
+          rate_unit?: string
+          source_url?: string | null
+          title?: string
+          union_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rate_schedules_union_id_fkey"
+            columns: ["union_id"]
+            isOneToOne: false
+            referencedRelation: "unions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       residency_documents: {
         Row: {
           client_id: string | null
@@ -412,6 +663,107 @@ export type Database = {
           },
         ]
       }
+      role_coverage: {
+        Row: {
+          id: number
+          needs_verification: boolean
+          notes: string | null
+          province: string
+          region: string | null
+          relationship: string
+          role_id: string
+          sort_order: number
+          union_id: string
+          updated_at: string
+        }
+        Insert: {
+          id?: never
+          needs_verification?: boolean
+          notes?: string | null
+          province: string
+          region?: string | null
+          relationship?: string
+          role_id: string
+          sort_order?: number
+          union_id: string
+          updated_at?: string
+        }
+        Update: {
+          id?: never
+          needs_verification?: boolean
+          notes?: string | null
+          province?: string
+          region?: string | null
+          relationship?: string
+          role_id?: string
+          sort_order?: number
+          union_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_coverage_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_coverage_union_id_fkey"
+            columns: ["union_id"]
+            isOneToOne: false
+            referencedRelation: "unions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          aliases: string[]
+          code: string | null
+          department_id: string
+          description: string | null
+          id: string
+          is_trainee: boolean
+          name: string
+          requirements: string[]
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          aliases?: string[]
+          code?: string | null
+          department_id: string
+          description?: string | null
+          id: string
+          is_trainee?: boolean
+          name: string
+          requirements?: string[]
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          aliases?: string[]
+          code?: string | null
+          department_id?: string
+          description?: string | null
+          id?: string
+          is_trainee?: boolean
+          name?: string
+          requirements?: string[]
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sync_queue: {
         Row: {
           attempted_at: string | null
@@ -452,6 +804,197 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      union_departments: {
+        Row: {
+          id: number
+          name: string
+          sort_order: number
+          union_id: string
+          updated_at: string
+        }
+        Insert: {
+          id?: never
+          name: string
+          sort_order?: number
+          union_id: string
+          updated_at?: string
+        }
+        Update: {
+          id?: never
+          name?: string
+          sort_order?: number
+          union_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "union_departments_union_id_fkey"
+            columns: ["union_id"]
+            isOneToOne: false
+            referencedRelation: "unions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      union_engine_meta: {
+        Row: {
+          id: boolean
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          id?: boolean
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          id?: boolean
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      union_jurisdictions: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          id: number
+          needs_verification: boolean
+          notes: string | null
+          province: string
+          region: string | null
+          union_id: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          id?: never
+          needs_verification?: boolean
+          notes?: string | null
+          province: string
+          region?: string | null
+          union_id: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          id?: never
+          needs_verification?: boolean
+          notes?: string | null
+          province?: string
+          region?: string | null
+          union_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "union_jurisdictions_union_id_fkey"
+            columns: ["union_id"]
+            isOneToOne: false
+            referencedRelation: "unions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      union_requirements: {
+        Row: {
+          caucus: string | null
+          id: number
+          kind: string
+          province: string | null
+          sort_order: number
+          text: string
+          union_id: string
+          updated_at: string
+        }
+        Insert: {
+          caucus?: string | null
+          id?: never
+          kind?: string
+          province?: string | null
+          sort_order?: number
+          text: string
+          union_id: string
+          updated_at?: string
+        }
+        Update: {
+          caucus?: string | null
+          id?: never
+          kind?: string
+          province?: string | null
+          sort_order?: number
+          text?: string
+          union_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "union_requirements_union_id_fkey"
+            columns: ["union_id"]
+            isOneToOne: false
+            referencedRelation: "unions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      union_tiers: {
+        Row: {
+          description: string | null
+          hours_rule: string | null
+          id: number
+          name: string
+          province: string | null
+          requires_department: boolean
+          role_ids: string[]
+          sort_order: number
+          target_type: string
+          target_value: number
+          union_id: string
+          updated_at: string
+          window_months: number | null
+        }
+        Insert: {
+          description?: string | null
+          hours_rule?: string | null
+          id?: never
+          name: string
+          province?: string | null
+          requires_department?: boolean
+          role_ids?: string[]
+          sort_order?: number
+          target_type: string
+          target_value: number
+          union_id: string
+          updated_at?: string
+          window_months?: number | null
+        }
+        Update: {
+          description?: string | null
+          hours_rule?: string | null
+          id?: never
+          name?: string
+          province?: string | null
+          requires_department?: boolean
+          role_ids?: string[]
+          sort_order?: number
+          target_type?: string
+          target_value?: number
+          union_id?: string
+          updated_at?: string
+          window_months?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "union_tiers_union_id_fkey"
+            columns: ["union_id"]
+            isOneToOne: false
+            referencedRelation: "unions"
             referencedColumns: ["id"]
           },
         ]
@@ -512,6 +1055,78 @@ export type Database = {
           },
         ]
       }
+      unions: {
+        Row: {
+          application_fee: number | null
+          application_fee_notes: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string
+          dues_notes: string | null
+          dues_rate: number | null
+          id: string
+          is_active: boolean
+          jurisdictional_notes: string | null
+          last_verified: string | null
+          member_benefits: string[]
+          name: string
+          needs_verification: string[]
+          residency_rule: string | null
+          scope: string | null
+          sort_order: number
+          source_urls: string[]
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          application_fee?: number | null
+          application_fee_notes?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string
+          dues_notes?: string | null
+          dues_rate?: number | null
+          id: string
+          is_active?: boolean
+          jurisdictional_notes?: string | null
+          last_verified?: string | null
+          member_benefits?: string[]
+          name: string
+          needs_verification?: string[]
+          residency_rule?: string | null
+          scope?: string | null
+          sort_order?: number
+          source_urls?: string[]
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          application_fee?: number | null
+          application_fee_notes?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string
+          dues_notes?: string | null
+          dues_rate?: number | null
+          id?: string
+          is_active?: boolean
+          jurisdictional_notes?: string | null
+          last_verified?: string | null
+          member_benefits?: string[]
+          name?: string
+          needs_verification?: string[]
+          residency_rule?: string | null
+          scope?: string | null
+          sort_order?: number
+          source_urls?: string[]
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           created_at: string
@@ -552,9 +1167,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      union_roles: {
+        Row: {
+          coverage_id: number | null
+          department: string | null
+          needs_verification: boolean | null
+          notes: string | null
+          province: string | null
+          region: string | null
+          relationship: string | null
+          role: string | null
+          union_name: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      copy_role_coverage: {
+        Args: { p_from_role: string; p_to_role: string }
+        Returns: number
+      }
+      delete_my_account: { Args: never; Returns: undefined }
       finance_stats: {
         Args: { p_user_id: string; p_year?: number }
         Returns: {
@@ -566,11 +1199,9 @@ export type Database = {
         }[]
       }
       is_agent: { Args: never; Returns: boolean }
-      rate_schedule_lines: { Args: { p_schedule_ids: string[] }; Returns: Json }
-      union_engine_snapshot: { Args: never; Returns: Json }
-      union_engine_version: { Args: never; Returns: number }
       is_agent_of: { Args: { p_client: string }; Returns: boolean }
-      delete_my_account: { Args: never; Returns: undefined }
+      is_canadian_province: { Args: { p: string }; Returns: boolean }
+      is_engine_region: { Args: { r: string }; Returns: boolean }
       leave_agency: { Args: never; Returns: undefined }
       my_agency: {
         Args: never
@@ -589,6 +1220,7 @@ export type Database = {
           id: string
         }[]
       }
+      rate_schedule_lines: { Args: { p_schedule_ids: string[] }; Returns: Json }
       register_user_session: {
         Args: { p_device_label?: string; p_session_token: string }
         Returns: undefined
@@ -598,6 +1230,8 @@ export type Database = {
         Args: { p_accept: boolean; p_invite_id: string }
         Returns: undefined
       }
+      union_engine_snapshot: { Args: never; Returns: Json }
+      union_engine_version: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never
