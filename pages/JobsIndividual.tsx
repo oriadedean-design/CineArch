@@ -28,14 +28,14 @@ export const JobsIndividual = () => {
     <div className="space-y-10 md:space-y-16 animate-in fade-in duration-700">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8 pb-8 md:pb-12 border-b border-white/10">
         <div className="space-y-2">
-           <Text variant="caption">Production Ledger</Text>
+           <Text variant="caption">Every day you've logged</Text>
            <Heading level={1} className="font-serif italic text-white tracking-tighter text-6xl md:text-7xl leading-none">The Slate.</Heading>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full md:w-auto">
           <Button variant="outline" onClick={() => setShowIngest(!showIngest)} className={clsx("h-14 md:h-16 border-white/10 flex justify-center items-center", showIngest && "bg-white text-black")}>
              <UploadCloud size={16} className="mr-3" /> Ingest Dailies
           </Button>
-          <Button onClick={() => navigate('/jobs/new')} className="bg-accent text-black h-14 md:h-16 px-8 md:px-12 font-black flex justify-center items-center">Mark Slate</Button>
+          <Button onClick={() => navigate('/jobs/new')} className="bg-accent text-black h-14 md:h-16 px-8 md:px-12 font-black flex justify-center items-center">Mark the slate</Button>
         </div>
       </header>
 
@@ -63,7 +63,7 @@ export const JobsIndividual = () => {
         {jobs.length === 0 && (
           <div className="col-span-full py-24 md:py-40 text-center border border-dashed border-white/5 opacity-30 italic">
              <Layers className="mx-auto mb-4 md:mb-6 opacity-20 w-8 h-8 md:w-12 md:h-12" />
-             Personnel slate is clear.
+             Nothing in the can yet. Hit the clapperboard to mark your first day.
           </div>
         )}
       </div>

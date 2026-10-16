@@ -108,7 +108,7 @@ export const Welcome = ({ onEnter }: { onEnter: (asAgent?: boolean) => void }) =
                       </li>
                     ))}
                  </ul>
-                 <Button onClick={() => onEnter(plan.id === 'agency')} className={clsx("w-full h-16 md:h-20 text-[10px] tracking-[0.4em]", plan.id === 'pro' ? "bg-accent text-black" : "bg-white/10 text-white hover:bg-white")}>Select Your Tier</Button>
+                 <Button onClick={() => onEnter(plan.id === 'agency')} className={clsx("w-full h-16 md:h-20 text-[10px] tracking-[0.4em]", plan.id === 'pro' ? "bg-accent text-black" : "bg-white/10 text-white hover:bg-white")}>{plan.id === 'free' ? 'Start free' : plan.id === 'pro' ? 'Go A-List' : 'Run your roster'}</Button>
                </div>
              ))}
           </div>

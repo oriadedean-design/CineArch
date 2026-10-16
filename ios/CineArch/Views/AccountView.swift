@@ -3,6 +3,7 @@ import SwiftUI
 struct AccountView: View {
     @Environment(Session.self) private var session
     @State private var showAuth = false
+    @State private var showPlans = UserDefaults.standard.bool(forKey: "cinearch.plans")
     @State private var confirmDelete = false
     @State private var typed = ""
     @State private var working = false
@@ -13,17 +14,25 @@ struct AccountView: View {
     var body: some View {
         NavigationStack {
             Form {
-                if let user = session.user {
-                    Section("Signed in") {
-                        LabeledContent("Email", value: user.email ?? "")
-                        Button("Sign out") { Task { await session.signOut() } }
+                if session.isSignedIn {
+                    Section(session.isPreview ? "Preview: \(Sample.name)" : "Signed in") {
+                        LabeledContent("Email", value: session.displayEmail ?? "")
+                        NavigationLink { PlansView() } label: {
+                            LabeledContent("Your plan") {
+                                Text(session.isPremium ? Plan.pro.name : Plan.indie.name)
+                                    .foregroundStyle(session.isPremium ? Theme.accent : .secondary)
+                            }
+                        }
+                        Button(session.isPreview ? "Leave preview" : "Sign out") { Task { await session.signOut() } }
                     }
                 } else {
                     Section {
                         Button("Sign in or create account") { showAuth = true }
+                        Button("Take a look around") { session.startPreview() }
                     } footer: {
-                        Text("The guide and pay calculator work without an account. Sign in to save jobs.")
+                        Text("The guide and pay calculator work without an account. Sign in to mark the slate, or look around a sample A-List Pro account first.")
                     }
+                    Section { NavigationLink("What comes with A-List Pro") { PlansView() } }
                 }
 
                 Section("CineArch") {
@@ -32,7 +41,7 @@ struct AccountView: View {
                     Link(destination: URL(string: "\(site)/#/about")!) { Label("Support", systemImage: "questionmark.circle") }
                 }
 
-                if session.isSignedIn {
+                if session.user != nil && !session.isPreview {
                     Section {
                         Button("Delete account", role: .destructive) { typed = ""; confirmDelete = true }
                             .disabled(working)
@@ -43,6 +52,8 @@ struct AccountView: View {
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
             .navigationTitle("Account")
+            .previewBadge()
+            .navigationDestination(isPresented: $showPlans) { PlansView() }
             .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in with your CineArch account, or create one.") {} }
             .alert("Delete your account?", isPresented: $confirmDelete) {
                 TextField("Type DELETE", text: $typed).textInputAutocapitalization(.characters)

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Layers, FileText, Settings, Plus, WalletCards, X, Users, BookOpen, Eye } from 'lucide-react';
+import { LayoutDashboard, Layers, FileText, Settings, Clapperboard, WalletCards, X, Users, BookOpen, Eye } from 'lucide-react';
 import { api } from '../services/storage';
 import { User, CineNotification } from '../types';
 import { clsx } from 'clsx';
@@ -89,7 +89,7 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
               <span className="font-serif italic text-2xl md:text-4xl text-white">Ca</span>
               <div className="flex flex-col">
                 <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-white">CineArch</span>
-                <span className="hidden sm:block text-[9px] md:text-xs font-black uppercase tracking-[0.2em] text-white/30 italic">Registry // v0.5</span>
+                <span className="hidden sm:block text-[9px] md:text-xs font-black uppercase tracking-[0.2em] text-white/30 italic">Cast & Crew Tracker</span>
               </div>
             </div>
 
@@ -123,7 +123,7 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
               </div>
             ) : (
               <button onClick={() => navigate('/')} className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] bg-white text-black px-5 md:px-10 py-3 md:py-4 shadow-glow hover:bg-accent transition-all">
-                Verify
+                Sign in
               </button>
             )}
           </div>
@@ -151,9 +151,11 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
             <div className="w-px h-8 bg-white/10 mx-2"></div>
             <button
               onClick={() => navigate(user?.accountType === 'AGENT' ? '/roster' : '/jobs/new')}
-              className="flex items-center justify-center w-14 h-14 bg-accent text-black hover:scale-105 transition-all shadow-glow"
+              className="flex items-center justify-center w-14 h-14 bg-accent text-black hover:scale-105 hover:-rotate-6 transition-all shadow-glow"
+              title={user?.accountType === 'AGENT' ? 'Your roster' : 'Mark the slate'}
+              aria-label={user?.accountType === 'AGENT' ? 'Your roster' : 'Mark the slate: add a job'}
             >
-              <Plus size={24} strokeWidth={3} />
+              <Clapperboard size={24} strokeWidth={2.5} />
             </button>
           </div>
         </nav>

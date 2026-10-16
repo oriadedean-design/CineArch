@@ -5,33 +5,27 @@ struct JobsView: View {
     @Environment(Session.self) private var session
     @Environment(JobsStore.self) private var jobs
     @State private var showAuth = false
-    @State private var showNew = false
 
     var body: some View {
         NavigationStack {
             Group {
                 if !session.isSignedIn {
                     ContentUnavailableView {
-                        Label("Your jobs", systemImage: "list.bullet.rectangle")
+                        Label("Your Slate", systemImage: "list.bullet.rectangle")
                     } description: {
-                        Text("Sign in to log your work, see your hours and earnings, and pick up where you left off on the website.")
+                        Text("Sign in to mark the slate on every day you work, see your hours and earnings, and pick up where you left off on the website.")
                     } actions: {
-                        Button("Sign in or create account") { showAuth = true }.buttonStyle(.borderedProminent)
+                        Button("Sign in or create account") { showAuth = true }.buttonStyle(.borderedProminent).foregroundStyle(.black)
                     }
                 } else {
                     list
                 }
             }
-            .navigationTitle("Jobs")
-            .toolbar {
-                if session.isSignedIn {
-                    Button { showNew = true } label: { Image(systemName: "plus") }.accessibilityLabel("Log a job")
-                }
-            }
-            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to see and log your jobs.") {} }
-            .sheet(isPresented: $showNew) { CalculatorView(onSaved: { showNew = false }) }
-            .task(id: session.user?.id) {
-                if session.isSignedIn { await jobs.load() } else { jobs.clear() }
+            .navigationTitle("Your Slate")
+            .previewBadge()
+            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to see your slate.") {} }
+            .task(id: session.identity) {
+                if session.isPreview { jobs.usePreview() } else if session.isSignedIn { await jobs.load() } else { jobs.clear() }
             }
         }
     }
@@ -47,7 +41,7 @@ struct JobsView: View {
                 }
             }
             if jobs.jobs.isEmpty && !jobs.isLoading {
-                Section { Text("No jobs yet. Tap + to log your first day.").foregroundStyle(.secondary) }
+                Section { Text("Nothing in the can yet. Tap the clapperboard to mark your first day.").foregroundStyle(.secondary) }
             }
             Section {
                 ForEach(jobs.jobs) { j in JobRow(job: j) }
@@ -87,6 +81,7 @@ struct JobRow: View {
                 Text(job.daysWorked > 1 ? "\(job.totalHours.hours) over \(job.daysWorked) days" : job.totalHours.hours)
                 if let u = job.unionName { Text("·"); Text(u) }
                 if job.isBelowScale { Text("· Below scale").foregroundStyle(.red) }
+                if job.status == "TENTATIVE" { Text("· Pencilled in").foregroundStyle(Theme.accent) }
             }
             .font(.caption).foregroundStyle(.secondary)
         }

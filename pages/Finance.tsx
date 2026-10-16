@@ -4,7 +4,7 @@ import { Heading, Text, Card, Button, Input, Select, Badge, ProgressBar } from '
 import { Lock, Crown, Plus, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Calculator, PieChart, FileText, Landmark, Wallet } from 'lucide-react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
-import { User, FinanceTransaction, FinanceStats, UserUnionTracking } from '../types';
+import { User, FinanceTransaction, FinanceStats, UserUnionTracking, PLANS } from '../types';
 import { findUnion } from '../services/engine';
 import { clsx } from 'clsx';
 
@@ -84,15 +84,22 @@ export const Finance = () => {
           <div className="space-y-4">
             <h1 className="heading-huge text-white italic uppercase leading-none">Wrap <br/><span className="text-accent">Wallet.</span></h1>
             <Text className="text-gray-400 italic">
-              Unlock precision budgeting for the Canadian guild landscape. Automate tax compliance, track union initiation fees, and forecast your GST status.
+              Wrap Wallet comes with A-List Pro. Your film money in one place: what you earned, what you spent, your GST/HST line and what to set aside for tax.
             </Text>
           </div>
+          <ul className="text-left space-y-3 border-t border-white/10 pt-6">
+            {PLANS.pro.benefits.slice(1).map(b => (
+              <li key={b} className="flex items-start gap-3 text-sm text-white/70 italic">
+                <span className="text-accent font-bold">✓</span><span>{b}</span>
+              </li>
+            ))}
+          </ul>
           <div className="space-y-4">
             <Button disabled className="w-full h-20 text-[10px] tracking-[0.5em] bg-white/20 text-white/40 cursor-not-allowed font-black">
-              <Crown className="w-5 h-5 mr-3" /> Initialize Wallet // $15 mo
+              <Crown className="w-5 h-5 mr-3" /> Go A-List Pro · $15/mo
             </Button>
             <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">
-              Payment integration coming soon. Access will be granted server-side upon subscription.
+              Upgrades open soon.
             </p>
           </div>
         </div>
@@ -104,11 +111,11 @@ export const Finance = () => {
     <div className="space-y-16 pb-40">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 border-b border-white/10 pb-12">
         <div className="space-y-2">
-          <Badge color="accent" className="italic tracking-widest">Financial Terminal</Badge>
+          <Badge color="accent" className="italic tracking-widest">The Business Side</Badge>
           <h1 className="heading-huge uppercase italic leading-none">WRAP <br/><span className="text-accent">WALLET.</span></h1>
         </div>
         <Button onClick={() => setIsAddModalOpen(true)} className="h-16 px-10 text-[10px] tracking-[0.4em] font-black">
-          <Plus className="w-4 h-4 mr-3" /> Log Transaction
+          <Plus className="w-4 h-4 mr-3" /> Add to the ledger
         </Button>
       </header>
 
@@ -116,7 +123,7 @@ export const Finance = () => {
       {stats && (
         <div className="grid md:grid-cols-4 gap-1">
           <div className="p-10 glass-ui space-y-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">Gross Scale</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">Income</p>
             <div className="text-4xl font-serif text-white italic">${stats.grossIncomeYTD.toLocaleString()}</div>
           </div>
           <div className="p-10 glass-ui space-y-6">
@@ -124,11 +131,11 @@ export const Finance = () => {
             <div className="text-4xl font-serif text-white italic">${stats.totalExpensesYTD.toLocaleString()}</div>
           </div>
           <div className="p-10 glass-ui space-y-6 border-accent/20 bg-accent/5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-accent italic">Audit Safe Yield</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-accent italic">Deductible</p>
             <div className="text-4xl font-serif text-white italic">${stats.deductibleExpensesYTD.toLocaleString()}</div>
           </div>
           <div className="p-10 glass-ui space-y-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">Est. Taxable Base</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">Net (taxable)</p>
             <div className="text-4xl font-serif text-accent italic">${stats.taxableIncomeProjected.toLocaleString()}</div>
           </div>
         </div>
@@ -139,8 +146,8 @@ export const Finance = () => {
         <div className="lg:col-span-2 glass-ui p-12 space-y-12">
           <div className="flex justify-between items-center border-b border-white/5 pb-8">
             <div className="space-y-1">
-              <h3 className="font-serif italic text-4xl text-white">Small Supplier Status</h3>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">Threshold Tracking: Rule GST-001</p>
+              <h3 className="font-serif italic text-4xl text-white">The $30k GST/HST Line</h3>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic">Past $30,000 in a year, you register for GST/HST</p>
             </div>
             <Badge color="neutral">Limit: $30k</Badge>
           </div>
@@ -159,7 +166,7 @@ export const Finance = () => {
                 <div className="p-8 bg-accent/5 border border-accent/20 flex gap-6 items-start">
                   <AlertTriangle className="text-accent" size={24} />
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-accent italic">Action Required</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-accent italic">Time to register</p>
                     <p className="text-sm text-white/60 italic leading-relaxed">Threshold exceeded. Register for GST/HST to remain in compliance with the CRA.</p>
                   </div>
                 </div>
@@ -172,7 +179,7 @@ export const Finance = () => {
         <div className="p-12 glass-ui space-y-10 border-accent/20 bg-accent/5">
           <div className="flex items-center gap-4">
             <Landmark size={20} className="text-accent" />
-            <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-accent">Compliance Budget</h4>
+            <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-accent">Union Fees Ahead</h4>
           </div>
           <div className="space-y-8">
             {tracking.length > 0 ? tracking.map(t => {
@@ -188,7 +195,7 @@ export const Finance = () => {
                 </div>
               );
             }) : (
-              <p className="text-xs text-white/20 italic">No guild fees initialized. Set targets in Base Camp to forecast initiation costs.</p>
+              <p className="text-xs text-white/20 italic">No union picked yet. Choose one in Your Config to see what joining costs.</p>
             )}
           </div>
         </div>
@@ -196,12 +203,12 @@ export const Finance = () => {
 
       {/* Transaction List */}
       <div className="space-y-10">
-        <h3 className="font-serif italic text-3xl md:text-4xl text-white">Production Ledger</h3>
+        <h3 className="font-serif italic text-3xl md:text-4xl text-white">Ledger</h3>
 
         {/* Mobile: card list */}
         <div className="md:hidden space-y-2">
           {transactions.length === 0 && (
-            <p className="py-16 text-center text-white/20 italic uppercase font-black tracking-widest text-sm">Slate Clear</p>
+            <p className="py-16 text-center text-white/20 italic uppercase font-black tracking-widest text-sm">Nothing in the can yet</p>
           )}
           {transactions.map(tx => (
             <div key={tx.id} className="glass-ui p-5 flex justify-between items-start gap-4">
@@ -225,15 +232,15 @@ export const Finance = () => {
             <thead className="bg-white/[0.02] border-b border-white/5">
               <tr className="text-xs font-black uppercase tracking-widest text-white/40">
                 <th className="p-6">Date</th>
-                <th className="p-6">Context</th>
-                <th className="p-6">Sector</th>
-                <th className="p-6 text-right">Magnitude</th>
-                <th className="p-6 text-center">Protocol</th>
+                <th className="p-6">What</th>
+                <th className="p-6">Category</th>
+                <th className="p-6 text-right">Amount</th>
+                <th className="p-6 text-center">Rule</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {transactions.length === 0 && (
-                <tr><td colSpan={5} className="p-20 text-center text-white/20 italic uppercase font-black tracking-widest">Slate Clear</td></tr>
+                <tr><td colSpan={5} className="p-20 text-center text-white/20 italic uppercase font-black tracking-widest">Nothing in the can yet</td></tr>
               )}
               {transactions.map(tx => (
                 <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors group">
@@ -260,8 +267,8 @@ export const Finance = () => {
         <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6">
           <div className="w-full max-w-xl glass-ui p-12 border-white/20 animate-in zoom-in-95 duration-300">
             <div className="flex justify-between items-center mb-10">
-              <h3 className="font-serif italic text-4xl text-white">Log Mark</h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-white/20 hover:text-white transition-colors">DISCARD</button>
+              <h3 className="font-serif italic text-4xl text-white">Add to the ledger</h3>
+              <button onClick={() => setIsAddModalOpen(false)} className="text-white/20 hover:text-white transition-colors">CUT</button>
             </div>
             <div className="space-y-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -279,7 +286,7 @@ export const Finance = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Sector</label>
+                <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Category</label>
                 <Select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="h-16 text-sm font-serif italic">
                   {form.type === 'EXPENSE' ? (
                     <>
@@ -315,7 +322,7 @@ export const Finance = () => {
               </div>
 
               <div className="pt-8">
-                <Button onClick={handleAddTransaction} className="w-full h-20 text-[11px] font-black uppercase tracking-[0.5em] bg-white text-black hover:bg-accent">Print Record</Button>
+                <Button onClick={handleAddTransaction} className="w-full h-20 text-[11px] font-black uppercase tracking-[0.5em] bg-white text-black hover:bg-accent">Add it</Button>
               </div>
             </div>
           </div>

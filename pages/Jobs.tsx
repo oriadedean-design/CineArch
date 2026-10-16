@@ -217,7 +217,7 @@ export const JobDetail = () => {
         <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6">
           <div className="w-full max-w-md glass-ui p-12 border-red-500/20 space-y-8 animate-in zoom-in-95 duration-300">
             <div className="space-y-4">
-              <h3 className="font-serif italic text-4xl text-white">Delete Mark?</h3>
+              <h3 className="font-serif italic text-4xl text-white">Strike this day?</h3>
               <p className="text-sm text-white/50 italic leading-relaxed">
                 This will permanently remove <span className="text-white">{form.productionName || 'this job'}</span> from your slate. This action cannot be undone.
               </p>
@@ -225,7 +225,7 @@ export const JobDetail = () => {
             <div className="flex gap-4 pt-4">
               <Button onClick={() => setShowDeleteConfirm(false)} variant="outline" className="flex-1 h-14 border-white/10 text-xs">Cancel</Button>
               <Button onClick={handleDelete} disabled={isDeleting} className="flex-1 h-14 bg-red-600 hover:bg-red-500 text-white text-xs font-black uppercase tracking-widest">
-                {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+                {isDeleting ? 'Striking…' : 'Strike it'}
               </Button>
             </div>
           </div>
@@ -296,6 +296,7 @@ export const JobDetail = () => {
                   <button onClick={() => set({ isUnion: false, unionTypeId: '', productionTier: undefined, ratePosition: undefined })} className={clsx("px-5 py-3 text-xs font-black uppercase tracking-widest border transition-all", !form.isUnion ? "bg-accent text-black border-accent" : "text-white/20 border-white/5")}>Non-union</button>
                 </div>
               </div>
+              {form.isUnion && <p className="text-xs text-white/50 italic -mt-4">Not a member yet? Still pick Union. Permit days on a union set count toward joining.</p>}
 
               {form.isUnion ? (
                 <div className="space-y-6 animate-in slide-in-from-top-2 duration-500">
@@ -459,8 +460,8 @@ export const JobDetail = () => {
 
             <div className="pt-4 flex flex-col gap-4 items-end">
               {error && <p role="alert" className="text-sm text-red-400 italic self-stretch">{error}</p>}
-              <Button onClick={handleSave} isLoading={saving} className="h-20 px-16 shadow-glow w-full md:w-auto">Commit to Your Slate</Button>
-              <button onClick={() => navigate('/jobs')} className="text-xs font-black uppercase tracking-[0.6em] text-white/40 hover:text-white transition-colors py-4">Discard Mark</button>
+              <Button onClick={handleSave} isLoading={saving} className="h-20 px-16 shadow-glow w-full md:w-auto">Mark the slate</Button>
+              <button onClick={() => navigate('/jobs')} className="text-xs font-black uppercase tracking-[0.6em] text-white/40 hover:text-white transition-colors py-4">Cut (don't save)</button>
             </div>
           </div>
         </div>

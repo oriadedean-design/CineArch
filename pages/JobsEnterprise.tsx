@@ -45,7 +45,7 @@ export const JobsEnterprise = () => {
     <div className="space-y-16 animate-in fade-in duration-700">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-12 border-b border-white/10">
         <div className="space-y-2">
-           <Badge color="accent" className="italic tracking-widest uppercase">Master Ledger // Aggregate View</Badge>
+           <Badge color="accent" className="italic tracking-widest uppercase">Full Ledger // Every Client</Badge>
            <h1 className="heading-huge text-white uppercase italic leading-none">THE <br/><span className="text-accent">AGGREGATE.</span></h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
@@ -133,7 +133,7 @@ export const JobsEnterprise = () => {
           
           {loading && (
              <div className="col-span-full py-40 text-center border border-dashed border-white/5 opacity-30 italic animate-pulse">
-                Synchronizing Master Ledger...
+                Loading the full ledger…
              </div>
           )}
         </div>

@@ -2,17 +2,40 @@ import Foundation
 import Observation
 import Supabase
 
-// The signed-in account: same logins as the website.
+// The signed-in account: same logins as the website. Preview is a sample
+// A-List Pro account (Sample.swift) for looking around without signing in.
 @MainActor @Observable
 final class Session {
     private(set) var user: User?
-    var isSignedIn: Bool { user != nil }
+    private(set) var isPremium = false
+    /// Launch with `-cinearch.preview YES` (and `-cinearch.premium NO` for the free plan) to open in preview.
+    private(set) var isPreview = UserDefaults.standard.bool(forKey: "cinearch.preview")
+    var isSignedIn: Bool { user != nil || isPreview }
+    /// Changes whenever the account on screen changes, so views reload.
+    var identity: String? { isPreview ? "preview-\(isPremium)" : user?.id.uuidString }
+    var displayEmail: String? { isPreview ? Sample.email : user?.email }
+
+    init() {
+        if isPreview { isPremium = UserDefaults.standard.object(forKey: "cinearch.premium") == nil || UserDefaults.standard.bool(forKey: "cinearch.premium") }
+    }
 
     func watch() async {
         for await (_, session) in Backend.client.auth.authStateChanges {
             user = session?.user
+            if !isPreview { await loadPlan() }
         }
     }
+
+    /// profiles.is_premium, set server-side when someone subscribes.
+    private func loadPlan() async {
+        guard let id = user?.id else { isPremium = false; return }
+        struct Row: Decodable { let is_premium: Bool }
+        let row: Row? = try? await Backend.client.from("profiles").select("is_premium").eq("id", value: id).single().execute().value
+        isPremium = row?.is_premium ?? false
+    }
+
+    func startPreview(premium: Bool = true) { isPreview = true; isPremium = premium }
+    func endPreview() { isPreview = false; isPremium = false }
 
     func signIn(email: String, password: String) async throws {
         try await Backend.client.auth.signIn(email: email, password: password)
@@ -29,6 +52,7 @@ final class Session {
     }
 
     func signOut() async {
+        if isPreview { endPreview(); return }
         try? await Backend.client.auth.signOut()
     }
 

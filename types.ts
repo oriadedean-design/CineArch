@@ -188,27 +188,46 @@ export interface Plan {
   benefits: string[];
 }
 
+// What each plan includes. Same wording as ios/CineArch/Data/Plans.swift.
 export const PLANS: Record<string, Plan> = {
   free: {
     id: 'free',
     label: 'Indie Log',
     price: '$0',
-    desc: 'Local-only registry for individual crew.',
-    benefits: ['5 Active Slates', 'Basic Audit Export', 'Regional Guild Metadata']
+    desc: 'Everything you need to log your days and count them toward your card.',
+    benefits: [
+      'Union guide and rate cards for every province',
+      'Pay calculator with overtime and minimum calls',
+      'Your Slate: mark every day you work',
+      'Your Wrap: count your days toward your union card',
+    ]
   },
   pro: {
     id: 'pro',
     label: 'A-List Pro',
     price: '$15',
-    desc: 'Full financial terminal and vault access.',
-    benefits: ['Unlimited Slates', 'Real-time GST Monitor', 'Encrypted Vault Storage', 'Audit Pack™ Compiler']
+    desc: 'The business side of your career, handled.',
+    benefits: [
+      'Everything in Indie Log',
+      'Wrap Wallet: an income and expense ledger with Canadian tax rules',
+      'Your $30k GST/HST line, tracked as you earn',
+      'What to set aside for CPP and income tax',
+      'Union joining fees, ahead of time',
+      'The Vault: pay stubs and proof for your union application',
+      'Your Ledger: PDF and CSV reports for applications and tax time',
+    ]
   },
   agency: {
     id: 'agency',
     label: 'Agency Command',
     price: '$95',
-    desc: 'Multi-user roster management system.',
-    benefits: ['Manage 35+ Personnel', 'Bulk Roster Ingest', 'Showrunner Aggregate Dashboard', 'Priority Support']
+    desc: 'For agencies and managers looking after a roster.',
+    benefits: [
+      'Everything in A-List Pro',
+      "Your Roster: every client's days and progress in one place",
+      'Bulk upload for the whole roster',
+      'Priority support',
+    ]
   }
 };
 

@@ -109,7 +109,7 @@ struct PayForm: View {
                     Button {
                         if session.isSignedIn { showSave = true } else { showAuth = true }
                     } label: {
-                        Label("Save as a job", systemImage: "square.and.arrow.down").frame(maxWidth: .infinity)
+                        Label("Mark the slate", systemImage: "movieclapper").frame(maxWidth: .infinity)
                     }
                 }
             }
@@ -120,7 +120,7 @@ struct PayForm: View {
         .onChange(of: productionType) { position = nil }
         .task(id: p.schedule?.id) { if let s = p.schedule { await store.ensureLines([s.id]) } }
         .sheet(isPresented: $showAuth) {
-            AuthSheet(reason: "Create a free account to save jobs and track your union progress. It syncs with the CineArch website.") {
+            AuthSheet(reason: "Create a free account to mark the slate and count your days toward the union. It syncs with the CineArch website.") {
                 showSave = true
             }
         }
@@ -213,12 +213,12 @@ struct SaveJobSheet: View {
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
-            .navigationTitle("Save job")
+            .navigationTitle("Mark the slate")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { Task { await save() } }
+                    Button("Mark it") { Task { await save() } }
                         .disabled(production.trimmed.isEmpty || company.trimmed.isEmpty || role.trimmed.isEmpty || saving)
                 }
             }

@@ -57,7 +57,7 @@ export const SettingsEnterprise = () => {
                   <Landmark className="text-accent" size={24} />
                   <span className="text-[10px] font-black uppercase tracking-widest text-accent italic">Status: Showrunner</span>
                </div>
-               <h3 className="text-4xl font-serif italic text-white leading-[0.8]">Master <br/>Integrity.</h3>
+               <h3 className="text-4xl font-serif italic text-white leading-[0.8]">Account <br/>Health.</h3>
                <p className="text-xs text-white/40 leading-relaxed font-light">Global settings for your roster members. Changes here affect compliance logic across the entire aggregate ledger.</p>
             </Card>
 

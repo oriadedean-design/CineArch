@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
-import { User, UserUnionTracking, ResidencyDocument, RESIDENCY_DOC_TYPES, CanadianProvince, Job } from '../types';
+import { User, UserUnionTracking, ResidencyDocument, RESIDENCY_DOC_TYPES, CanadianProvince, Job, PLANS } from '../types';
 import { findUnion } from '../services/engine';
 import { Heading, Text, Button, Input, Select, Badge, Card, ProgressBar } from '../components/ui';
 import { BulkJobUpload } from '../components/BulkJobUpload';
@@ -123,7 +123,7 @@ export const Settings = () => {
       <div className="grid md:grid-cols-4 gap-12">
         <div className="space-y-2">
           {user?.accountType === 'AGENT' && <TabButton id="AGENCY" label="Agency Command" />}
-          <TabButton id="ACCOUNT" label="Personnel File" />
+          <TabButton id="ACCOUNT" label="Your Trailer" />
           <TabButton id="PLAN" label="Membership" />
           <TabButton id="GOALS" label="Guild Tracks" />
           <TabButton id="VAULT" label="The Vault" />
@@ -143,7 +143,7 @@ export const Settings = () => {
              <div className="space-y-12 animate-in fade-in duration-500">
                 <div className="space-y-2 border-b border-white/5 pb-8">
                    <h3 className="font-serif italic text-4xl text-white">Agency Command</h3>
-                   <p className="text-[10px] text-accent font-black uppercase tracking-widest italic">Roster Master Controller</p>
+                   <p className="text-[10px] text-accent font-black uppercase tracking-widest italic">Roster Admin</p>
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-10">
@@ -216,7 +216,7 @@ export const Settings = () => {
                   </div>
 
                   <div className="mt-12 pt-8 border-t border-white/5 flex justify-end">
-                     <Button onClick={handleSave} className="px-12 h-16">Print Updates</Button>
+                     <Button onClick={handleSave} className="px-12 h-16">Save</Button>
                   </div>
                </Card>
             </div>
@@ -224,22 +224,46 @@ export const Settings = () => {
 
           {activeTab === 'PLAN' && (
              <div className="space-y-8 animate-in fade-in duration-500">
-               <Card className="border-accent/20 bg-accent/5">
-                  <div className="flex items-center justify-between mb-12">
-                     <div className="flex items-center gap-6">
-                        <div className="p-4 bg-accent/20 border border-accent/40">
-                            <Crown className="w-8 h-8 text-accent" />
-                        </div>
-                        <div>
-                           <h3 className="font-serif italic text-4xl text-white">
-                               {user?.accountType === 'AGENT' ? 'Showrunner' : 'A-List Pro'}
-                           </h3>
-                           <p className="text-[10px] text-accent font-black uppercase tracking-[0.4em]">Status: Verified On-Set</p>
-                        </div>
-                     </div>
-                     <Badge color="accent">Active Account</Badge>
-                  </div>
-               </Card>
+               {(() => {
+                  const current = user?.accountType === 'AGENT' ? PLANS.agency : user?.isPremium ? PLANS.pro : PLANS.free;
+                  const next = current.id === 'free' ? PLANS.pro : null;
+                  return (
+                    <>
+                      <Card className="border-accent/20 bg-accent/5">
+                         <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-6">
+                               <div className="p-4 bg-accent/20 border border-accent/40">
+                                   <Crown className="w-8 h-8 text-accent" />
+                               </div>
+                               <div>
+                                  <h3 className="font-serif italic text-4xl text-white">{current.label}</h3>
+                                  <p className="text-[10px] text-accent font-black uppercase tracking-[0.4em]">{current.price}{current.id !== 'free' && ' / month'}</p>
+                               </div>
+                            </div>
+                            <Badge color="accent">Your plan</Badge>
+                         </div>
+                         <p className="text-sm text-white/60 italic mb-6">{current.desc}</p>
+                         <ul className="space-y-3">
+                            {current.benefits.map(b => (
+                              <li key={b} className="flex items-start gap-3 text-sm text-white/80 italic"><span className="text-accent font-bold">✓</span><span>{b}</span></li>
+                            ))}
+                         </ul>
+                      </Card>
+                      {next && (
+                        <Card className="border-white/10">
+                           <h3 className="font-serif italic text-3xl text-white mb-2">What comes with {next.label}</h3>
+                           <p className="text-[10px] text-accent font-black uppercase tracking-[0.4em] mb-6">{next.price} / month</p>
+                           <ul className="space-y-3 mb-8">
+                              {next.benefits.slice(1).map(b => (
+                                <li key={b} className="flex items-start gap-3 text-sm text-white/80 italic"><span className="text-accent font-bold">✓</span><span>{b}</span></li>
+                              ))}
+                           </ul>
+                           <Button disabled className="w-full h-14 text-[10px] tracking-[0.4em] bg-white/20 text-white/40 cursor-not-allowed font-black">Go A-List Pro · upgrades open soon</Button>
+                        </Card>
+                      )}
+                    </>
+                  );
+               })()}
              </div>
           )}
 
