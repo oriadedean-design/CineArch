@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
+import { DeleteAccount } from '../components/DeleteAccount';
 import { User, CanadianProvince } from '../types';
 import { Heading, Text, Button, Input, Select, Card, Badge } from '../components/ui';
 import { Shield, User as UserIcon, Lock, Landmark, FileText, Trash2, Users, XCircle } from 'lucide-react';
@@ -144,6 +145,7 @@ export const SettingsIndividual = () => {
               <Button onClick={handleSave} className="h-16 px-12">Print Updates</Button>
             </div>
           </div>
+          <DeleteAccount />
         </main>
       </div>
     </div>

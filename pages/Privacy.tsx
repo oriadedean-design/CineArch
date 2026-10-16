@@ -50,7 +50,7 @@ export const Privacy = () => {
                   <Scale size={16} />
                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em]">The Purge Protocol</h3>
                </div>
-               <p className="text-textSecondary leading-relaxed font-light text-sm">At any time, you may trigger an Account Purge in your settings. This immediately and permanently deletes all records and documents across our backup environments.</p>
+               <p className="text-textSecondary leading-relaxed font-light text-sm">At any time, you can delete your account in Settings, on the website or in the app. This immediately and permanently deletes your login, jobs, union progress, documents and finance records. Copies in our database provider's encrypted backups are removed when those backups expire.</p>
             </section>
          </div>
       </div>
