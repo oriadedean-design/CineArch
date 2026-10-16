@@ -20,6 +20,8 @@ enum Sample {
     static let jobs: [Job] = [
         job("Harbour Lights (Season 2)", "Apex Screen Partners", "2nd Assistant Camera", union: iatse667,
             "2026-11-02", "2026-11-27", days: 20, hoursPerDay: 12, rate: 42, hours: 220, overtime: 60, gross: 10_500, status: "TENTATIVE"),
+        job("Night Market (Short)", "Lantern Pictures", "2nd Assistant Camera", union: nil,
+            "2026-10-11", days: 1, hoursPerDay: 12, rate: 35, hours: 11, overtime: 0, gross: 385, status: "TENTATIVE"),
         job("Northern Lights (Series)", "Apex Screen Partners", "2nd Assistant Camera", union: iatse667,
             "2026-10-14", days: 1, hoursPerDay: 12, rate: 42, hours: 11, overtime: 3, gross: 525),
         job("Northern Lights (Series)", "Apex Screen Partners", "2nd Assistant Camera", union: iatse667,

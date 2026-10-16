@@ -5,6 +5,7 @@ import { api } from '../services/storage';
 import { User, CineNotification } from '../types';
 import { clsx } from 'clsx';
 import { isDemoMode, exitDemoMode } from '../services/demo';
+import { NotesBell } from './NotesBell';
 
 export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onLogout: () => void }) => {
   const navigate = useNavigate();
@@ -104,6 +105,7 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
           </div>
 
           <div className="pointer-events-auto flex items-center gap-3">
+            {isDashboardMode && user?.accountType !== 'AGENT' && <NotesBell />}
             {user ? (
               <div className="flex items-center gap-2 md:gap-4 bg-white/5 border border-white/10 px-3 md:px-5 py-2 hover:bg-white/10 transition-all cursor-pointer group" onClick={() => navigate('/settings')}>
                 <div className="w-7 h-7 bg-white text-black font-black flex items-center justify-center text-xs shrink-0">

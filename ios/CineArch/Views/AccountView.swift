@@ -4,6 +4,7 @@ struct AccountView: View {
     @Environment(Session.self) private var session
     @State private var showAuth = false
     @State private var showCallSheet = false
+    @AppStorage(Notes.remindersKey) private var reminders = false
     @State private var showPlans = UserDefaults.standard.bool(forKey: "cinearch.plans")
     @State private var confirmDelete = false
     @State private var typed = ""
@@ -42,6 +43,16 @@ struct AccountView: View {
                         Text("The guide and pay calculator work without an account. Sign in to mark the slate, or look around a sample A-List Pro account first.")
                     }
                     Section { NavigationLink("What comes with A-List Pro") { PlansView() } }
+                }
+
+                if session.isSignedIn {
+                    Section {
+                        Toggle("Phone reminders", isOn: Binding(get: { reminders }, set: { on in
+                            Task { reminders = on ? await Notes.requestPermission() : false }
+                        }))
+                    } footer: {
+                        Text("A 9 a.m. reminder before tax dates and days leaving your union window. Everything else waits in Notes from set on Your Wrap.")
+                    }
                 }
 
                 Section("CineArch") {

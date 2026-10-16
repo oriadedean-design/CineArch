@@ -11,6 +11,7 @@ struct WrapView: View {
     @State private var showAuth = false
     @State private var editing: TrackedUnion?
     @State private var showAdd = false
+    @State private var showNotes = UserDefaults.standard.bool(forKey: "cinearch.notes")   // `-cinearch.notes YES` for screenshots
 
     var body: some View {
         NavigationStack {
@@ -19,6 +20,13 @@ struct WrapView: View {
             }
             .navigationTitle("Your Wrap")
             .previewBadge()
+            .toolbar {
+                if session.isSignedIn {
+                    ToolbarItem(placement: .topBarTrailing) { NotesBell(count: visibleNotes.count) { showNotes = true } }
+                }
+            }
+            .sheet(isPresented: $showNotes) { NotesView(notes: notes) }
+            .task(id: notes.map(\.id)) { await Notes.scheduleReminders(notes) }
             .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to track your days toward union membership.") {} }
             .sheet(isPresented: $showAdd) { TrackUnionSheet(existing: nil) }
             .sheet(item: $editing) { TrackUnionSheet(existing: $0) }
@@ -33,6 +41,11 @@ struct WrapView: View {
             }
         }
     }
+
+    private var notes: [Note] {
+        session.isSignedIn ? Notes.make(jobs: jobs.jobs, tracks: tracking.tracks, engine: store.engine) : []
+    }
+    private var visibleNotes: [Note] { notes.filter { !Notes.dismissed.contains($0.id) } }
 
     private var signedOut: some View {
         ContentUnavailableView {
