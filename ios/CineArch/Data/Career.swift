@@ -78,6 +78,10 @@ struct TrackProgress: Identifiable {
     }
 }
 
+struct SignInNeeded: LocalizedError {
+    var errorDescription: String? { "You're not signed in. Sign in from Account, then try again." }
+}
+
 @MainActor @Observable
 final class TrackingStore {
     private(set) var tracks: [TrackedUnion] = []
@@ -105,7 +109,10 @@ final class TrackingStore {
             tracks.append(track)
             return
         }
-        track.userId = Backend.client.auth.currentUser?.id
+        // Without a live sign-in the row would go up with no owner and the
+        // database refuses it, so say so plainly instead.
+        guard let session = try? await Backend.client.auth.session else { throw SignInNeeded() }
+        track.userId = session.user.id
         track.id = nil
         let saved: TrackedUnion = try await Backend.client.from("union_tracking")
             .upsert(track, onConflict: "user_id,union_type_id").select().single().execute().value

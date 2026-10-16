@@ -32,7 +32,7 @@ struct RootView: View {
     // `-cinearch.tab wallet` opens on that tab (for screenshots).
     @State private var tab = Tab(rawValue: UserDefaults.standard.string(forKey: "cinearch.tab") ?? "") ?? .wrap
     /// `-cinearch.onboarding YES` opens the call sheet (for screenshots).
-    static let showOnboarding = UserDefaults.standard.bool(forKey: "cinearch.onboarding")
+    @State private var showOnboarding = UserDefaults.standard.bool(forKey: "cinearch.onboarding")
     enum Tab: String { case wrap, jobs, ledger = "wallet", guide, account }
 
     var body: some View {
@@ -51,7 +51,7 @@ struct RootView: View {
         .tint(Theme.accent)
         .listStyle(.grouped)
         .buttonBorderShape(.roundedRectangle(radius: 0))
-        .fullScreenCover(isPresented: .constant(session.needsOnboarding || Self.showOnboarding)) {
+        .fullScreenCover(isPresented: Binding(get: { session.needsOnboarding || showOnboarding }, set: { if !$0 { showOnboarding = false } })) {
             OnboardingView().tint(Theme.accent).listStyle(.grouped).buttonBorderShape(.roundedRectangle(radius: 0))
         }
     }

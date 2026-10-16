@@ -56,7 +56,7 @@ struct OnboardingView: View {
             .navigationTitle(title)
             .safeAreaInset(edge: .bottom) { actions }
             .toolbar {
-                if session.profile?.isOnboarded == true {
+                if !session.needsOnboarding {
                     ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
                 }
             }
@@ -215,6 +215,7 @@ struct OnboardingView: View {
         saving = true
         defer { saving = false }
         error = nil
+        guard session.user != nil else { error = SignInNeeded().errorDescription; return }
         do {
             try await session.saveCallSheet(Profile.Update(
                 province: province, region: province == "Ontario" ? region : nil, department: department,
