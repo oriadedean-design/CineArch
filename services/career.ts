@@ -58,6 +58,11 @@ const roleId = (role: string) => findRole(role)?.id ?? role.trim().toLowerCase()
 const tierFor = (track: UserUnionTracking): UnionTier | undefined =>
   getUnionSpec(track.unionTypeId)?.tiers.find(t => t.name === track.tierLabel);
 
+// ACTRA members who joined as AABP before October 31, 2012 may count up to
+// 800 background hours from before they joined.
+const ACTRA_LEGACY_JOIN = '2012-10-31';
+const ACTRA_LEGACY_HOURS = 800;
+
 // Hours a job adds under a tier's hours rule.
 const ruleHours = (j: Job, tier?: UnionTier) => {
   if (tier?.hoursRule !== 'actra_background') return j.totalHours || 0;
@@ -75,17 +80,22 @@ export function trackProgress(
 ): TrackProgress {
   const since = tier?.windowMonths ? windowStart(tier.windowMonths, today) : undefined;
   const roles = tier?.roleIds?.length ? new Set(tier.roleIds) : undefined;
-  const relevant = jobs.filter(j =>
+  const countsFrom = tier?.startLabel ? track.countsFrom : undefined;
+  const eligible = jobs.filter(j =>
     j.isUnion && ((track.unionTypeId && j.unionTypeId === track.unionTypeId) || j.unionName === track.unionName)
     && (!tier?.province || !j.province || j.province === tier.province)
     && (!roles || roles.has(roleId(j.role)))
     && (!since || j.startDate >= since));
+  const relevant = countsFrom ? eligible.filter(j => j.startDate >= countsFrom) : eligible;
+  const earlier = countsFrom ? eligible.filter(j => j.startDate < countsFrom) : [];
   const measure = (j: Job) =>
     track.targetType === 'HOURS' ? ruleHours(j, tier)
     : track.targetType === 'EARNINGS' ? j.grossEarnings || 0
     : track.targetType === 'DAYS' ? workedDays(j)
     : 1;  // CREDITS: one per job
-  const current = round((track.startingValue || 0) + relevant.reduce((sum, j) => sum + measure(j), 0));
+  const legacy = tier?.hoursRule === 'actra_background' && countsFrom && countsFrom < ACTRA_LEGACY_JOIN
+    ? Math.min(ACTRA_LEGACY_HOURS, earlier.reduce((sum, j) => sum + measure(j), 0)) : 0;
+  const current = round((track.startingValue || 0) + legacy + relevant.reduce((sum, j) => sum + measure(j), 0));
   const target = track.targetValue;
   return {
     track, current, target,

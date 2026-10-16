@@ -25,7 +25,7 @@ struct CineArchApp: App {
     }
 }
 
-// Your Wrap, Your Slate, Wrap Wallet, Guide, Account, with the clapperboard floating
+// Your Wrap, Your Slate, Guide (middle), Wrap Wallet, Account, with the clapperboard floating
 // above every tab. The pay calculator opens from the clapperboard.
 struct RootView: View {
     // `-cinearch.tab wallet` opens on that tab (for screenshots).
@@ -36,8 +36,8 @@ struct RootView: View {
         TabView(selection: $tab) {
             WrapView().tabItem { Label("Wrap", systemImage: "chart.bar.fill") }.tag(Tab.wrap)
             JobsView().tabItem { Label("Slate", systemImage: "list.bullet.rectangle") }.tag(Tab.jobs)
-            LedgerView().tabItem { Label("Wallet", systemImage: "wallet.bifold") }.tag(Tab.ledger)
             GuideView().tabItem { Label("Guide", systemImage: "book") }.tag(Tab.guide)
+            LedgerView().tabItem { Label("Wallet", systemImage: "wallet.bifold") }.tag(Tab.ledger)
             AccountView().tabItem { Label("Account", systemImage: "person.crop.circle") }.tag(Tab.account)
         }
         .tint(Theme.accent)
@@ -58,7 +58,7 @@ struct PreviewBadge: View {
             } label: {
                 Text("PREVIEW").font(.caption2.weight(.heavy)).tracking(1.5)
                     .foregroundStyle(.black).padding(.horizontal, 10).padding(.vertical, 4)
-                    .background(Theme.accent, in: Capsule())
+                    .background(Theme.accent)
             }
         }
     }

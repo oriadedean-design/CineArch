@@ -1,12 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Heading, Text, Card, Button, Badge } from '../components/ui';
-import { Download, FileSpreadsheet, Landmark, Target, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Lock, Download, FileSpreadsheet, Landmark, Target, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/storage';
 import { financeApi } from '../services/finance';
-import { Job, User, UserUnionTracking, FinanceStats } from '../types';
+import { Job, User, UserUnionTracking, FinanceStats, PLANS } from '../types';
 import { clsx } from 'clsx';
 import Papa from 'papaparse';
 import jsPDF from 'jspdf';
+import { PlanCard } from '../components/PlanCard';
 
 export const Reports = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -157,6 +158,18 @@ export const Reports = () => {
 
     doc.save(`cinearch-report-${new Date().toISOString().split('T')[0]}.pdf`);
   };
+
+  // Ledger reports (PDF and CSV) come with A-List Pro.
+  if (user && !user.isPremium) {
+    return (
+      <div className="max-w-xl mx-auto py-16 space-y-8 animate-in fade-in duration-700">
+        <Lock className="text-accent" size={28} />
+        <h1 className="heading-huge text-white uppercase italic leading-none">Your <br/><span className="text-accent">Ledger.</span></h1>
+        <p className="text-white/60 italic">Ledger reports come with {PLANS.pro.label}: your jobs, hours and union progress as a PDF or spreadsheet, ready for a union application or tax time.</p>
+        <PlanCard user={user} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-24 animate-in fade-in duration-1000">

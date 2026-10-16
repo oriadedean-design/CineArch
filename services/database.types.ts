@@ -953,6 +953,7 @@ export type Database = {
           requires_department: boolean
           role_ids: string[]
           sort_order: number
+          start_label: string | null
           target_type: string
           target_value: number
           union_id: string
@@ -968,6 +969,7 @@ export type Database = {
           requires_department?: boolean
           role_ids?: string[]
           sort_order?: number
+          start_label?: string | null
           target_type: string
           target_value: number
           union_id: string
@@ -983,6 +985,7 @@ export type Database = {
           requires_department?: boolean
           role_ids?: string[]
           sort_order?: number
+          start_label?: string | null
           target_type?: string
           target_value?: number
           union_id?: string
@@ -1002,6 +1005,7 @@ export type Database = {
       union_tracking: {
         Row: {
           client_id: string | null
+          counts_from: string | null
           created_at: string
           department: string | null
           id: string
@@ -1017,6 +1021,7 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          counts_from?: string | null
           created_at?: string
           department?: string | null
           id?: string
@@ -1032,6 +1037,7 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          counts_from?: string | null
           created_at?: string
           department?: string | null
           id?: string
@@ -1198,6 +1204,7 @@ export type Database = {
           total_expenses: number
         }[]
       }
+      has_pro: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
       is_agent_of: { Args: { p_client: string }; Returns: boolean }
       is_canadian_province: { Args: { p: string }; Returns: boolean }
