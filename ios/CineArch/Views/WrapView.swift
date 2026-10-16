@@ -129,7 +129,7 @@ struct TrackRow: View {
                 Text("\(Int((progress.fraction * 100).rounded()))%")
                     .font(Theme.serif(.title)).foregroundStyle(Theme.accent).monospacedDigit()
             }
-            ProgressView(value: progress.fraction).tint(Theme.accent)
+            SquareProgress(value: progress.fraction)
             HStack {
                 Text("\(t.format(progress.current)) of \(t.format(t.targetValue)) \(t.unit)\(progress.windowMonths.map { " in \($0) months" } ?? "")\(t.countsFrom.map { " since \($0)" } ?? "")")
                 Spacer()
@@ -164,7 +164,7 @@ struct TrackUnionSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
                 Section {
                     Picker("Union", selection: $unionId) {
                         Text("Choose…").tag("")

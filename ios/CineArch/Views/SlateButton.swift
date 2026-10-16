@@ -42,7 +42,7 @@ struct MarkSlateSheet: View {
             CalculatorView(onSaved: { dismiss() })
         } else {
             NavigationStack {
-                Form {
+                List {
                     if let last = jobs.lastJob {
                         repeatSection(last)
                     }

@@ -40,7 +40,7 @@ struct PayForm: View {
 
     var body: some View {
         let p = priced
-        Form {
+        List {
             Section("The job") {
                 Picker("Union", selection: $unionId) {
                     Text("Non-union").tag(Self.nonUnion)
@@ -191,7 +191,7 @@ struct SaveJobSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
                 Section {
                     TextField("Production", text: $production).textInputAutocapitalization(.words)
                     TextField("Production company", text: $company).textInputAutocapitalization(.words)

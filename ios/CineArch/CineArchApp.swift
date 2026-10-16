@@ -43,11 +43,17 @@ struct RootView: View {
             LedgerView().tabItem { Label("Wallet", systemImage: "wallet.bifold") }.tag(Tab.ledger)
             AccountView().tabItem { Label("Account", systemImage: "person.crop.circle") }.tag(Tab.account)
         }
-        .fullScreenCover(isPresented: .constant(session.needsOnboarding || Self.showOnboarding)) { OnboardingView() }
         .overlay(alignment: .bottomTrailing) {
             SlateButton().padding(.trailing, 20).padding(.bottom, 84)
         }
-        .tint(Theme.accent)   // outermost, so sheets and covers get it too
+        // Outermost, so every screen, sheet and cover gets them: signal yellow,
+        // and square corners (film frames, sensors, slates and strips are square).
+        .tint(Theme.accent)
+        .listStyle(.grouped)
+        .buttonBorderShape(.roundedRectangle(radius: 0))
+        .fullScreenCover(isPresented: .constant(session.needsOnboarding || Self.showOnboarding)) {
+            OnboardingView().tint(Theme.accent).listStyle(.grouped).buttonBorderShape(.roundedRectangle(radius: 0))
+        }
     }
 }
 

@@ -24,6 +24,22 @@ enum Theme {
     }
 }
 
+/// A square-ended progress bar (the system one has rounded ends).
+struct SquareProgress: View {
+    let value: Double
+    var color: Color = Theme.accent
+    var body: some View {
+        GeometryReader { g in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(Color.primary.opacity(0.12))
+                Rectangle().fill(color).frame(width: g.size.width * min(1, max(0, value)))
+            }
+        }
+        .frame(height: 6)
+        .accessibilityElement().accessibilityValue("\(Int((min(1, max(0, value)) * 100).rounded())) percent")
+    }
+}
+
 extension Double {
     var money: String { formatted(.currency(code: "CAD").presentation(.narrow)) }
     var hours: String { "\(formatted(.number.precision(.fractionLength(0...2))))h" }

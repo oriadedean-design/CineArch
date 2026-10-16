@@ -15,7 +15,7 @@ struct AccountView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
                 if session.isSignedIn {
                     Section(session.isPreview ? "Preview: \(Sample.name)" : "Signed in") {
                         LabeledContent("Email", value: session.displayEmail ?? "")
@@ -111,7 +111,7 @@ struct AuthSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
                 Section { Text(reason).foregroundStyle(.secondary) }
                 Section {
                     if creating { TextField("Your name", text: $name).textContentType(.name) }

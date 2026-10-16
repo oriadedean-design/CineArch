@@ -40,7 +40,7 @@ struct OnboardingView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
                 Section {
                     Text("Scene \(step.rawValue) of \(Step.allCases.count)").font(.caption.weight(.heavy)).tracking(1.5).foregroundStyle(Theme.accent)
                         .listRowBackground(Color.clear)

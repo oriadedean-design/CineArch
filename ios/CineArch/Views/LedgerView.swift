@@ -57,7 +57,7 @@ struct LedgerView: View {
                 LabeledContent("GST/HST paid", value: s.gstPaid.money)
                 LabeledContent(s.gstOwing >= 0 ? "Owing" : "Refund", value: abs(s.gstOwing).money)
                 VStack(alignment: .leading, spacing: 6) {
-                    ProgressView(value: s.gstThresholdFraction).tint(s.gstThresholdFraction >= 1 ? .red : Theme.accent)
+                    SquareProgress(value: s.gstThresholdFraction, color: s.gstThresholdFraction >= 1 ? .red : Theme.accent)
                     Text(s.gstThresholdFraction >= 1
                          ? "You're past $30,000 this year. You need a GST/HST number."
                          : "\((Ledger.smallSupplierThreshold - s.grossIncome).money) until you must register for GST/HST ($30,000).")
@@ -145,7 +145,7 @@ struct LedgerEntrySheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
                 Picker("Type", selection: $isIncome) {
                     Text("Expense").tag(false)
                     Text("Income").tag(true)
