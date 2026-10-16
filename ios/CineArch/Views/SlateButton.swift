@@ -3,13 +3,15 @@ import CineArchKit
 
 // The floating clapperboard: one tap to mark today's slate.
 struct SlateButton: View {
+    @Environment(Session.self) private var session
     @State private var showSlate = false
+    @State private var showAuth = false
     @State private var claps = 0
 
     var body: some View {
         Button {
             claps += 1
-            showSlate = true
+            if session.isSignedIn { showSlate = true } else { showAuth = true }
         } label: {
             Image(systemName: "movieclapper.fill")
                 .font(.system(size: 24, weight: .semibold))
@@ -22,6 +24,11 @@ struct SlateButton: View {
         .sensoryFeedback(.impact(weight: .medium), trigger: claps)
         .accessibilityLabel("Mark the slate: add a job")
         .sheet(isPresented: $showSlate) { MarkSlateSheet() }
+        // Signed in from here? Carry on to the slate once sign-in closes.
+        .sheet(isPresented: $showAuth, onDismiss: { if session.isSignedIn { showSlate = true } }) {
+            AuthSheet(reason: "Sign in or create an account to mark the slate. Every day you log counts toward your union card.",
+                      alternative: ("Just work out pay (no account)", AnyView(CalculatorView(onSaved: {})))) {}
+        }
     }
 }
 

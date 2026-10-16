@@ -1,0 +1,186 @@
+<!doctype html><html lang="en-CA"><head><meta charset="utf-8"><title>CineArch Wrap Report — Sample</title>
+<link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  @page { size: Letter; margin: 0; }
+  :root { --ink: #0b0b0b; --paper: #ffffff; --signal: #FACC15; --muted: #6b6b6b; --rule: #e4e4e4; --green: #15803d; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Spline Sans', -apple-system, sans-serif; color: var(--ink); background: var(--paper); font-size: 10pt; line-height: 1.45; }
+  .page { width: 8.5in; height: 11in; position: relative; padding: 0.55in 0.6in 0.8in; page-break-after: always; overflow: hidden; }
+  .page:last-child { page-break-after: auto; }
+  .serif { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+  .label { font-size: 7pt; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+
+  /* Slate header: black band with clapper stripes */
+  .slate { background: var(--ink); color: #fff; margin: -0.55in -0.6in 0.35in; padding: 0 0.6in 0.3in; }
+  .stripes { height: 0.22in; margin: 0 -0.6in 0.28in; background: repeating-linear-gradient(-45deg, var(--signal) 0 0.22in, var(--ink) 0.22in 0.44in); }
+  .slate-top { display: flex; justify-content: space-between; align-items: flex-end; }
+  .wordmark { font-size: 9pt; font-weight: 700; letter-spacing: 0.45em; color: var(--signal); }
+  .slate h1 { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; font-size: 40pt; line-height: 1; margin-top: 10px; }
+  .slate-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 18px; border-top: 1px solid #333; }
+  .slate-grid div { padding: 9px 12px 0 0; }
+  .slate-grid .label { color: #9a9a9a; }
+  .slate-grid p { font-size: 10.5pt; margin-top: 2px; }
+
+  .tagsample { background: var(--signal); color: var(--ink); font-size: 7pt; font-weight: 700; letter-spacing: 0.2em; padding: 3px 7px; margin-right: 10px; }
+  .sample { position: absolute; top: 0.33in; right: 0.6in; background: var(--signal); color: var(--ink); font-size: 7pt; font-weight: 700; letter-spacing: 0.2em; padding: 4px 8px; }
+
+  h2 { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; font-size: 20pt; margin: 22px 0 10px; display: flex; align-items: baseline; gap: 10px; }
+  h2 .label { font-family: 'Spline Sans', sans-serif; font-style: normal; }
+
+  .figures { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid var(--ink); }
+  .figures > div { padding: 12px 14px; border-right: 1px solid var(--rule); }
+  .figures > div:last-child { border-right: 0; }
+  .figures .big { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 24pt; line-height: 1.1; margin-top: 4px; }
+  .figures .net { background: var(--ink); color: #fff; }
+  .figures .net .big { color: var(--signal); }
+  .figures .net .label { color: #9a9a9a; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .box { border: 1px solid var(--rule); padding: 12px 14px; }
+  .row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--rule); }
+  .row:last-child { border-bottom: 0; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .bar { height: 10px; background: #efefef; margin: 8px 0 6px; position: relative; }
+  .bar span { position: absolute; inset: 0 auto 0 0; background: var(--ink); }
+  .bar.signal span { background: var(--signal); }
+
+  .greenlit { display: flex; align-items: center; gap: 12px; border: 1.5px solid var(--green); padding: 10px 14px; margin-top: 14px; }
+  .seal { width: 26px; height: 26px; border: 2px solid var(--green); display: grid; place-items: center; color: var(--green); font-weight: 700; }
+  .greenlit .label { color: var(--green); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; }
+  th { text-align: left; font-size: 6.8pt; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); padding: 6px 6px; border-bottom: 1.5px solid var(--ink); }
+  td { padding: 6px 6px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  td.r, th.r { text-align: right; }
+  tr.total td { border-top: 1.5px solid var(--ink); border-bottom: 0; font-weight: 600; }
+  .lit { color: var(--green); font-weight: 600; white-space: nowrap; }
+  .need { color: #a16207; font-weight: 600; white-space: nowrap; }
+  .tag { font-size: 6.8pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 1px 5px; border: 1px solid var(--ink); }
+  .tag.u { background: var(--signal); border-color: var(--signal); }
+  .muted { color: var(--muted); }
+
+  footer { position: absolute; left: 0.6in; right: 0.6in; bottom: 0.4in; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--ink); padding-top: 8px; font-size: 7.5pt; color: var(--muted); }
+  footer .mark { font-weight: 700; letter-spacing: 0.4em; color: var(--ink); }
+  .note { font-size: 7.8pt; color: var(--muted); margin-top: 8px; }
+
+  .proofs-intro { margin: 6px 0 4px; }
+  .proof { display: grid; grid-template-columns: 3.35in 1fr; gap: 0.3in; height: 4.15in; padding: 0.18in 0; border-bottom: 1px dashed #cfcfcf; }
+  .proof:last-of-type { border-bottom: 0; }
+  .photo-wrap { background: #e9e6df; display: grid; place-items: center; overflow: hidden; position: relative; }
+  .photo-wrap .cap { position: absolute; left: 8px; bottom: 6px; font-size: 6.5pt; letter-spacing: .15em; font-weight: 700; color: #7a766d; text-transform: uppercase; }
+  .doc { background: #fffdf8; width: 2.75in; padding: 14px 14px 18px; transform: rotate(-1.2deg); box-shadow: 0 6px 16px rgba(0,0,0,.18);
+         font-family: 'Courier New', monospace; font-size: 7.3pt; line-height: 1.5; color: #222; }
+  .doc.stub, .doc.invoice { border-top: 4px solid #0b0b0b; }
+  .doc .l { white-space: pre; position: relative; }
+  .doc .l.first { font-weight: 700; }
+  .doc .l.pinned { background: rgba(250, 204, 21, .35); outline: 1.5px solid #FACC15; margin: 0 -4px; padding: 0 4px; }
+  .pin { display: inline-grid; place-items: center; width: 15px; height: 15px; background: #0b0b0b; color: #FACC15; font: 700 7.5pt 'Spline Sans', sans-serif; }
+  .doc .pin { position: absolute; right: -24px; top: 0; }
+  .panel h3 { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; font-size: 17pt; line-height: 1.1; margin: 4px 0 2px; }
+  .panel .status { display: inline-block; margin-top: 8px; font-size: 7pt; font-weight: 700; letter-spacing: .2em; color: var(--green); border: 1.5px solid var(--green); padding: 2px 6px; }
+  .read { width: 100%; margin-top: 12px; font-size: 8.3pt; }
+  .read td { padding: 5px 4px; }
+  .read th { padding: 5px 4px; }
+  .ok { color: var(--green); font-weight: 700; }
+  .missing { border: 1.5px dashed #a16207; padding: 10px 14px; margin-top: 12px; }
+  .cat td.r { font-variant-numeric: tabular-nums; }
+
+  .tagsample { background: var(--signal); color: var(--ink); font-size: 7pt; font-weight: 700; letter-spacing: 0.2em; padding: 3px 7px; margin-right: 10px; }
+</style></head><body><section class="page"><div class="slate"><div class="stripes"></div>
+  <div class="slate-top"><span class="wordmark">CINEARCH</span>
+    <span><span class="tagsample">SAMPLE · MADE-UP DATA</span> <span class="label" style="color:#9a9a9a">Wrap Report</span></span></div>
+  <h1>Jordan Ellis · 2026 so far</h1><div class="slate-grid"><div><span class="label">Role</span><p>2nd Assistant Camera</p></div><div><span class="label">Based in</span><p>Toronto, Ontario</p></div><div><span class="label">Working toward</span><p>IATSE 667</p></div><div><span class="label">Period</span><p>Jan 1 – Oct 17, 2026</p></div></div></div><h2>The money <span class="label">From the Wrap Wallet</span></h2><div class="figures">
+    <div><span class="label">Income</span><div class="big num">$22,575.00</div><span class="muted">5 entries</span></div>
+    <div><span class="label">Expenses</span><div class="big num">$724.00</div><span class="muted">$690.00 deductible</span></div>
+    <div class="net"><span class="label">Net (after deductions)</span><div class="big num">$21,885.00</div><span style="color:#9a9a9a">Income less deductible expenses</span></div></div><div class="greenlit"><div class="seal">✓</div>
+    <div style="flex:1"><span class="label">Green Lit</span><div><b>7 of 9</b> entries backed with proof, attached at the back</div></div>
+    <div class="need">2 need proof</div></div><div class="two" style="margin-top:18px">
+    <div><h2 style="margin-top:0">GST/HST</h2><div class="box">
+      <div class="row"><span>Collected</span><span class="num">$0.00</span></div>
+      <div class="row"><span>Paid on expenses</span><span class="num">$48.62</span></div>
+      <div class="row"><span>Small-supplier line</span><span class="num">$30,000.00</span></div>
+      <div class="bar signal"><span style="width:75.25%"></span></div>
+      <span class="muted">$22,575 of $30,000 · $7,425 until you must register</span></div></div>
+    <div><h2 style="margin-top:0">Set aside <span class="label">Estimates</span></h2><div class="box">
+      <div class="row"><span>CPP (self-employed)</span><span class="num">$2,187.82</span></div>
+      <div class="row"><span>Income tax</span><span class="num">$4,377.00</span></div>
+      <div class="row"><b>Total to set aside</b><b class="num">$6,564.82</b></div>
+      <p class="note">CPP at 11.9% above $3,500; income tax at a flat 20% of net. Rough estimates, not tax advice. Check with an accountant.</p></div></div></div><h2>Getting your card <span class="label">Days on union sets</span></h2><div class="box">
+    <div class="row" style="border:0"><span><b>IATSE 667</b> · Member</span><span class="num"><b>42</b> of 60 days · 18 to go</span></div>
+    <div class="bar"><span style="width:70%"></span></div>
+    <span class="muted">36 days logged on IATSE 667 sets in CineArch + 6 banked before. Permit and non-member days on a union set count.</span></div><footer><span class="mark">CINEARCH</span><span>Generated Oct 17, 2026 · cine-arch.vercel.app</span><span>Page 1 of 6</span></footer></section><section class="page"><div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid var(--ink);padding-bottom:8px">
+  <span class="wordmark" style="color:var(--ink)">CINEARCH</span>
+  <span><span class="tagsample">SAMPLE · MADE-UP DATA</span> <span class="label">Wrap Report · Jordan Ellis · 2026</span></span></div><h2>Your Slate <span class="label">Worked, 2026</span></h2><table><tr><th>Dates</th><th>Production</th><th>Role</th><th>Set</th><th class="r">Days</th><th class="r">Hours</th><th class="r">Gross</th><th>Proof</th></tr>
+    <tr><td class="num">Oct 14</td><td>Northern Lights (Series)<br><span class="muted">Apex Screen Partners</span></td><td>2nd AC</td><td><span class="tag u">IATSE 667</span></td><td class="r num">1</td><td class="r num">11</td><td class="r num">$525.00</td><td><span class=lit>✓ Pay stub</span></td></tr><tr><td class="num">Sep 8 – Oct 9</td><td>Northern Lights (Series)<br><span class="muted">Apex Screen Partners</span></td><td>2nd AC</td><td><span class="tag u">IATSE 667</span></td><td class="r num">20</td><td class="r num">220</td><td class="r num">$10,500.00</td><td><span class=lit>✓ Pay stub</span></td></tr><tr><td class="num">Jun 1 – Jun 19</td><td>Untitled Horror Feature<br><span class="muted">Darkfield Productions</span></td><td>2nd AC</td><td><span class="tag u">IATSE 667</span></td><td class="r num">15</td><td class="r num">165</td><td class="r num">$7,400.00</td><td><span class=lit>✓ Pay stub</span></td></tr><tr><td class="num">May 12 – May 13</td><td>Maple &amp; Main (Commercial)<br><span class="muted">Northbound Creative</span></td><td>Camera Op</td><td><span class="tag">Non-union</span></td><td class="r num">2</td><td class="r num">24</td><td class="r num">$1,400.00</td><td><span class=muted>—</span></td></tr><tr><td class="num">Apr 20 – Apr 24</td><td>The Long Weekend<br><span class="muted">Junction Films</span></td><td>1st AC</td><td><span class="tag">Non-union</span></td><td class="r num">5</td><td class="r num">55</td><td class="r num">$2,750.00</td><td><span class=muted>—</span></td></tr><tr class="total"><td colspan="4">Worked</td><td class="r num">43</td><td class="r num">475</td><td class="r num">$22,575.00</td><td></td></tr></table><p class="note">Pencilled in, not counted: Harbour Lights (Season 2), Nov 2–27; Night Market (Short), Oct 11.</p><h2>Wrap Wallet <span class="label">Every entry, with its proof</span></h2><table><tr><th>Date</th><th>What</th><th>Category</th><th class="r">Before tax</th><th class="r">GST/HST</th><th class="r">Total</th><th>Proof</th></tr><tr><td class="num">Oct 14</td><td>Northern Lights · day call</td><td>Service fees</td><td class="r num">$525.00</td><td class="r num">—</td><td class="r num">+$525.00</td><td><span class=lit>✓ Green Lit</span></td></tr><tr><td class="num">Oct 9</td><td>Northern Lights · block 2</td><td>Service fees</td><td class="r num">$10,500.00</td><td class="r num">—</td><td class="r num">+$10,500.00</td><td><span class=lit>✓ Green Lit</span></td></tr><tr><td class="num">Oct 9</td><td>Wrap drinks with the camera team</td><td>Meals (50% rule)</td><td class="r num">$68.00</td><td class="r num">$8.84</td><td class="r num">−$76.84</td><td><span class=need>Needs proof</span></td></tr><tr><td class="num">Sep 4</td><td>AC pouch, slate markers, lens tissue</td><td>Gear & small tools</td><td class="r num">$186.00</td><td class="r num">$24.18</td><td class="r num">−$210.18</td><td><span class=lit>✓ Green Lit</span></td></tr><tr><td class="num">Jul 2</td><td>IATSE 667 permit fees</td><td>Union dues</td><td class="r num">$350.00</td><td class="r num">—</td><td class="r num">−$350.00</td><td><span class=lit>✓ Green Lit</span></td></tr><tr><td class="num">Jun 19</td><td>Untitled Horror Feature</td><td>Service fees</td><td class="r num">$7,400.00</td><td class="r num">—</td><td class="r num">+$7,400.00</td><td><span class=lit>✓ Green Lit</span></td></tr><tr><td class="num">May 13</td><td>Maple &amp; Main commercial</td><td>Service fees</td><td class="r num">$1,400.00</td><td class="r num">—</td><td class="r num">+$1,400.00</td><td><span class=lit>✓ Green Lit</span></td></tr><tr><td class="num">Apr 24</td><td>The Long Weekend</td><td>Service fees</td><td class="r num">$2,750.00</td><td class="r num">—</td><td class="r num">+$2,750.00</td><td><span class=lit>✓ Green Lit</span></td></tr><tr><td class="num">Mar 31</td><td>Phone plan (business share)</td><td>Office supplies</td><td class="r num">$120.00</td><td class="r num">$15.60</td><td class="r num">−$135.60</td><td><span class=need>Needs proof</span></td></tr></table><footer><span class="mark">CINEARCH</span><span>Generated Oct 17, 2026 · cine-arch.vercel.app</span><span>Page 2 of 6</span></footer></section><section class="page"><div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid var(--ink);padding-bottom:8px">
+  <span class="wordmark" style="color:var(--ink)">CINEARCH</span>
+  <span><span class="tagsample">SAMPLE · MADE-UP DATA</span> <span class="label">Wrap Report · Jordan Ellis · 2026</span></span></div><h2>The proof <span class="label">Photos attached, annotated</span></h2><div class="proof">
+  <div class="photo-wrap"><div class="doc stub"><div class="l first">APEX SCREEN PARTNERS INC.</div><div class="l">Northern Lights (Series) · Prod. #NL-204</div><div class="l">PAY STATEMENT</div><div class="l">&nbsp;</div><div class="l">Employee: Jordan Ellis</div><div class="l">Position: 2nd Assistant Camera</div><div class="l pinned">Work date: Oct 14, 2026<span class=pin>1</span></div><div class="l pinned">Union: IATSE Local 667 (permit)<span class=pin>2</span></div><div class="l">&nbsp;</div><div class="l pinned">Hours worked        11.0<span class=pin>3</span></div><div class="l">Rate               42.00</div><div class="l pinned">Gross pay          525.00<span class=pin>4</span></div><div class="l">Deductions         -98.41</div><div class="l">Net pay            426.59</div></div><span class="cap">Photo · Pay stub</span></div>
+  <div class="panel">
+    <span class="label">Proof 1 of 7 · Pay stub</span>
+    <h3>Northern Lights · day call</h3>
+    <div class="muted">Oct 14, 2026 · Service fees · +$525.00</div>
+    <span class="status">✓ GREEN LIT</span>
+    <table class="read"><tr><th></th><th>Read</th><th>On the photo</th><th>Your records</th><th></th></tr><tr><td><span class="pin">1</span></td><td>Work date</td><td>Oct 14, 2026</td><td>Oct 14, 2026</td><td class="ok">✓</td></tr><tr><td><span class="pin">2</span></td><td>Union set</td><td>IATSE 667</td><td>IATSE 667</td><td class="ok">✓</td></tr><tr><td><span class="pin">3</span></td><td>Hours</td><td>11.0</td><td>11</td><td class="ok">✓</td></tr><tr><td><span class="pin">4</span></td><td>Gross pay</td><td>$525.00</td><td>$525.00</td><td class="ok">✓</td></tr></table>
+    <p class="note">Highlighted on the photo where it was read. ✓ means the figure on the photo matches your records.</p>
+  </div></div><div class="proof">
+  <div class="photo-wrap"><div class="doc stub"><div class="l first">APEX SCREEN PARTNERS INC.</div><div class="l">Northern Lights (Series) · Prod. #NL-204</div><div class="l">PAY STATEMENT</div><div class="l">&nbsp;</div><div class="l">Employee: Jordan Ellis</div><div class="l">Position: 2nd Assistant Camera</div><div class="l pinned">Period: Sep 8 – Oct 9, 2026<span class=pin>1</span></div><div class="l">Union: IATSE Local 667 (permit)</div><div class="l pinned">Days worked          20<span class=pin>2</span></div><div class="l pinned">Hours worked       220.0<span class=pin>3</span></div><div class="l">Rate               42.00</div><div class="l pinned">Gross pay       10,500.00<span class=pin>4</span></div><div class="l">Net pay          8,121.77</div></div><span class="cap">Photo · Pay stub</span></div>
+  <div class="panel">
+    <span class="label">Proof 2 of 7 · Pay stub</span>
+    <h3>Northern Lights · block 2</h3>
+    <div class="muted">Oct 9, 2026 · Service fees · +$10,500.00</div>
+    <span class="status">✓ GREEN LIT</span>
+    <table class="read"><tr><th></th><th>Read</th><th>On the photo</th><th>Your records</th><th></th></tr><tr><td><span class="pin">1</span></td><td>Period</td><td>Sep 8 – Oct 9, 2026</td><td>Sep 8 – Oct 9</td><td class="ok">✓</td></tr><tr><td><span class="pin">2</span></td><td>Days</td><td>20</td><td>20</td><td class="ok">✓</td></tr><tr><td><span class="pin">3</span></td><td>Hours</td><td>220.0</td><td>220</td><td class="ok">✓</td></tr><tr><td><span class="pin">4</span></td><td>Gross pay</td><td>$10,500.00</td><td>$10,500.00</td><td class="ok">✓</td></tr></table>
+    <p class="note">Highlighted on the photo where it was read. ✓ means the figure on the photo matches your records.</p>
+  </div></div><footer><span class="mark">CINEARCH</span><span>Generated Oct 17, 2026 · cine-arch.vercel.app</span><span>Page 3 of 6</span></footer></section><section class="page"><div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid var(--ink);padding-bottom:8px">
+  <span class="wordmark" style="color:var(--ink)">CINEARCH</span>
+  <span><span class="tagsample">SAMPLE · MADE-UP DATA</span> <span class="label">Wrap Report · Jordan Ellis · 2026</span></span></div><div class="proof">
+  <div class="photo-wrap"><div class="doc "><div class="l first pinned">VISTEK CAMERA STORE<span class=pin>1</span></div><div class="l">496 Queen St E, Toronto</div><div class="l pinned">Sep 4, 2026  14:02<span class=pin>2</span></div><div class="l">&nbsp;</div><div class="l">AC pouch               129.00</div><div class="l">Slate markers x4        38.00</div><div class="l">Lens tissue             19.00</div><div class="l">&nbsp;</div><div class="l">SUBTOTAL               186.00</div><div class="l pinned">HST 13%                 24.18<span class=pin>3</span></div><div class="l pinned">TOTAL                  210.18<span class=pin>4</span></div><div class="l">&nbsp;</div><div class="l">VISA ****4417</div><div class="l">Thank you!</div></div><span class="cap">Photo · Receipt</span></div>
+  <div class="panel">
+    <span class="label">Proof 3 of 7 · Receipt</span>
+    <h3>AC pouch, slate markers, lens tissue</h3>
+    <div class="muted">Sep 4, 2026 · Gear &amp; small tools · −$210.18</div>
+    <span class="status">✓ GREEN LIT</span>
+    <table class="read"><tr><th></th><th>Read</th><th>On the photo</th><th>Your records</th><th></th></tr><tr><td><span class="pin">1</span></td><td>Store</td><td>Vistek Camera Store</td><td class="muted">Not in the entry</td><td class="muted">Noted</td></tr><tr><td><span class="pin">2</span></td><td>Date</td><td>Sep 4, 2026</td><td>Sep 4, 2026</td><td class="ok">✓</td></tr><tr><td><span class="pin">3</span></td><td>GST/HST</td><td>$24.18</td><td>$24.18</td><td class="ok">✓</td></tr><tr><td><span class="pin">4</span></td><td>Total</td><td>$210.18</td><td>$210.18</td><td class="ok">✓</td></tr></table>
+    <p class="note">Highlighted on the photo where it was read. ✓ means the figure on the photo matches your records.</p>
+  </div></div><div class="proof">
+  <div class="photo-wrap"><div class="doc "><div class="l first">IATSE LOCAL 667</div><div class="l">Permit fee receipt</div><div class="l pinned">Jul 2, 2026<span class=pin>1</span></div><div class="l">&nbsp;</div><div class="l">Member/permittee: J. Ellis</div><div class="l">Permit fees            350.00</div><div class="l">&nbsp;</div><div class="l pinned">TOTAL PAID             350.00<span class=pin>2</span></div><div class="l">&nbsp;</div><div class="l">Receipt #P-88213</div></div><span class="cap">Photo · Receipt</span></div>
+  <div class="panel">
+    <span class="label">Proof 4 of 7 · Receipt</span>
+    <h3>IATSE 667 permit fees</h3>
+    <div class="muted">Jul 2, 2026 · Union dues · −$350.00</div>
+    <span class="status">✓ GREEN LIT</span>
+    <table class="read"><tr><th></th><th>Read</th><th>On the photo</th><th>Your records</th><th></th></tr><tr><td><span class="pin">1</span></td><td>Date</td><td>Jul 2, 2026</td><td>Jul 2, 2026</td><td class="ok">✓</td></tr><tr><td><span class="pin">2</span></td><td>Total</td><td>$350.00</td><td>$350.00</td><td class="ok">✓</td></tr></table>
+    <p class="note">Highlighted on the photo where it was read. ✓ means the figure on the photo matches your records.</p>
+  </div></div><footer><span class="mark">CINEARCH</span><span>Generated Oct 17, 2026 · cine-arch.vercel.app</span><span>Page 4 of 6</span></footer></section><section class="page"><div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid var(--ink);padding-bottom:8px">
+  <span class="wordmark" style="color:var(--ink)">CINEARCH</span>
+  <span><span class="tagsample">SAMPLE · MADE-UP DATA</span> <span class="label">Wrap Report · Jordan Ellis · 2026</span></span></div><div class="proof">
+  <div class="photo-wrap"><div class="doc stub"><div class="l first">DARKFIELD PRODUCTIONS LTD.</div><div class="l">Untitled Horror Feature</div><div class="l">STATEMENT OF EARNINGS</div><div class="l">&nbsp;</div><div class="l">Jordan Ellis · 2nd AC</div><div class="l pinned">Period: Jun 1 – Jun 19, 2026<span class=pin>1</span></div><div class="l">IATSE 667 permit</div><div class="l pinned">Days                 15<span class=pin>2</span></div><div class="l pinned">Hours              165.0<span class=pin>3</span></div><div class="l pinned">Gross            7,400.00<span class=pin>4</span></div><div class="l">Net              5,702.10</div></div><span class="cap">Photo · Pay stub</span></div>
+  <div class="panel">
+    <span class="label">Proof 5 of 7 · Pay stub</span>
+    <h3>Untitled Horror Feature</h3>
+    <div class="muted">Jun 19, 2026 · Service fees · +$7,400.00</div>
+    <span class="status">✓ GREEN LIT</span>
+    <table class="read"><tr><th></th><th>Read</th><th>On the photo</th><th>Your records</th><th></th></tr><tr><td><span class="pin">1</span></td><td>Period</td><td>Jun 1 – Jun 19, 2026</td><td>Jun 1 – Jun 19</td><td class="ok">✓</td></tr><tr><td><span class="pin">2</span></td><td>Days</td><td>15</td><td>15</td><td class="ok">✓</td></tr><tr><td><span class="pin">3</span></td><td>Hours</td><td>165.0</td><td>165</td><td class="ok">✓</td></tr><tr><td><span class="pin">4</span></td><td>Gross pay</td><td>$7,400.00</td><td>$7,400.00</td><td class="ok">✓</td></tr></table>
+    <p class="note">Highlighted on the photo where it was read. ✓ means the figure on the photo matches your records.</p>
+  </div></div><div class="proof">
+  <div class="photo-wrap"><div class="doc invoice"><div class="l first">INVOICE #JE-2026-014</div><div class="l">From: Jordan Ellis</div><div class="l">To: Northbound Creative</div><div class="l pinned">Date: May 13, 2026<span class=pin>1</span></div><div class="l">&nbsp;</div><div class="l">Maple &amp; Main (Commercial)</div><div class="l">Camera Operator, May 12–13</div><div class="l">2 days @ 700.00     1,400.00</div><div class="l">&nbsp;</div><div class="l pinned">TOTAL DUE           1,400.00<span class=pin>2</span></div><div class="l">Paid May 28 · e-transfer</div></div><span class="cap">Photo · Invoice</span></div>
+  <div class="panel">
+    <span class="label">Proof 6 of 7 · Invoice</span>
+    <h3>Maple &amp; Main commercial</h3>
+    <div class="muted">May 13, 2026 · Service fees · +$1,400.00</div>
+    <span class="status">✓ GREEN LIT</span>
+    <table class="read"><tr><th></th><th>Read</th><th>On the photo</th><th>Your records</th><th></th></tr><tr><td><span class="pin">1</span></td><td>Date</td><td>May 13, 2026</td><td>May 13, 2026</td><td class="ok">✓</td></tr><tr><td><span class="pin">2</span></td><td>Total</td><td>$1,400.00</td><td>$1,400.00</td><td class="ok">✓</td></tr></table>
+    <p class="note">Highlighted on the photo where it was read. ✓ means the figure on the photo matches your records.</p>
+  </div></div><footer><span class="mark">CINEARCH</span><span>Generated Oct 17, 2026 · cine-arch.vercel.app</span><span>Page 5 of 6</span></footer></section><section class="page"><div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid var(--ink);padding-bottom:8px">
+  <span class="wordmark" style="color:var(--ink)">CINEARCH</span>
+  <span><span class="tagsample">SAMPLE · MADE-UP DATA</span> <span class="label">Wrap Report · Jordan Ellis · 2026</span></span></div><div class="proof">
+  <div class="photo-wrap"><div class="doc invoice"><div class="l first">INVOICE #JE-2026-011</div><div class="l">From: Jordan Ellis</div><div class="l">To: Junction Films</div><div class="l pinned">Date: Apr 24, 2026<span class=pin>1</span></div><div class="l">&nbsp;</div><div class="l">The Long Weekend</div><div class="l">1st AC, Apr 20–24</div><div class="l">5 days @ 550.00     2,750.00</div><div class="l">&nbsp;</div><div class="l pinned">TOTAL DUE           2,750.00<span class=pin>2</span></div><div class="l">Paid May 9 · cheque</div></div><span class="cap">Photo · Invoice</span></div>
+  <div class="panel">
+    <span class="label">Proof 7 of 7 · Invoice</span>
+    <h3>The Long Weekend</h3>
+    <div class="muted">Apr 24, 2026 · Service fees · +$2,750.00</div>
+    <span class="status">✓ GREEN LIT</span>
+    <table class="read"><tr><th></th><th>Read</th><th>On the photo</th><th>Your records</th><th></th></tr><tr><td><span class="pin">1</span></td><td>Date</td><td>Apr 24, 2026</td><td>Apr 24, 2026</td><td class="ok">✓</td></tr><tr><td><span class="pin">2</span></td><td>Total</td><td>$2,750.00</td><td>$2,750.00</td><td class="ok">✓</td></tr></table>
+    <p class="note">Highlighted on the photo where it was read. ✓ means the figure on the photo matches your records.</p>
+  </div></div><footer><span class="mark">CINEARCH</span><span>Generated Oct 17, 2026 · cine-arch.vercel.app</span><span>Page 6 of 6</span></footer></section></body></html>

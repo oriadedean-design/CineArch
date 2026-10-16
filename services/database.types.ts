@@ -1215,6 +1215,7 @@ export type Database = {
       is_agent_of: { Args: { p_client: string }; Returns: boolean }
       is_canadian_province: { Args: { p: string }; Returns: boolean }
       is_engine_region: { Args: { r: string }; Returns: boolean }
+      my_documents_usage: { Args: never; Returns: Json }
       leave_agency: { Args: never; Returns: undefined }
       my_agency: {
         Args: never

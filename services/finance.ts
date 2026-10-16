@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 import { FinanceTransaction, FinanceStats, TransactionType } from '../types';
 import { isDemoMode, DEMO_TRANSACTIONS, DEMO_STATS } from './demo';
 import type { Tables } from './database.types';
+import { fitUnder1MB, uploadError } from './uploads';
 
 /**
  * MASTER FISCAL PARAMETERS (CANADIAN COMPLIANCE)
@@ -133,11 +134,12 @@ export const financeApi = {
   },
 
   // Back an entry with proof: the file goes to documents/<user>/proof/, then the entry points at it (Green Lit).
-  attachProof: async (tx: FinanceTransaction, file: File): Promise<string> => {
+  attachProof: async (tx: FinanceTransaction, chosen: File): Promise<string> => {
+    const file = await fitUnder1MB(chosen);
     const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
     const path = `${tx.userId}/proof/${tx.id}-${Date.now()}.${ext}`;
     const up = await supabase.storage.from('documents').upload(path, file, { contentType: file.type || undefined });
-    if (up.error) throw up.error;
+    if (up.error) throw uploadError(up.error);
     const { error } = await supabase.from('finance_transactions').update({ proof_path: path }).eq('id', tx.id);
     if (error) throw error;
     if (tx.proofPath) await supabase.storage.from('documents').remove([tx.proofPath]);

@@ -3,6 +3,8 @@ import { Lock, Trash2, Upload } from 'lucide-react';
 import { api } from '../services/storage';
 import { PLANS, RESIDENCY_DOC_TYPES, type ResidencyDocument, type User } from '../types';
 import { Card, Select } from './ui';
+import { supabase } from '../services/supabase';
+import { ACCOUNT_LIMIT_BYTES } from '../services/uploads';
 
 // The Vault: pay stubs and proof for your union application. A-List Pro;
 // on the free plan you can still open and delete what you saved earlier.
@@ -12,7 +14,12 @@ export const Vault = ({ user }: { user: User | null }) => {
   const [busy, setBusy] = useState(false);
   const isPro = !!user?.isPremium;
 
-  const refresh = async () => setDocs(await api.vault.list());
+  const [used, setUsed] = useState<number | null>(null);
+  const refresh = async () => {
+    setDocs(await api.vault.list());
+    const { data } = await supabase.rpc('my_documents_usage');
+    if (data) setUsed(Number((data as { used_bytes: number }).used_bytes));
+  };
   useEffect(() => { refresh(); }, []);
 
   const upload = async (file?: File) => {
@@ -34,7 +41,12 @@ export const Vault = ({ user }: { user: User | null }) => {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-serif italic text-white leading-none">The Vault</h3>
-          <p className="text-xs text-white/40 italic mt-2">Pay stubs, vouchers and proof for your union application.</p>
+          <p className="text-xs text-white/40 italic mt-2">Pay stubs, vouchers and proof for your union application. Up to 1 MB a file; photos are shrunk to fit.</p>
+          {isPro && used !== null && (
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 mt-3">
+              {(used / 1_048_576).toFixed(1)} MB of {ACCOUNT_LIMIT_BYTES / 1_073_741_824} GB used (Vault and Wallet proof)
+            </p>
+          )}
         </div>
         {!isPro && <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-accent"><Lock size={12} /> {PLANS.pro.label}</span>}
       </div>

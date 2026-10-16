@@ -1,4 +1,6 @@
 import SwiftUI
+import QuickLook
+import CineArchKit
 
 // Wrap Wallet, the business side: income and expenses this year, each backed with
 // proof (Green Lit), GST/HST and what to set aside. Same rows as the website's Wrap Wallet.
@@ -9,6 +11,12 @@ struct LedgerView: View {
     @State private var showAuth = false
     @State private var showNew = false
     @State private var showPlans = false
+    @State private var showBulk = false
+    @State private var making: String?           // progress while a report is made
+    @State private var reportURL: URL?
+    @Environment(JobsStore.self) private var jobs
+    @Environment(TrackingStore.self) private var tracking
+    @Environment(EngineStore.self) private var store
     @State private var page = Page.entries
     @State private var filter = Filter.all
     @State private var proofFor: LedgerEntry?
@@ -22,13 +30,7 @@ struct LedgerView: View {
             Group {
                 if session.isSignedIn && !session.isPremium { FreeWallet() }
                 else if session.isSignedIn { content } else {
-                    ContentUnavailableView {
-                        Label("Wrap Wallet", systemImage: "wallet.bifold.fill")
-                    } description: {
-                        Text("Your film money in one place: income, expenses, GST/HST and what to set aside for tax.")
-                    } actions: {
-                        Button("Sign in or create account") { showAuth = true }.buttonStyle(.borderedProminent).foregroundStyle(.black)
-                    }
+                    LookAroundWallet { showAuth = true }
                 }
             }
             .navigationTitle("Wrap Wallet")
@@ -36,14 +38,24 @@ struct LedgerView: View {
             .toolbar {
                 if session.isSignedIn && session.isPremium {
                     ToolbarItem(placement: .topBarTrailing) {
-                        ShareLink(item: csvFile(), preview: SharePreview("Wrap Wallet spreadsheet")) {
-                            Image(systemName: "tablecells")
-                        }
-                        .accessibilityLabel("Export a spreadsheet")
-                        .disabled(ledger.entries.isEmpty)
+                        Menu {
+                            ForEach(ReportKind.allCases) { kind in
+                                Button { Task { await makeReport(kind) } } label: { Label(kind.rawValue + " (PDF)", systemImage: kind.icon) }
+                            }
+                            ShareLink(item: csvFile(), preview: SharePreview("Wrap Wallet spreadsheet")) {
+                                Label("Spreadsheet (CSV)", systemImage: "tablecells")
+                            }
+                            .disabled(ledger.entries.isEmpty)
+                        } label: { Image(systemName: "square.and.arrow.up") }
+                        .accessibilityLabel("Export a report or spreadsheet")
+                        .disabled(making != nil)
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button { showNew = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add income or an expense")
+                        Menu {
+                            Button { showNew = true } label: { Label("Add one", systemImage: "plus") }
+                            Button { showBulk = true } label: { Label("Receipts in bulk", systemImage: "square.stack.3d.up") }
+                        } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("Add income or expenses")
                     }
                 } else if session.isSignedIn {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -52,14 +64,27 @@ struct LedgerView: View {
                 }
             }
             .navigationDestination(isPresented: $showPlans) { PlansView() }
-            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to keep your ledger.") {} }
+            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in or create an account to see your Wrap Wallet: income, expenses, GST/HST and proof.") {} }
             .sheet(isPresented: $showNew, onDismiss: { if let e = justAdded { justAdded = nil; proofFor = e } }) {
                 LedgerEntrySheet { justAdded = $0 }
             }
             .sheet(item: $proofFor) { ProofSheet(entry: $0) }
+            .sheet(isPresented: $showBulk) { BulkReceiptsView() }
+            .quickLookPreview($reportURL)
+            .overlay {
+                if let making {
+                    VStack(spacing: 12) { ProgressView(); Text(making).font(.subheadline) }
+                        .padding(24).background(.regularMaterial)
+                }
+            }
             .task(id: session.identity) {
                 if session.isPreview { ledger.usePreview() }
                 else if session.isSignedIn && session.isPremium { await ledger.load() } else { ledger.clear() }
+                // `-cinearch.report tax|union|overview` makes that report on launch (for checking the layout).
+                if session.isPremium, let k = UserDefaults.standard.string(forKey: "cinearch.report"),
+                   let kind = ReportKind.allCases.first(where: { $0.rawValue.lowercased().hasPrefix(k) || (k == "overview" && $0 == .overview) }) {
+                    await makeReport(kind)
+                }
             }
         }
     }
@@ -149,6 +174,27 @@ struct LedgerView: View {
         }
     }
 
+    /// Builds a branded PDF on the phone, then opens it to look over, share or print.
+    private func makeReport(_ kind: ReportKind) async {
+        await jobs.use(session.place)
+        await tracking.use(session.place)
+        let p = session.profile
+        let input = ReportInput(
+            name: session.isPreview ? Sample.name : (p?.name ?? session.displayEmail ?? "You"),
+            role: p?.selectedRoles?.first ?? jobs.jobs.first?.role ?? "Film crew",
+            place: session.isPreview ? "Toronto, Ontario" : [p?.province].compactMap { $0 }.joined().ifBlank("Canada"),
+            jobs: jobs.jobs, entries: ledger.entries, stats: ledger.stats,
+            progress: tracking.tracks.map { TrackProgress(track: $0, jobs: jobs.jobs, engine: store.engine) },
+            isPreview: session.isPreview)
+        making = "Starting your \(kind.rawValue)…"
+        defer { making = nil }
+        do {
+            reportURL = try await Reports.make(kind, input) { step in making = step }
+        } catch {
+            ledger.error = "Couldn't make the \(kind.rawValue): \(error.localizedDescription)"
+        }
+    }
+
     private func csvFile() -> URL {
         let url = URL.temporaryDirectory.appending(path: "CineArch Wrap Wallet.csv")
         try? ledger.csv().write(to: url, atomically: true, encoding: .utf8)
@@ -166,6 +212,10 @@ struct LedgerView: View {
 }
 
 /// The note at the top of the Wallet: how many entries are Green Lit (backed with proof).
+private extension String {
+    func ifBlank(_ s: String) -> String { trimmingCharacters(in: .whitespaces).isEmpty ? s : self }
+}
+
 struct GreenLitNotice: View {
     let entries: [LedgerEntry]
     var showMissing: () -> Void
@@ -230,6 +280,9 @@ struct LedgerEntrySheet: View {
     @State private var description = ""
     @State private var date = Date()
     @State private var jobId: UUID?
+    @State private var proof: UploadFile?        // the receipt read to fill this in; attached on save
+    @State private var reading = false
+    @State private var readNote: String?
     @State private var saving = false
     @State private var error: String?
 
@@ -245,6 +298,21 @@ struct LedgerEntrySheet: View {
                 }
                 .pickerStyle(.segmented)
                 .listRowBackground(Color.clear)
+
+                Section {
+                    if let proof {
+                        Label(proof.ext == "pdf" ? "Receipt scanned · attached as proof" : "Receipt photo · attached as proof", systemImage: "checkmark.seal.fill")
+                            .foregroundStyle(Color.green)
+                    }
+                    if reading { HStack { ProgressView(); Text("Reading it…").foregroundStyle(.secondary) } }
+                    DocumentPicker(scanLabel: proof == nil ? "Scan with camera" : "Scan again") { files in
+                        Task { await read(files[0]) }
+                    } failed: { error = $0 }
+                } header: {
+                    Text(isIncome ? "Fill it in from an invoice or pay stub" : "Fill it in from a receipt")
+                } footer: {
+                    Text(readNote ?? "CineArch reads the store, total, GST/HST and date on your phone, and keeps the file as proof (Green Lit).")
+                }
 
                 if isIncome && !jobs.jobs.isEmpty {
                     Section {
@@ -280,7 +348,7 @@ struct LedgerEntrySheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Next: proof") { Task { await save() } }
+                    Button(proof == nil ? "Next: proof" : "Save") { Task { await save() } }
                         .disabled(amount == nil || description.trimmed.isEmpty || saving)
                 }
             }
@@ -293,6 +361,25 @@ struct LedgerEntrySheet: View {
             }
             .task { if jobs.jobs.isEmpty { await jobs.load() } }
         }
+    }
+
+    /// Reads the receipt on the phone and fills in what it finds. Fields it can't read stay as they are.
+    private func read(_ file: UploadFile) async {
+        proof = file
+        reading = true
+        defer { reading = false }
+        let r = DocumentReader.receipt(lines: await Documents.text(file.pages))
+        var filled = [String]()
+        if let v = r.vendor, description.trimmed.isEmpty { description = v; filled.append("store") }
+        if let total = r.total {
+            let tax = r.tax ?? 0
+            amountText = String(format: "%.2f", total - tax); filled.append("amount")
+            if r.tax != nil { taxText = String(format: "%.2f", tax); filled.append("GST/HST") }
+        }
+        if let d = r.date.flatMap(Date.init(isoDay:)) { date = d; filled.append("date") }
+        readNote = filled.isEmpty
+            ? "Couldn't read the details on this one. It's still attached as proof; fill in the rest below."
+            : "Read the \(ListFormatter.localizedString(byJoining: filled)) from it. Check each one before you save."
     }
 
     private func money(_ label: String, _ text: Binding<String>, placeholder: String) -> some View {
@@ -313,7 +400,13 @@ struct LedgerEntrySheet: View {
                                 amountBeforeTax: amount, taxAmount: tax, totalAmount: amount + tax,
                                 description: description.trimmed, dateIncurred: date.isoDay)
         do {
-            onSaved(try await ledger.add(entry))
+            let saved = try await ledger.add(entry)
+            if let proof {
+                do { try await ledger.attachProof(to: saved, file: proof) }
+                catch { onSaved(saved) }       // saved, but the proof didn't upload: ask again
+            } else {
+                onSaved(saved)
+            }
             dismiss()
         } catch {
             self.error = "Couldn't save: \(error.localizedDescription)"

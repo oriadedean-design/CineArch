@@ -110,6 +110,25 @@ export const Auth = ({ onLogin, onBack, initialAgentMode = false }: { onLogin: (
               </span>
             </button>
 
+            {import.meta.env.VITE_APPLE_SIGN_IN === 'on' && (
+              <button
+                type="button"
+                onClick={async () => {
+                  try { setLoading(true); await api.auth.loginWithApple(); }
+                  catch (err: any) { alert("Sign in with Apple didn't work: " + err.message); setLoading(false); }
+                }}
+                disabled={loading}
+                className="w-full h-24 border border-white/10 glass-ui hover:border-accent hover:bg-accent/5 transition-all flex items-center justify-center gap-6 group disabled:opacity-30 active:scale-95"
+              >
+                <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white" aria-hidden="true">
+                  <path d="M16.37 12.68c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.54 2.66-.39 6.6 1.1 8.76.73 1.06 1.6 2.24 2.73 2.2 1.1-.04 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.41 1.2-2.47-.03-.01-2.3-.88-2.32-3.5zM14.2 6.21c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.64-1.05 1.67-.92 2.66.97.08 1.96-.49 2.56-1.21z"/>
+                </svg>
+                <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80 group-hover:text-white transition-colors">
+                  {isLogin ? "Sign in with Apple" : "Sign up with Apple"}
+                </span>
+              </button>
+            )}
+
             <div className="flex items-center gap-6 opacity-20">
               <div className="h-px bg-white flex-1" />
               <span className="text-xs uppercase font-black tracking-[0.5em] text-white">OR USE ACCESS KEY</span>

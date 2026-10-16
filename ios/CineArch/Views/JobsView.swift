@@ -5,25 +5,35 @@ struct JobsView: View {
     @Environment(Session.self) private var session
     @Environment(JobsStore.self) private var jobs
     @State private var showAuth = false
+    @State private var showBulk = false
+    @State private var showPlans = false
+    @State private var proofFor: Job?
 
     var body: some View {
         NavigationStack {
             Group {
                 if !session.isSignedIn {
-                    ContentUnavailableView {
-                        Label("Your Slate", systemImage: "list.bullet.rectangle")
-                    } description: {
-                        Text("Sign in to mark the slate on every day you work, see your hours and earnings, and pick up where you left off on the website.")
-                    } actions: {
-                        Button("Sign in or create account") { showAuth = true }.buttonStyle(.borderedProminent).foregroundStyle(.black)
-                    }
+                    LookAroundSlate { showAuth = true }
                 } else {
                     list
                 }
             }
             .navigationTitle("Your Slate")
             .previewBadge()
-            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to see your slate.") {} }
+            .toolbar {
+                if session.isSignedIn {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { if session.isPremium { showBulk = true } else { showPlans = true } } label: {
+                            Label("Pay stubs in bulk", systemImage: session.isPremium ? "square.stack.3d.up" : "lock")
+                        }
+                        .accessibilityLabel(session.isPremium ? "Add jobs from pay stubs in bulk" : "Pay stubs in bulk is A-List Pro")
+                    }
+                }
+            }
+            .navigationDestination(isPresented: $showPlans) { PlansView() }
+            .sheet(isPresented: $showBulk) { BulkPayStubsView() }
+            .sheet(item: $proofFor) { JobProofSheet(job: $0) }
+            .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in or create an account to mark the slate on every day you work.") {} }
             .task(id: session.identity) {
                 await jobs.use(session.place)
             }
@@ -50,7 +60,13 @@ struct JobsView: View {
                 }
             }
             Section {
-                ForEach(jobs.jobs) { j in JobRow(job: j) }
+                ForEach(jobs.jobs) { j in
+                    if session.isPremium {
+                        Button { proofFor = j } label: { JobRow(job: j, showProof: true) }.buttonStyle(.plain)
+                    } else {
+                        JobRow(job: j)
+                    }
+                }
                     .onDelete { idx in
                         let doomed = idx.map { jobs.jobs[$0] }
                         Task { for j in doomed { await jobs.delete(j) } }
@@ -73,9 +89,15 @@ struct JobsView: View {
 
 struct JobRow: View {
     let job: Job
+    var showProof = false
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
+                if showProof && job.status != "TENTATIVE" {
+                    Image(systemName: job.isGreenLit ? "checkmark.square.fill" : "square.dashed")
+                        .foregroundStyle(job.isGreenLit ? Color.green : .secondary)
+                        .accessibilityLabel(job.isGreenLit ? "Green Lit" : "Needs a pay stub")
+                }
                 Text(job.productionName).font(.headline)
                 Spacer()
                 Text((job.grossEarnings ?? 0).money).monospacedDigit()
@@ -92,5 +114,6 @@ struct JobRow: View {
             .font(.caption).foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
+        .contentShape(Rectangle())
     }
 }

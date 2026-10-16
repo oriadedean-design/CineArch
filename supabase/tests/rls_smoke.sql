@@ -103,6 +103,13 @@ begin
   if not public.has_pro() then raise exception 'FAIL: has_pro() false for a Pro account'; end if;
   v_checks := v_checks + 1;
 
+  -- Upload limits: 5 GB per account, nothing used yet.
+  if (public.my_documents_usage()->>'limit_bytes')::bigint <> 5368709120
+     or (public.my_documents_usage()->>'used_bytes')::bigint <> 0 then
+    raise exception 'FAIL: my_documents_usage %', public.my_documents_usage();
+  end if;
+  v_checks := v_checks + 1;
+
   -- Job with only the fields the app's form sends (no company_name)
   insert into public.jobs (user_id, production_name, role, start_date, total_hours, gross_earnings, client_id)
   values (v_bob, 'Smoke Feature', 'Camera Trainee', current_date, 12, 900, 'device-1')
@@ -257,6 +264,11 @@ begin
   if v_n <> 0 then raise exception 'FAIL: anonymous visitor can read profiles'; end if;
   v_checks := v_checks + 2;
   execute 'reset role';
+
+  execute 'reset role';
+  select file_size_limit into v_num from storage.buckets where id = 'documents';
+  if v_num is distinct from 1048576 then raise exception 'FAIL: documents bucket allows % bytes per file, expected 1 MB', v_num; end if;
+  v_checks := v_checks + 1;
 
   raise exception 'CINEARCH_TESTS_PASSED: % checks (all test data rolled back)', v_checks;
 end;

@@ -17,6 +17,11 @@ enum DataPlace: Equatable {
     }
 }
 
+/// Proof uploads keep receipts and pay stubs online, so they come with A-List Pro.
+struct ProOnly: LocalizedError {
+    var errorDescription: String? { "Keeping proof comes with A-List Pro." }
+}
+
 /// Files in Application Support/CineArch/<user id>/, one JSON file per kind.
 enum OnDevice {
     private static func folder(_ user: UUID) -> URL {

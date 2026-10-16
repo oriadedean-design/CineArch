@@ -151,16 +151,33 @@ final class LedgerStore {
         return saved
     }
 
-    /// Backs an entry with proof: the file goes to documents/<user>/proof/, then the entry points at it.
-    func attachProof(to entry: LedgerEntry, data: Data, fileExtension ext: String, contentType: String) async throws {
+    /// Documents stored online, for "X MB of 5 GB used".
+    private(set) var usedBytes: Int64 = 0
+
+    struct StorageFull: LocalizedError {
+        var errorDescription: String? { "You've used your 5 GB of documents. Delete some old proof to make room." }
+    }
+
+    func loadUsage() async {
+        guard !isPreview else { return }
+        struct Usage: Decodable { let used_bytes: Int64 }
+        if let u: Usage = try? await Backend.client.rpc("my_documents_usage").execute().value { usedBytes = u.used_bytes }
+    }
+
+    /// Backs an entry with proof: the file (already under 1 MB) goes to documents/<user>/proof/,
+    /// then the entry points at it.
+    func attachProof(to entry: LedgerEntry, file: UploadFile) async throws {
         guard let id = entry.id else { return }
         if isPreview { setProof(id, "preview/proof/\(id)"); return }
         guard let user = try? await Backend.client.auth.session.user.id else { throw SignInNeeded() }
-        let path = "\(user.uuidString.lowercased())/proof/\(id.uuidString.lowercased())-\(Int(Date().timeIntervalSince1970)).\(ext)"
-        try await Backend.client.storage.from("documents").upload(path, data: data, options: FileOptions(contentType: contentType))
+        await loadUsage()
+        guard usedBytes + Int64(file.data.count) <= Documents.accountLimitBytes else { throw StorageFull() }
+        let path = "\(user.uuidString.lowercased())/proof/\(id.uuidString.lowercased())-\(Int(Date().timeIntervalSince1970)).\(file.ext)"
+        try await Backend.client.storage.from("documents").upload(path, data: file.data, options: FileOptions(contentType: file.contentType))
         try await Backend.client.from("finance_transactions").update(["proof_path": path]).eq("id", value: id).execute()
         if let old = entry.proofPath { _ = try? await Backend.client.storage.from("documents").remove(paths: [old]) }
         setProof(id, path)
+        await loadUsage()
     }
 
     /// A link to look at an entry's proof, good for 5 minutes.

@@ -102,6 +102,16 @@ final class Session {
         return r.session != nil
     }
 
+    /// Sign in with Apple (off until Features.signInWithApple; see docs/sign-in-with-apple.md).
+    /// Apple shares the name only the first time, so it's saved to the profile then.
+    func signInWithApple(idToken: String, nonce: String, name: PersonNameComponents?) async throws {
+        try await Backend.client.auth.signInWithIdToken(credentials: OpenIDConnectCredentials(provider: .apple, idToken: idToken, nonce: nonce))
+        if let name, let full = Optional(PersonNameComponentsFormatter().string(from: name)), !full.isEmpty,
+           let id = try? await Backend.client.auth.session.user.id {
+            _ = try? await Backend.client.from("profiles").update(["name": full]).eq("id", value: id).is("name", value: nil).execute()
+        }
+    }
+
     func sendPasswordReset(email: String) async throws {
         try await Backend.client.auth.resetPasswordForEmail(email)
     }
