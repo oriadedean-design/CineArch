@@ -2,6 +2,10 @@ import Foundation
 
 // How work counts toward a union tier, the same rules as services/career.ts.
 public enum Eligibility {
+    /// ACTRA members who joined as AABP before this date may count up to 800 earlier background hours.
+    public static let actraLegacyJoin = "2012-10-31"
+    public static let actraLegacyHours = 800.0
+
     public static func quarterHours(_ h: Double) -> Double { (h * 4).rounded() / 4 }
 
     /// ACTRA Toronto background hours for one day: at least the 8 you were paid for;

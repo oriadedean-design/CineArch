@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
 import { DeleteAccount } from '../components/DeleteAccount';
 import { PlanCard } from '../components/PlanCard';
+import { UnionGoals } from '../components/UnionGoals';
+import { Vault } from '../components/Vault';
 import { User, CanadianProvince } from '../types';
 import { Heading, Text, Button, Input, Select, Card, Badge } from '../components/ui';
 import { Shield, User as UserIcon, Lock, Landmark, FileText, Trash2, Users, XCircle } from 'lucide-react';
@@ -31,7 +33,7 @@ export const SettingsIndividual = () => {
       try {
         const u = await api.auth.updateUser(profileForm);
         setUser(u);
-        alert("Profile Canonical Synchronized.");
+        alert("Saved.");
       } catch (e: any) {
         alert(`Save failed: ${e.message}`);
       }
@@ -53,7 +55,7 @@ export const SettingsIndividual = () => {
   };
 
   const handlePurge = async () => {
-    if (!confirm('Purge Drive?')) return;
+    if (!confirm('Clear all your jobs, union goals and documents? This can\'t be undone.')) return;
     try {
       await api.system.resetData();
       window.location.reload();
@@ -63,7 +65,7 @@ export const SettingsIndividual = () => {
   };
 
   const handleRevokeAgency = async () => {
-    if (window.confirm("CRITICAL ACTION: Revoking agency access will immediately disconnect your ledger from their command terminal. Proceed?")) {
+    if (window.confirm("Unlink your agency? They will stop seeing your jobs and union progress right away.")) {
       await api.auth.revokeAgency();
       const u = await api.auth.getUser();
       setUser(u);
@@ -142,6 +144,8 @@ export const SettingsIndividual = () => {
               <Button onClick={handleSave} className="h-16 px-12">Save</Button>
             </div>
           </div>
+          <UnionGoals />
+          <Vault user={user} />
           <DeleteAccount />
         </main>
       </div>

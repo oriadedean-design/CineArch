@@ -76,6 +76,25 @@ describe('ACTRA Toronto background (AABP)', () => {
     ], { tier: route, today });
     expect(p.current).toBe(33 + 8 + 9.5);
   });
+
+  it('counts background hours from the AABP since date', () => {
+    const since: UnionTier = { ...route, startLabel: 'AABP since' };
+    const jobs = [
+      bg({ startDate: '2026-01-10', daysWorked: 10, hoursPerDay: 9, totalHours: 80 }),   // before joining: 10 × 8
+      bg({ startDate: '2026-06-01', daysWorked: 5, hoursPerDay: 12, totalHours: 55 }),   // after: 5 × 11
+    ];
+    expect(trackProgress({ ...actra(since), countsFrom: '2026-05-01' }, jobs, { tier: since, today }).current).toBe(55);
+    expect(trackProgress(actra(since), jobs, { tier: since, today }).current).toBe(80 + 55);   // no date yet: everything
+  });
+
+  it('lets AABP members who joined before October 31, 2012 count up to 800 earlier hours', () => {
+    const since: UnionTier = { ...route, startLabel: 'AABP since' };
+    const jobs = [
+      bg({ startDate: '2011-01-03', daysWorked: 120, hoursPerDay: 8, totalHours: 960 }),  // 960 before joining → 800
+      bg({ startDate: '2013-02-01', daysWorked: 10, hoursPerDay: 8, totalHours: 80 }),
+    ];
+    expect(trackProgress({ ...actra(since), countsFrom: '2012-06-01' }, jobs, { tier: since, today }).current).toBe(880);
+  });
 });
 
 describe('assessCareer', () => {

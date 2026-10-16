@@ -81,6 +81,27 @@ begin
   exception when insufficient_privilege then v_checks := v_checks + 1;
   end;
 
+  -- Wrap Wallet and the Vault are A-List Pro: a free account can't add to them.
+  begin
+    insert into public.finance_transactions (user_id, type, date_incurred, description, category, amount_before_tax, tax_amount, total_amount)
+    values (v_bob, 'INCOME', current_date, 'Free plan', 'Wages', 1, 0, 1);
+    raise exception 'FAIL: free account added a ledger entry';
+  exception when insufficient_privilege then v_checks := v_checks + 1;
+  end;
+  begin
+    insert into public.residency_documents (user_id, type, file_name, storage_path) values (v_bob, 'LEASE', 'x.pdf', v_bob || '/x.pdf');
+    raise exception 'FAIL: free account added a Vault document';
+  exception when insufficient_privilege then v_checks := v_checks + 1;
+  end;
+
+  -- Upgrade Bob (server-side, as the payment webhook would), then carry on as Bob.
+  execute 'reset role';
+  update public.profiles set is_premium = true, plan = 'pro' where id = v_bob;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_bob, 'email', 'bob.smoke@cinearch.test', 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+  if not public.has_pro() then raise exception 'FAIL: has_pro() false for a Pro account'; end if;
+  v_checks := v_checks + 1;
+
   insert into public.finance_transactions (user_id, type, date_incurred, description, category, amount_before_tax, tax_amount, total_amount, deductible_amount)
   values
     (v_bob, 'INCOME',  current_date, 'Smoke pay', 'Wages', 1000, 50, 1050, null),

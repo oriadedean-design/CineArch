@@ -99,7 +99,7 @@ struct TrackRow: View {
             }
             ProgressView(value: progress.fraction).tint(Theme.accent)
             HStack {
-                Text("\(t.format(progress.current)) of \(t.format(t.targetValue)) \(t.unit)\(progress.windowMonths.map { " in \($0) months" } ?? "")")
+                Text("\(t.format(progress.current)) of \(t.format(t.targetValue)) \(t.unit)\(progress.windowMonths.map { " in \($0) months" } ?? "")\(t.countsFrom.map { " since \($0)" } ?? "")")
                 Spacer()
                 Text(progress.remaining > 0 ? "\(t.format(progress.remaining)) to go" : "Ready to apply!")
                     .foregroundStyle(progress.remaining > 0 ? Color.secondary : Theme.accent)
@@ -121,6 +121,8 @@ struct TrackUnionSheet: View {
     @State private var unionId = ""
     @State private var tierName = ""
     @State private var bankedText = ""
+    @State private var since = Date()
+    @State private var hasSince = false
     @State private var saving = false
     @State private var error: String?
 
@@ -161,6 +163,14 @@ struct TrackUnionSheet: View {
                     } footer: {
                         Text("Union-set work from before you started logging in CineArch.")
                     }
+                    if let label = tier.startLabel {
+                        Section {
+                            Toggle(label, isOn: $hasSince)
+                            if hasSince { DatePicker("Date", selection: $since, in: ...Date(), displayedComponents: .date) }
+                        } footer: {
+                            Text("Only work on or after this date counts. Joined before October 31, 2012? Up to 800 earlier hours count too.")
+                        }
+                    }
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
@@ -177,6 +187,7 @@ struct TrackUnionSheet: View {
                 unionId = existing.unionTypeId
                 tierName = existing.tierLabel
                 bankedText = existing.startingValue > 0 ? existing.startingValue.formatted(.number.grouping(.never)) : ""
+                if let d = existing.countsFrom.flatMap(Date.init(isoDay:)) { since = d; hasSince = true }
             }
             .onChange(of: unionId) { if existing == nil || unionId != existing?.unionTypeId { tierName = union?.tiers.first?.name ?? "" } }
         }
@@ -189,7 +200,8 @@ struct TrackUnionSheet: View {
         let banked = Double(bankedText.replacingOccurrences(of: ",", with: ".")) ?? 0
         do {
             try await tracking.save(TrackedUnion(unionTypeId: union.id, unionName: union.name, tierLabel: tier.name,
-                                                 targetType: tier.targetType, targetValue: tier.targetValue, startingValue: banked))
+                                                 targetType: tier.targetType, targetValue: tier.targetValue, startingValue: banked,
+                                                 countsFrom: tier.startLabel != nil && hasSince ? since.isoDay : nil))
             dismiss()
         } catch {
             self.error = "Couldn't save: \(error.localizedDescription)"

@@ -185,6 +185,7 @@ const toTracking = (t: TrackingRow): UserUnionTracking => ({
   targetType: t.target_type as UserUnionTracking['targetType'],
   targetValue: t.target_value,
   startingValue: t.starting_value,
+  countsFrom: t.counts_from ?? undefined,
 });
 
 const toDocument = (d: DocumentRow): ResidencyDocument => ({
@@ -551,6 +552,7 @@ export const api = {
         target_type: t.targetType,
         target_value: t.targetValue,
         starting_value: t.startingValue || 0,
+        counts_from: t.countsFrom ?? null,
       }));
       const { error } = await supabase.from('union_tracking').upsert(rows, { onConflict: 'user_id,union_type_id' });
       if (error) throw error;

@@ -80,6 +80,7 @@ export interface UnionTier {
   roleIds?: string[];            // only jobs in these roles count (empty = any)
   windowMonths?: number | null;  // only work in the last N months counts
   hoursRule?: 'actra_background' | null;
+  startLabel?: string | null;    // asks when counting starts, e.g. 'AABP since'
   initiationFee?: number;
   annualDues?: number;
   requiredCertificates?: string[];
@@ -127,6 +128,7 @@ export interface UserUnionTracking {
   targetType: 'HOURS' | 'DAYS' | 'CREDITS' | 'EARNINGS';
   targetValue: number;
   startingValue: number;
+  countsFrom?: string;           // YYYY-MM-DD; only work on or after it counts (tiers with a startLabel)
 }
 
 export interface Job {

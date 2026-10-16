@@ -43,6 +43,7 @@ public struct Union: Codable, Sendable, Identifiable, Hashable {
         public var roleIds: [String]?        // only jobs in these roles count (empty = any)
         public var windowMonths: Int?        // only work in the last N months counts
         public var hoursRule: String?        // "actra_background"
+        public var startLabel: String?       // asks when counting starts, e.g. "AABP since"
     }
     public struct Requirement: Codable, Sendable, Hashable {
         public var kind: String
