@@ -6,6 +6,8 @@ import { Heading, Text, Card, Badge, Button, ProgressBar } from '../components/u
 import { ArrowUpRight, Landmark, Radar, BookOpen, HelpCircle, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ComingUp, IncomeChart, JobTimeline } from '../components/WrapOverview';
+import { ProNudge } from '../components/ProNudge';
+import { PLANS } from '../types';
 import clsx from 'clsx';
 
 const DashStat = ({ label, value, subtext, highlight = false }: { label: string, value: string, subtext?: string, highlight?: boolean }) => (
@@ -140,7 +142,12 @@ export const DashboardIndividual = () => {
 
       <JobTimeline jobs={jobs} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-        <IncomeChart jobs={jobs} showGSTLine={!!user.isPremium} />
+        <div className="space-y-4">
+          <IncomeChart jobs={jobs} showGSTLine={!!user.isPremium} />
+          <ProNudge id="gst-line" user={user}
+            title={`You've earned ${jobs.filter(j => j.status !== 'TENTATIVE' && j.startDate.startsWith(String(new Date().getFullYear()))).reduce((s, j) => s + (j.grossEarnings || 0), 0).toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })} this year.`}
+            detail={`${PLANS.pro.label} tracks it against the $30k GST/HST line and estimates what to set aside for CPP and income tax.`} />
+        </div>
         <ComingUp jobs={jobs} tracks={tracking} />
       </div>
     </div>

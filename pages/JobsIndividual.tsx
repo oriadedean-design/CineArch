@@ -4,6 +4,8 @@ import { api } from '../services/storage';
 import { Job, User } from '../types';
 import { Heading, Text, Button, Badge } from '../components/ui';
 import { BulkJobUpload } from '../components/BulkJobUpload';
+import { ProNudge } from '../components/ProNudge';
+import { PLANS } from '../types';
 import { UploadCloud, Plus, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
@@ -38,6 +40,11 @@ export const JobsIndividual = () => {
           <Button onClick={() => navigate('/jobs/new')} className="bg-accent text-black h-14 md:h-16 px-8 md:px-12 font-black flex justify-center items-center">Mark the slate</Button>
         </div>
       </header>
+
+      {jobs.length >= 10 && (
+        <ProNudge id="ledger-reports" user={user} title={`${jobs.length} jobs on your Slate.`}
+          detail={`Your Ledger turns them into a PDF or spreadsheet for union applications and tax time. ${PLANS.pro.label}.`} />
+      )}
 
       {showIngest && <div className="animate-in slide-in-from-top-4 duration-500"><BulkJobUpload userId={user?.id || 'anon'} onComplete={() => { setShowIngest(false); refresh(); }} /></div>}
 

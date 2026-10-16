@@ -45,6 +45,10 @@ struct WrapView: View {
     private var notes: [Note] {
         session.isSignedIn ? Notes.make(jobs: jobs.jobs, tracks: tracking.tracks, engine: store.engine) : []
     }
+    private var earnedThisYear: Double {
+        let year = String(Calendar.current.component(.year, from: Date()))
+        return jobs.jobs.filter { $0.status != "TENTATIVE" && $0.startDate.hasPrefix(year) }.reduce(0) { $0 + ($1.grossEarnings ?? 0) }
+    }
     private var visibleNotes: [Note] { notes.filter { !Notes.dismissed.contains($0.id) } }
 
     private var signedOut: some View {
@@ -81,7 +85,12 @@ struct WrapView: View {
             }
 
             Section("Your year on set") { JobTimeline(jobs: jobs.jobs) }
-            Section("Income this year") { IncomeChart(jobs: jobs.jobs, showGSTLine: session.isPremium) }.id("income")
+            Section("Income this year") {
+                IncomeChart(jobs: jobs.jobs, showGSTLine: session.isPremium)
+                ProNudge(id: "gst-line", title: "You've earned \(earnedThisYear.money) this year.",
+                         detail: "\(Plan.pro.name) tracks it against the $30k GST/HST line and estimates what to set aside for CPP and income tax.")
+            }
+            .id("income")
             Section {
                 ComingUp(deadlines: store.engine.snapshot.deadlines ?? [], progress: progress, jobs: jobs.jobs, engine: store.engine)
             } header: { Text("Coming up") } footer: { Text("Tap a tax date to open its source.") }
