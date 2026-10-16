@@ -111,7 +111,29 @@ export interface EngineSnapshot {
   rateSchedules: { id: string; unionId: string; title: string; productionType: string | null; effectiveFrom: string; effectiveTo: string | null;
     columns: string[]; hourlyColumn: string | null; dailyColumn: string | null; rateUnit: string; sourceUrl: string | null; notes: string | null; roleIds: string[] }[];
   payRules: PayRule[];
+  deadlines?: Deadline[];
 }
+
+// Tax and union dates people plan around, each with its source (public.deadlines).
+export interface Deadline {
+  id: string;
+  title: string;
+  month: number;
+  day: number;
+  appliesTo: 'self_employed' | 'instalments' | 'gst_registered' | 'union_member';
+  province: string | null;
+  unionId: string | null;
+  detail: string | null;
+  sourceUrl: string;
+  checkedOn: string;
+}
+
+/** The next time a deadline comes round, today included (local dates). */
+export const nextOccurrence = (d: Pick<Deadline, 'month' | 'day'>, today = new Date()): Date => {
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const thisYear = new Date(today.getFullYear(), d.month - 1, d.day);
+  return thisYear >= start ? thisYear : new Date(today.getFullYear() + 1, d.month - 1, d.day);
+};
 
 export interface EngineUnion extends UnionType {
   scope?: string;
@@ -212,6 +234,7 @@ const build = (s: EngineSnapshot) => {
     departmentCoverage: indexCoverage(s.departmentCoverage),
     rateSchedules,
     payRules: s.payRules ?? [],
+    deadlines: s.deadlines ?? [],
   };
 };
 
@@ -296,6 +319,7 @@ export const resolveGuildForRole = (province: string, role: string, department: 
   resolveGuildsForRole(province, role, department, options)[0];
 
 export const getUnionSpec = (id: string): EngineUnion | null => engine.unionById.get(id) ?? null;
+export const getDeadlines = (): Deadline[] => engine.deadlines;
 export const getAllUnions = (): EngineUnion[] => engine.unions;
 export const getDepartments = (): IndustryDepartment[] => engine.departments;
 export const getRateSchedules = (unionId: string): RateSchedule[] => engine.rateSchedules.filter(s => s.unionId === unionId);

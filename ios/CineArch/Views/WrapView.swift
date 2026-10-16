@@ -50,7 +50,7 @@ struct WrapView: View {
         let unionHours = confirmed.filter(\.isUnion).reduce(0) { $0 + $1.totalHours }
         let otherHours = confirmed.filter { !$0.isUnion }.reduce(0) { $0 + $1.totalHours }
         let belowScale = confirmed.filter(\.isBelowScale).count
-        return List {
+        return ScrollViewReader { proxy in List {
             Section {
                 ForEach(progress) { p in
                     Button { editing = p.track } label: { TrackRow(progress: p) }
@@ -67,6 +67,13 @@ struct WrapView: View {
                 Text("Days on a union set count toward that union even before you're a member. When you mark the slate, pick the union whose set it was.")
             }
 
+            Section("Your year on set") { JobTimeline(jobs: jobs.jobs) }
+            Section("Income this year") { IncomeChart(jobs: jobs.jobs, showGSTLine: session.isPremium) }.id("income")
+            Section {
+                ComingUp(deadlines: store.engine.snapshot.deadlines ?? [], progress: progress, jobs: jobs.jobs, engine: store.engine)
+            } header: { Text("Coming up") } footer: { Text("Tap a tax date to open its source.") }
+            .id("coming-up")
+
             Section("Your hours") {
                 LabeledContent("On union sets", value: unionHours.hours)
                 LabeledContent("Non-union", value: otherHours.hours)
@@ -80,6 +87,9 @@ struct WrapView: View {
             if let e = tracking.error ?? jobs.error { Section { Text(e).foregroundStyle(.red) } }
         }
         .refreshable { await jobs.load(); await tracking.load() }
+        // `-cinearch.scrollTo coming-up` opens scrolled down (for screenshots).
+        .onAppear { if let id = UserDefaults.standard.string(forKey: "cinearch.scrollTo") { proxy.scrollTo(id, anchor: .top) } }
+        }
     }
 }
 

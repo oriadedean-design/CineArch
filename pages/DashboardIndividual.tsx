@@ -5,6 +5,7 @@ import { UserUnionTracking, Job, User } from '../types';
 import { Heading, Text, Card, Badge, Button, ProgressBar } from '../components/ui';
 import { ArrowUpRight, Landmark, Radar, BookOpen, HelpCircle, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ComingUp, IncomeChart, JobTimeline } from '../components/WrapOverview';
 import clsx from 'clsx';
 
 const DashStat = ({ label, value, subtext, highlight = false }: { label: string, value: string, subtext?: string, highlight?: boolean }) => (
@@ -135,6 +136,12 @@ export const DashboardIndividual = () => {
             <ArrowUpRight className="text-accent group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
           </div>
         </aside>
+      </div>
+
+      <JobTimeline jobs={jobs} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+        <IncomeChart jobs={jobs} showGSTLine={!!user.isPremium} />
+        <ComingUp jobs={jobs} tracks={tracking} />
       </div>
     </div>
   );
