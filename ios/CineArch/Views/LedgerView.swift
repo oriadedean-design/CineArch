@@ -1,4 +1,5 @@
 import SwiftUI
+import CineArchKit
 
 // Wrap Wallet, the business side: income and expenses this year, each backed with
 // proof (Green Lit), GST/HST and what to set aside. Same rows as the website's Wrap Wallet.
@@ -9,6 +10,7 @@ struct LedgerView: View {
     @State private var showAuth = false
     @State private var showNew = false
     @State private var showPlans = false
+    @State private var showBulk = false
     @State private var page = Page.entries
     @State private var filter = Filter.all
     @State private var proofFor: LedgerEntry?
@@ -43,7 +45,11 @@ struct LedgerView: View {
                         .disabled(ledger.entries.isEmpty)
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button { showNew = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add income or an expense")
+                        Menu {
+                            Button { showNew = true } label: { Label("Add one", systemImage: "plus") }
+                            Button { showBulk = true } label: { Label("Receipts in bulk", systemImage: "square.stack.3d.up") }
+                        } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("Add income or expenses")
                     }
                 } else if session.isSignedIn {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -57,6 +63,7 @@ struct LedgerView: View {
                 LedgerEntrySheet { justAdded = $0 }
             }
             .sheet(item: $proofFor) { ProofSheet(entry: $0) }
+            .sheet(isPresented: $showBulk) { BulkReceiptsView() }
             .task(id: session.identity) {
                 if session.isPreview { ledger.usePreview() }
                 else if session.isSignedIn && session.isPremium { await ledger.load() } else { ledger.clear() }
@@ -230,6 +237,9 @@ struct LedgerEntrySheet: View {
     @State private var description = ""
     @State private var date = Date()
     @State private var jobId: UUID?
+    @State private var proof: UploadFile?        // the receipt read to fill this in; attached on save
+    @State private var reading = false
+    @State private var readNote: String?
     @State private var saving = false
     @State private var error: String?
 
@@ -245,6 +255,21 @@ struct LedgerEntrySheet: View {
                 }
                 .pickerStyle(.segmented)
                 .listRowBackground(Color.clear)
+
+                Section {
+                    if let proof {
+                        Label(proof.ext == "pdf" ? "Receipt scanned · attached as proof" : "Receipt photo · attached as proof", systemImage: "checkmark.seal.fill")
+                            .foregroundStyle(Color.green)
+                    }
+                    if reading { HStack { ProgressView(); Text("Reading it…").foregroundStyle(.secondary) } }
+                    DocumentPicker(scanLabel: proof == nil ? "Scan with camera" : "Scan again") { files in
+                        Task { await read(files[0]) }
+                    } failed: { error = $0 }
+                } header: {
+                    Text(isIncome ? "Fill it in from an invoice or pay stub" : "Fill it in from a receipt")
+                } footer: {
+                    Text(readNote ?? "CineArch reads the store, total, GST/HST and date on your phone, and keeps the file as proof (Green Lit).")
+                }
 
                 if isIncome && !jobs.jobs.isEmpty {
                     Section {
@@ -280,7 +305,7 @@ struct LedgerEntrySheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Next: proof") { Task { await save() } }
+                    Button(proof == nil ? "Next: proof" : "Save") { Task { await save() } }
                         .disabled(amount == nil || description.trimmed.isEmpty || saving)
                 }
             }
@@ -293,6 +318,25 @@ struct LedgerEntrySheet: View {
             }
             .task { if jobs.jobs.isEmpty { await jobs.load() } }
         }
+    }
+
+    /// Reads the receipt on the phone and fills in what it finds. Fields it can't read stay as they are.
+    private func read(_ file: UploadFile) async {
+        proof = file
+        reading = true
+        defer { reading = false }
+        let r = DocumentReader.receipt(lines: await Documents.text(file.pages))
+        var filled = [String]()
+        if let v = r.vendor, description.trimmed.isEmpty { description = v; filled.append("store") }
+        if let total = r.total {
+            let tax = r.tax ?? 0
+            amountText = String(format: "%.2f", total - tax); filled.append("amount")
+            if r.tax != nil { taxText = String(format: "%.2f", tax); filled.append("GST/HST") }
+        }
+        if let d = r.date.flatMap(Date.init(isoDay:)) { date = d; filled.append("date") }
+        readNote = filled.isEmpty
+            ? "Couldn't read the details on this one. It's still attached as proof; fill in the rest below."
+            : "Read the \(ListFormatter.localizedString(byJoining: filled)) from it. Check each one before you save."
     }
 
     private func money(_ label: String, _ text: Binding<String>, placeholder: String) -> some View {
@@ -313,7 +357,13 @@ struct LedgerEntrySheet: View {
                                 amountBeforeTax: amount, taxAmount: tax, totalAmount: amount + tax,
                                 description: description.trimmed, dateIncurred: date.isoDay)
         do {
-            onSaved(try await ledger.add(entry))
+            let saved = try await ledger.add(entry)
+            if let proof {
+                do { try await ledger.attachProof(to: saved, file: proof) }
+                catch { onSaved(saved) }       // saved, but the proof didn't upload: ask again
+            } else {
+                onSaved(saved)
+            }
             dismiss()
         } catch {
             self.error = "Couldn't save: \(error.localizedDescription)"

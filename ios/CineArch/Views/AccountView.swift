@@ -1,10 +1,19 @@
 import SwiftUI
 import Supabase
+import AuthenticationServices
+import CryptoKit
+
+enum Features {
+    /// Sign in with Apple. Needs a paid Apple Developer account, the Sign in with Apple
+    /// capability, and Apple turned on in Supabase. Steps: docs/sign-in-with-apple.md.
+    static let signInWithApple = false
+}
 
 struct AccountView: View {
     @Environment(Session.self) private var session
     @Environment(JobsStore.self) private var jobs
     @Environment(TrackingStore.self) private var tracking
+    @Environment(LedgerStore.self) private var ledger
     @State private var showAuth = false
     @State private var showScene = false
     @AppStorage(Notes.remindersKey) private var reminders = false
@@ -75,11 +84,17 @@ struct AccountView: View {
                         }
                     }
 
-                    Section("Plan") {
+                    Section {
                         NavigationLink { PlansView() } label: {
                             LabeledContent("Your plan") {
                                 Text(session.isPremium ? Plan.pro.name : Plan.indie.name)
                                     .foregroundStyle(session.isPremium ? Theme.accent : .secondary)
+                            }
+                        }
+                        if session.isPremium {
+                            VStack(alignment: .leading, spacing: 6) {
+                                LabeledContent("Documents", value: "\(ByteCountFormatter.string(fromByteCount: ledger.usedBytes, countStyle: .file)) of 5 GB")
+                                SquareProgress(value: Double(ledger.usedBytes) / Double(Documents.accountLimitBytes))
                             }
                         }
                         NavigationLink { PlansView() } label: {
@@ -88,6 +103,8 @@ struct AccountView: View {
                                     .foregroundStyle(session.isPremium ? Theme.accent : .secondary)
                             }
                         }
+                    } header: { Text("Plan") } footer: {
+                        if session.isPremium { Text("Proof and receipts, up to 1 MB each and 5 GB in all.") }
                     }
                 } else {
                     Section {
@@ -141,6 +158,7 @@ struct AccountView: View {
                 async let a: Void = jobs.use(session.place)
                 async let b: Void = tracking.use(session.place)
                 _ = await (a, b)
+                if session.isPremium { await ledger.loadUsage() }
                 name = session.isPreview ? Sample.name : session.profile?.name ?? ""
                 goal = session.profile?.earningGoal.map { $0.formatted(.number.grouping(.never)) } ?? ""
             }
@@ -243,11 +261,24 @@ struct AuthSheet: View {
     @State private var password = ""
     @State private var working = false
     @State private var message: String?
+    @State private var nonce = ""
 
     var body: some View {
         NavigationStack {
             List {
                 Section { Text(reason).foregroundStyle(.secondary) }
+                if Features.signInWithApple {
+                    Section {
+                        SignInWithAppleButton(creating ? .signUp : .signIn) { request in
+                            nonce = Self.randomNonce()
+                            request.requestedScopes = [.fullName, .email]
+                            request.nonce = Self.sha256(nonce)
+                        } onCompletion: { result in Task { await apple(result) } }
+                        .signInWithAppleButtonStyle(.white)
+                        .frame(height: 50)
+                        .listRowInsets(EdgeInsets())
+                    } footer: { Text("Or use your email below.") }
+                }
                 Section {
                     if creating { TextField("Your name", text: $name).textContentType(.name) }
                     TextField("Email", text: $email)
@@ -285,6 +316,34 @@ struct AuthSheet: View {
         } catch {
             message = error.localizedDescription
         }
+    }
+
+    private func apple(_ result: Result<ASAuthorization, Error>) async {
+        switch result {
+        case .success(let auth):
+            guard let cred = auth.credential as? ASAuthorizationAppleIDCredential,
+                  let token = cred.identityToken.flatMap({ String(data: $0, encoding: .utf8) }) else {
+                message = "Apple didn't send a sign-in token. Try again."; return
+            }
+            working = true
+            defer { working = false }
+            do {
+                try await session.signInWithApple(idToken: token, nonce: nonce, name: cred.fullName)
+                dismiss()
+                onSignedIn()
+            } catch { message = error.localizedDescription }
+        case .failure(let error):
+            if (error as? ASAuthorizationError)?.code != .canceled { message = error.localizedDescription }
+        }
+    }
+
+    private static func randomNonce(length: Int = 32) -> String {
+        let chars = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        return String((0..<length).map { _ in chars[Int.random(in: 0..<chars.count)] })
+    }
+
+    private static func sha256(_ input: String) -> String {
+        SHA256.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
     private func reset() async {

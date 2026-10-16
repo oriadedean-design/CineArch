@@ -5,6 +5,8 @@ struct JobsView: View {
     @Environment(Session.self) private var session
     @Environment(JobsStore.self) private var jobs
     @State private var showAuth = false
+    @State private var showBulk = false
+    @State private var showPlans = false
 
     var body: some View {
         NavigationStack {
@@ -23,6 +25,18 @@ struct JobsView: View {
             }
             .navigationTitle("Your Slate")
             .previewBadge()
+            .toolbar {
+                if session.isSignedIn {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { if session.isPremium { showBulk = true } else { showPlans = true } } label: {
+                            Label("Pay stubs in bulk", systemImage: session.isPremium ? "square.stack.3d.up" : "lock")
+                        }
+                        .accessibilityLabel(session.isPremium ? "Add jobs from pay stubs in bulk" : "Pay stubs in bulk is A-List Pro")
+                    }
+                }
+            }
+            .navigationDestination(isPresented: $showPlans) { PlansView() }
+            .sheet(isPresented: $showBulk) { BulkPayStubsView() }
             .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in to see your slate.") {} }
             .task(id: session.identity) {
                 await jobs.use(session.place)

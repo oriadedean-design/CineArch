@@ -4,6 +4,7 @@ import { trackProgress } from './career';
 import { User, Job, UserUnionTracking, ResidencyDocument, AgencyInvite } from '../types';
 import { isDemoMode, DEMO_USER, DEMO_JOBS, DEMO_TRACKING } from './demo';
 import type { Tables, TablesInsert, TablesUpdate } from './database.types';
+import { fitUnder1MB, uploadError as toUploadError } from './uploads';
 
 /**
  * CINEARCH DATA BRIDGE (SUPABASE VERSION)
@@ -325,6 +326,16 @@ export const api = {
     },
 
     // 2c. Google OAuth Authentication
+    // Sign in with Apple: on only when VITE_APPLE_SIGN_IN=on (needs the Apple provider set up in Supabase, docs/sign-in-with-apple.md).
+    async loginWithApple() {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: { redirectTo: window.location.origin }
+      });
+      if (error) throw error;
+      return data;
+    },
+
     async loginWithGoogle() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -590,15 +601,16 @@ export const api = {
     },
 
     // Upload a file to the private bucket and record it. Path: <user_id>/<uuid>-<name>
-    upload: async (file: File, type: string): Promise<ResidencyDocument> => {
+    upload: async (chosen: File, type: string): Promise<ResidencyDocument> => {
       const userId = await requireUserId();
+      const file = await fitUnder1MB(chosen);
       const safeName = file.name.replace(/[^\w.\-]+/g, '_');
       const path = `${userId}/${crypto.randomUUID()}-${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from(DOCUMENTS_BUCKET)
         .upload(path, file, { contentType: file.type, upsert: false });
-      if (uploadError) throw uploadError;
+      if (uploadError) throw toUploadError(uploadError);
 
       const { data, error } = await supabase
         .from('residency_documents')

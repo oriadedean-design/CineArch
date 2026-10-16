@@ -30,6 +30,6 @@ rate cards for 4 unions, pay rules for 3).
 | Agency Command | Bulk upload for the whole roster | True | Website only. |
 | Agency Command | Priority support | Not built | No support channel or queue exists. |
 
-**Not on the list yet:** proof and Green Lit, camera scanning, and Sync Online (the website, iPad or another phone), Pro-only since 2026-10-17 and enforced in the database. These are Pro-only, but no A-List Pro benefit names them. Wording is Dean's call.
+**Not on the list yet:** proof and Green Lit, camera scanning, reading receipts and pay stubs (iPhone, on the phone), bulk receipts and pay stubs (iPhone), and Sync Online (the website, iPad or another phone), Pro-only since 2026-10-17 and enforced in the database. Uploads: 1 MB per file, 5 GB per account. These are Pro-only, but no A-List Pro benefit names them. Wording is Dean's call.
 
 Payments: no plan can be bought yet. Upgrade buttons say "Upgrades open soon".
