@@ -3,11 +3,12 @@ import CineArchKit
 
 // Many pay stubs at once: each is read on the phone and becomes a draft job on
 // your Slate (production, dates, hours, gross pay). You pick whose set it was and
-// check each one before saving. The stubs themselves aren't uploaded.
+// check each one before saving. Each stub is kept as the job's proof (Green Lit).
 struct BulkPayStubsView: View {
     @Environment(JobsStore.self) private var jobs
     @Environment(EngineStore.self) private var store
     @Environment(Session.self) private var session
+    @Environment(LedgerStore.self) private var ledger
     @Environment(\.dismiss) private var dismiss
 
     static let nonUnion = "non-union"
@@ -15,6 +16,7 @@ struct BulkPayStubsView: View {
     struct Draft: Identifiable {
         let id = UUID()
         var preview: UIImage?
+        var file: UploadFile?     // kept as the job's proof (Green Lit)
         var production = ""
         var role = ""
         var start = Date()
@@ -45,7 +47,7 @@ struct BulkPayStubsView: View {
                     } failed: { problems.append($0) }
                     if reading > 0 { HStack { ProgressView(); Text("Reading \(reading) pay stub\(reading == 1 ? "" : "s")…").foregroundStyle(.secondary) } }
                 } header: { Text("Add pay stubs") } footer: {
-                    Text("Up to 20 at a time. Read on your phone; the stubs stay on your phone.")
+                    Text("Up to 20 at a time. Read on your phone, then each stub is kept as that job's proof (Green Lit), up to 1 MB each.")
                 }
 
                 if !drafts.isEmpty {
@@ -108,7 +110,7 @@ struct BulkPayStubsView: View {
             reading += 1
             defer { reading -= 1 }
             let p = DocumentReader.payStub(lines: await Documents.text(file.pages))
-            var d = Draft(preview: file.pages.first)
+            var d = Draft(preview: file.pages.first, file: file)
             d.production = p.employer ?? ""
             d.role = session.profile?.selectedRoles?.first ?? ""
             if let s = p.startDate.flatMap(Date.init(isoDay:)) { d.start = s; d.end = s }
@@ -136,8 +138,13 @@ struct BulkPayStubsView: View {
                           totalHours: Double(d.hours) ?? 0, hourlyRate: Double(d.rate), daysWorked: days,
                           mealBreakMinutes: 0, overtimeHours: 0, grossEarnings: Double(d.gross),
                           province: session.profile?.province)
-            do { try await jobs.add(job) }
-            catch { problems.append("\(d.production): couldn't save (\(error.localizedDescription))."); left.append(d) }
+            do {
+                let saved = try await jobs.add(job)
+                if let file = d.file {
+                    do { try await jobs.attachProof(to: saved, file: file, ledger: ledger) }
+                    catch { problems.append("\(d.production): marked, but the pay stub didn't upload (\(error.localizedDescription)). Tap it on your Slate to try again.") }
+                }
+            } catch { problems.append("\(d.production): couldn't save (\(error.localizedDescription))."); left.append(d) }
             saving?.done += 1
         }
         saving = nil

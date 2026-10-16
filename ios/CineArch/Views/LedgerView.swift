@@ -1,4 +1,5 @@
 import SwiftUI
+import QuickLook
 import CineArchKit
 
 // Wrap Wallet, the business side: income and expenses this year, each backed with
@@ -11,6 +12,11 @@ struct LedgerView: View {
     @State private var showNew = false
     @State private var showPlans = false
     @State private var showBulk = false
+    @State private var making: String?           // progress while a report is made
+    @State private var reportURL: URL?
+    @Environment(JobsStore.self) private var jobs
+    @Environment(TrackingStore.self) private var tracking
+    @Environment(EngineStore.self) private var store
     @State private var page = Page.entries
     @State private var filter = Filter.all
     @State private var proofFor: LedgerEntry?
@@ -38,11 +44,17 @@ struct LedgerView: View {
             .toolbar {
                 if session.isSignedIn && session.isPremium {
                     ToolbarItem(placement: .topBarTrailing) {
-                        ShareLink(item: csvFile(), preview: SharePreview("Wrap Wallet spreadsheet")) {
-                            Image(systemName: "tablecells")
-                        }
-                        .accessibilityLabel("Export a spreadsheet")
-                        .disabled(ledger.entries.isEmpty)
+                        Menu {
+                            ForEach(ReportKind.allCases) { kind in
+                                Button { Task { await makeReport(kind) } } label: { Label(kind.rawValue + " (PDF)", systemImage: kind.icon) }
+                            }
+                            ShareLink(item: csvFile(), preview: SharePreview("Wrap Wallet spreadsheet")) {
+                                Label("Spreadsheet (CSV)", systemImage: "tablecells")
+                            }
+                            .disabled(ledger.entries.isEmpty)
+                        } label: { Image(systemName: "square.and.arrow.up") }
+                        .accessibilityLabel("Export a report or spreadsheet")
+                        .disabled(making != nil)
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
@@ -64,9 +76,21 @@ struct LedgerView: View {
             }
             .sheet(item: $proofFor) { ProofSheet(entry: $0) }
             .sheet(isPresented: $showBulk) { BulkReceiptsView() }
+            .quickLookPreview($reportURL)
+            .overlay {
+                if let making {
+                    VStack(spacing: 12) { ProgressView(); Text(making).font(.subheadline) }
+                        .padding(24).background(.regularMaterial)
+                }
+            }
             .task(id: session.identity) {
                 if session.isPreview { ledger.usePreview() }
                 else if session.isSignedIn && session.isPremium { await ledger.load() } else { ledger.clear() }
+                // `-cinearch.report tax|union|overview` makes that report on launch (for checking the layout).
+                if session.isPremium, let k = UserDefaults.standard.string(forKey: "cinearch.report"),
+                   let kind = ReportKind.allCases.first(where: { $0.rawValue.lowercased().hasPrefix(k) || (k == "overview" && $0 == .overview) }) {
+                    await makeReport(kind)
+                }
             }
         }
     }
@@ -156,6 +180,27 @@ struct LedgerView: View {
         }
     }
 
+    /// Builds a branded PDF on the phone, then opens it to look over, share or print.
+    private func makeReport(_ kind: ReportKind) async {
+        await jobs.use(session.place)
+        await tracking.use(session.place)
+        let p = session.profile
+        let input = ReportInput(
+            name: session.isPreview ? Sample.name : (p?.name ?? session.displayEmail ?? "You"),
+            role: p?.selectedRoles?.first ?? jobs.jobs.first?.role ?? "Film crew",
+            place: session.isPreview ? "Toronto, Ontario" : [p?.province].compactMap { $0 }.joined().ifBlank("Canada"),
+            jobs: jobs.jobs, entries: ledger.entries, stats: ledger.stats,
+            progress: tracking.tracks.map { TrackProgress(track: $0, jobs: jobs.jobs, engine: store.engine) },
+            isPreview: session.isPreview)
+        making = "Starting your \(kind.rawValue)…"
+        defer { making = nil }
+        do {
+            reportURL = try await Reports.make(kind, input) { step in making = step }
+        } catch {
+            ledger.error = "Couldn't make the \(kind.rawValue): \(error.localizedDescription)"
+        }
+    }
+
     private func csvFile() -> URL {
         let url = URL.temporaryDirectory.appending(path: "CineArch Wrap Wallet.csv")
         try? ledger.csv().write(to: url, atomically: true, encoding: .utf8)
@@ -173,6 +218,10 @@ struct LedgerView: View {
 }
 
 /// The note at the top of the Wallet: how many entries are Green Lit (backed with proof).
+private extension String {
+    func ifBlank(_ s: String) -> String { trimmingCharacters(in: .whitespaces).isEmpty ? s : self }
+}
+
 struct GreenLitNotice: View {
     let entries: [LedgerEntry]
     var showMissing: () -> Void

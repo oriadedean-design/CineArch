@@ -72,19 +72,27 @@ enum Documents {
 
     /// The text on the pages, top to bottom, read on the phone (English and French).
     static func text(_ pages: [UIImage]) async -> [String] {
-        var lines = [String]()
-        for page in pages {
-            guard let cg = page.cgImage else { continue }
-            let request = VNRecognizeTextRequest()
-            request.recognitionLevel = .accurate
-            request.recognitionLanguages = ["en-CA", "fr-CA"]
-            request.usesLanguageCorrection = true
-            try? VNImageRequestHandler(cgImage: cg, orientation: .init(page.imageOrientation)).perform([request])
-            lines += DocumentReader.lines((request.results ?? []).compactMap { o in
-                o.topCandidates(1).first.map { TextBox(text: $0.string, minX: o.boundingBox.minX, midY: o.boundingBox.midY, height: o.boundingBox.height) }
-            })
-        }
-        return lines
+        pages.flatMap { rows($0).map(\.text) }
+    }
+
+    /// The printed lines on one image, with where each sits (for annotating proof).
+    static func rows(_ page: UIImage) -> [TextRow] {
+        guard let cg = page.cgImage else { return [] }
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.recognitionLanguages = ["en-CA", "fr-CA"]
+        request.usesLanguageCorrection = true
+        try? VNImageRequestHandler(cgImage: cg, orientation: .init(page.imageOrientation)).perform([request])
+        return DocumentReader.rows((request.results ?? []).compactMap { o in
+            o.topCandidates(1).first.map {
+                TextBox(text: $0.string, minX: o.boundingBox.minX, midY: o.boundingBox.midY, height: o.boundingBox.height, width: o.boundingBox.width)
+            }
+        })
+    }
+
+    /// A stored proof file as one image (a PDF's first page).
+    static func image(fromProof data: Data, path: String) -> UIImage? {
+        path.lowercased().hasSuffix(".pdf") ? pdfPages(data).first : UIImage(data: data)
     }
 
     private static func pdfPages(_ data: Data) -> [UIImage] {

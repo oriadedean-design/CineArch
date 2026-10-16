@@ -28,26 +28,92 @@ public struct TextBox: Sendable {
     public var minX: Double
     public var midY: Double
     public var height: Double
-    public init(text: String, minX: Double, midY: Double, height: Double) {
-        self.text = text; self.minX = minX; self.midY = midY; self.height = height
+    public var width: Double
+    public init(text: String, minX: Double, midY: Double, height: Double, width: Double = 0) {
+        self.text = text; self.minX = minX; self.midY = midY; self.height = height; self.width = width
     }
 }
 
+/// A printed line on a photo: its text and the box around it (normalized, y bottom-up).
+public struct TextRow: Sendable, Equatable {
+    public var text: String
+    public var minX, minY, maxX, maxY: Double
+}
+
+/// What a report checks on a proof photo, against the person's own records.
+public struct ProofField: Sendable {
+    public enum Kind: Sendable { case money(Double), date(String), number(Double), name }
+    public var label: String
+    public var kind: Kind
+    public var record: String?        // as shown in "Your records"; nil for things the entry doesn't hold
+    public var keywords: [String]     // words on the line that make a match more likely (TOTAL, HST…)
+    public init(_ label: String, _ kind: Kind, record: String?, keywords: [String] = []) {
+        self.label = label; self.kind = kind; self.record = record; self.keywords = keywords
+    }
+}
+
+/// Where a field was found on the photo (if it was), and whether it matches the records.
+public struct ProofMark: Sendable, Equatable {
+    public var number: Int
+    public var label: String
+    public var onPhoto: String?       // the line as read; nil when not found
+    public var record: String?
+    public var matches: Bool
+    public var row: TextRow?
+}
+
 public enum DocumentReader {
+    /// The printed lines with their boxes, top to bottom (pieces on one line joined).
+    public static func rows(_ boxes: [TextBox]) -> [TextRow] {
+        var groups: [[TextBox]] = []
+        for b in boxes.sorted(by: { $0.midY > $1.midY }) {
+            if let last = groups.last?.first, abs(last.midY - b.midY) < max(last.height, b.height) * 0.5 {
+                groups[groups.count - 1].append(b)
+            } else {
+                groups.append([b])
+            }
+        }
+        return groups.map { g in
+            let s = g.sorted { $0.minX < $1.minX }
+            return TextRow(text: s.map(\.text).joined(separator: "  "),
+                           minX: s.map(\.minX).min() ?? 0, minY: s.map { $0.midY - $0.height / 2 }.min() ?? 0,
+                           maxX: s.map { $0.minX + $0.width }.max() ?? 0, maxY: s.map { $0.midY + $0.height / 2 }.max() ?? 0)
+        }
+    }
+
+    /// Finds each field on the photo's lines and says whether it matches the records.
+    /// A field that isn't found is reported as not found, never guessed.
+    public static func annotate(_ rows: [TextRow], _ fields: [ProofField], today: Date = Date()) -> [ProofMark] {
+        var used = Set<Int>()
+        return fields.enumerated().map { n, f in
+            let candidates = rows.indices.filter { i in
+                guard !used.contains(i) else { return false }
+                let line = rows[i].text
+                switch f.kind {
+                case .money(let v): return amounts(line).contains { abs($0 - v) < 0.005 }
+                case .number(let v): return numbers(line).contains { abs($0 - v) < 0.005 } && hasKeyword(line, f.keywords)
+                case .date(let iso): return dates(in: [line], today: today).contains(iso)
+                case .name: return isName(line)
+                }
+            }
+            // Prefer the line with the right word on it (TOTAL, not SUBTOTAL).
+            let pick = candidates.first { hasKeyword(rows[$0].text, f.keywords) && !rows[$0].text.uppercased().contains("SUB") } ?? candidates.first
+            if let i = pick { used.insert(i) }
+            let found = pick.map { rows[$0] }
+            let noted: Bool = if case .name = f.kind { true } else { false }
+            return ProofMark(number: n + 1, label: f.label, onPhoto: found?.text, record: f.record,
+                             matches: found != nil && !noted, row: found)
+        }
+    }
+
+    private static func hasKeyword(_ line: String, _ words: [String]) -> Bool {
+        words.isEmpty || words.contains { line.uppercased().contains($0) }
+    }
+
     /// Joins pieces that sit on the same printed line, left to right, and returns
     /// the lines top to bottom. ("HST" and "2.73" come back as two pieces when
     /// there's a gap between them.)
-    public static func lines(_ boxes: [TextBox]) -> [String] {
-        var rows: [[TextBox]] = []
-        for b in boxes.sorted(by: { $0.midY > $1.midY }) {
-            if let last = rows.last?.first, abs(last.midY - b.midY) < max(last.height, b.height) * 0.5 {
-                rows[rows.count - 1].append(b)
-            } else {
-                rows.append([b])
-            }
-        }
-        return rows.map { $0.sorted { $0.minX < $1.minX }.map(\.text).joined(separator: "  ") }
-    }
+    public static func lines(_ boxes: [TextBox]) -> [String] { rows(boxes).map(\.text) }
 
     // MARK: Receipts
 
@@ -131,7 +197,7 @@ public enum DocumentReader {
     }
 
     /// A line that reads like a business name: mostly letters, no amounts.
-    private static func isName(_ l: String) -> Bool {
+    static func isName(_ l: String) -> Bool {
         let letters = l.filter(\.isLetter).count
         return letters >= 3 && Double(letters) / Double(max(1, l.count)) > 0.6 && amounts(l).isEmpty
             && !["RECEIPT", "INVOICE", "FACTURE", "REÇU", "PAY STUB", "STATEMENT", "WELCOME"].contains { l.uppercased().contains($0) }
@@ -151,7 +217,7 @@ public enum DocumentReader {
         return nil
     }
 
-    private static func numbers(_ line: String) -> [Double] {
+    static func numbers(_ line: String) -> [Double] {
         guard let re = try? NSRegularExpression(pattern: #"\d+(?:[.,]\d+)?"#) else { return [] }
         let ns = line as NSString
         return re.matches(in: line, range: NSRange(location: 0, length: ns.length))

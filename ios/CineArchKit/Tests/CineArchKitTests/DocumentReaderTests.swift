@@ -62,3 +62,33 @@ struct TextLineTests {
         #expect(got == ["HST  2.73", "TOTAL  23.72"])
     }
 }
+
+struct AnnotateTests {
+    let today = ISO8601DateFormatter().date(from: "2026-10-17T12:00:00Z")!
+    func row(_ t: String, _ y: Double) -> TextRow { TextRow(text: t, minX: 0.1, minY: y - 0.02, maxX: 0.9, maxY: y + 0.02) }
+
+    @Test func findsEachFieldAndChecksIt() {
+        let rows = [row("VISTEK CAMERA STORE", 0.9), row("Sep 4, 2026  14:02", 0.85), row("SUBTOTAL  186.00", 0.5),
+                    row("HST 13%  24.18", 0.45), row("TOTAL  210.18", 0.4)]
+        let marks = DocumentReader.annotate(rows, [
+            ProofField("Store", .name, record: nil),
+            ProofField("Date", .date("2026-09-04"), record: "Sep 4, 2026"),
+            ProofField("GST/HST", .money(24.18), record: "$24.18", keywords: ["HST", "GST"]),
+            ProofField("Total", .money(210.18), record: "$210.18", keywords: ["TOTAL"]),
+        ], today: today)
+        #expect(marks.map(\.onPhoto) == ["VISTEK CAMERA STORE", "Sep 4, 2026  14:02", "HST 13%  24.18", "TOTAL  210.18"])
+        #expect(marks.map(\.matches) == [false, true, true, true])     // a store name is noted, not matched
+    }
+
+    @Test func saysWhenAFigureIsNotThere() {
+        let marks = DocumentReader.annotate([row("TOTAL  99.00", 0.4)], [ProofField("Total", .money(210.18), record: "$210.18", keywords: ["TOTAL"])], today: today)
+        #expect(marks[0].onPhoto == nil)
+        #expect(marks[0].matches == false)
+    }
+
+    @Test func rowsKeepTheirBoxes() {
+        let r = DocumentReader.rows([TextBox(text: "HST", minX: 0.1, midY: 0.5, height: 0.04, width: 0.1),
+                                     TextBox(text: "2.73", minX: 0.8, midY: 0.5, height: 0.04, width: 0.1)])
+        #expect(r == [TextRow(text: "HST  2.73", minX: 0.1, minY: 0.48, maxX: 0.9, maxY: 0.52)])
+    }
+}

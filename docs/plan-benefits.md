@@ -29,7 +29,7 @@ rate cards for 4 unions, pay rules for 3).
 | A-List Pro | Export your Wrap Wallet as a spreadsheet | True | Web and iPhone: a CSV with date, type, category, amounts, deductible and Green Lit status. |
 | A-List Pro | Union joining fees, ahead of time | Partly | Website Wallet shows the application fee for each union you track (17 of 25 unions have a fee on file). Not on iPhone. |
 | A-List Pro | The Vault: pay stubs and proof for your union application | Partly | Website Settings; locked to Pro in the database. Not on iPhone. |
-| A-List Pro | Your Ledger: PDF and CSV reports for applications and tax time | Partly | Website Reports, locked on screen for free accounts. Wrap Wallet exports a CSV spreadsheet on both apps; no PDF on iPhone. The page also shows hard-coded statuses ("Residency Check: Verified", "Voucher Sync", "Provenance Score") that are not checked. |
+| A-List Pro | Your Ledger: PDF and CSV reports for applications and tax time | True | iPhone: Union Pack, Tax Pack and Wrap Report PDFs, each with proof photos attached and annotated (where each figure was read, and whether it matches); CSV spreadsheet. Website: Reports page (locked for free) and CSV. The website Reports page still shows hard-coded statuses ("Residency Check: Verified", "Voucher Sync", "Provenance Score") that are not checked. |
 | Agency Command | Everything in A-List Pro | True | |
 | Agency Command | Your Roster: every client's days and progress in one place | True | Website only (Your Roster). |
 | Agency Command | Bulk upload for the whole roster | True | Website only. |

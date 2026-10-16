@@ -27,6 +27,7 @@ struct Job: Codable, Identifiable, Hashable {
     var ratePosition: String?
     var grossEarnings: Double?
     var province: String?
+    var proofPath: String?           // pay stub in documents/<user>/proof/; with it the job is Green Lit
 
     enum CodingKeys: String, CodingKey {
         case id, status, role, department, province
@@ -36,6 +37,7 @@ struct Job: Codable, Identifiable, Hashable {
         case hourlyRate = "hourly_rate", daysWorked = "days_worked", hoursPerDay = "hours_per_day"
         case mealBreakMinutes = "meal_break_minutes", overtimeHours = "overtime_hours"
         case unionMinimumRate = "union_minimum_rate", ratePosition = "rate_position", grossEarnings = "gross_earnings"
+        case proofPath = "proof_path"
     }
 
     /// Days worked: the logged day count, else the inclusive date span (as services/career.ts).
@@ -44,6 +46,8 @@ struct Job: Codable, Identifiable, Hashable {
         guard let endDate, let a = Date(isoDay: startDate), let b = Date(isoDay: endDate), b >= a else { return 1 }
         return (Calendar(identifier: .gregorian).dateComponents([.day], from: a, to: b).day ?? 0) + 1
     }
+
+    var isGreenLit: Bool { proofPath != nil }
 
     var isBelowScale: Bool {
         guard isUnion, let r = hourlyRate, let m = unionMinimumRate else { return false }
@@ -76,7 +80,9 @@ final class JobsStore {
         if newPlace != place { place = newPlace; jobs = []; error = nil }
         switch place {
         case .none: jobs = []
-        case .preview: jobs = Sample.jobs
+        case .preview:
+            // Sample union jobs come with a pay stub (Green Lit), to show the Union Pack.
+            jobs = Sample.jobs.map { var j = $0; if j.isUnion && j.status != "TENTATIVE" { j.proofPath = "preview/proof/\(j.productionName)" }; return j }
         case .phone, .online: await load()
         }
     }
@@ -112,7 +118,8 @@ final class JobsStore {
 
     private func persist(_ list: [Job], user: UUID) throws { try OnDevice.write(list, "jobs", user: user) }
 
-    func add(_ job: Job) async throws {
+    @discardableResult
+    func add(_ job: Job) async throws -> Job {
         var job = job
         switch place {
         case .none: throw SignInNeeded()
@@ -126,6 +133,7 @@ final class JobsStore {
         }
         jobs.insert(job, at: 0)
         jobs.sort { $0.startDate > $1.startDate }
+        return job
     }
 
     /// A pencilled-in job that happened: mark it worked so its days count.
@@ -143,6 +151,32 @@ final class JobsStore {
         } catch {
             self.error = "Couldn't confirm that job."
         }
+    }
+
+    /// Backs a job with its pay stub (A-List Pro): documents/<user>/proof/, then the job points at it.
+    func attachProof(to job: Job, file: UploadFile, ledger: LedgerStore) async throws {
+        guard let id = job.id else { return }
+        switch place {
+        case .preview: break
+        case .online(let user):
+            await ledger.loadUsage()
+            guard ledger.usedBytes + Int64(file.data.count) <= Documents.accountLimitBytes else { throw LedgerStore.StorageFull() }
+            let path = "\(user.uuidString.lowercased())/proof/job-\(id.uuidString.lowercased())-\(Int(Date().timeIntervalSince1970)).\(file.ext)"
+            try await Backend.client.storage.from("documents").upload(path, data: file.data, options: FileOptions(contentType: file.contentType))
+            try await Backend.client.from("jobs").update(["proof_path": path]).eq("id", value: id).execute()
+            if let old = job.proofPath { _ = try? await Backend.client.storage.from("documents").remove(paths: [old]) }
+            if let i = jobs.firstIndex(where: { $0.id == id }) { jobs[i].proofPath = path }
+            await ledger.loadUsage()
+            return
+        default: throw ProOnly()
+        }
+        if let i = jobs.firstIndex(where: { $0.id == id }) { jobs[i].proofPath = "preview/proof/\(id)" }
+    }
+
+    /// A link to look at a job's pay stub, good for 5 minutes.
+    func proofURL(_ job: Job) async -> URL? {
+        guard let path = job.proofPath, case .online = place else { return nil }
+        return try? await Backend.client.storage.from("documents").createSignedURL(path: path, expiresIn: 300)
     }
 
     /// The most recent day logged, for the slate's "same as last day".

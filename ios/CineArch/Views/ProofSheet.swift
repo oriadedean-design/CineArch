@@ -120,3 +120,60 @@ struct DocumentScanner: UIViewControllerRepresentable {
         func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFailWithError error: Error) { done(nil) }
     }
 }
+
+// Back a job with its pay stub (A-List Pro). With proof the job is Green Lit,
+// and the Union Pack attaches the stub, annotated.
+struct JobProofSheet: View {
+    @Environment(JobsStore.self) private var jobs
+    @Environment(LedgerStore.self) private var ledger
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+    let job: Job
+
+    @State private var uploading = false
+    @State private var error: String?
+
+    private var current: Job { jobs.jobs.first { $0.id == job.id } ?? job }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    LabeledContent("Dates", value: [current.startDate, current.endDate].compactMap { $0.flatMap(Date.init(isoDay:))?.formatted(date: .abbreviated, time: .omitted) }.joined(separator: " – "))
+                    LabeledContent("Set", value: current.unionName ?? "Non-union")
+                    LabeledContent("Hours", value: current.totalHours.hours)
+                    if let g = current.grossEarnings { LabeledContent("Gross", value: g.money) }
+                } header: { Text(current.productionName) }
+
+                Section {
+                    if current.isGreenLit {
+                        Label("Green Lit: backed with a pay stub", systemImage: "checkmark.seal.fill").foregroundStyle(Color.green)
+                        Button { Task { if let url = await jobs.proofURL(current) { openURL(url) } } } label: {
+                            Label("View pay stub", systemImage: "doc.text.magnifyingglass")
+                        }
+                    }
+                    DocumentPicker(scanLabel: current.isGreenLit ? "Replace: scan with camera" : "Scan with camera") { files in
+                        Task { await upload(files[0]) }
+                    } failed: { error = $0 }
+                    if uploading { HStack { ProgressView(); Text("Uploading…").foregroundStyle(.secondary) } }
+                } header: {
+                    Text(current.isGreenLit ? "Pay stub" : "Back it with a pay stub")
+                } footer: {
+                    Text("Up to 1 MB (photos are shrunk to fit). Green Lit jobs carry their pay stub into your Union Pack, highlighted where the dates, hours and pay appear.")
+                }
+                .disabled(uploading)
+                if let error { Section { Text(error).foregroundStyle(.red) } }
+            }
+            .navigationTitle(current.isGreenLit ? "Green Lit" : "Needs a pay stub")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(current.isGreenLit ? "Done" : "Later") { dismiss() } } }
+        }
+    }
+
+    private func upload(_ file: UploadFile) async {
+        uploading = true
+        defer { uploading = false }
+        do { try await jobs.attachProof(to: current, file: file, ledger: ledger); error = nil }
+        catch { self.error = "Couldn't upload: \(error.localizedDescription)" }
+    }
+}
