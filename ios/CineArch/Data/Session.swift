@@ -91,6 +91,15 @@ final class Session {
     }
 
     /// One profile field changed from Account (name, earning goal); `.null` clears it.
+    /// The agency managing this account (Agency Mode), for "booked by" on jobs.
+    private(set) var agency: (id: UUID, name: String)?
+    func loadAgency() async {
+        guard user != nil, !isPreview else { agency = isPreview ? (UUID(), "Northstar Talent") : nil; return }
+        struct Row: Decodable { let id: UUID; let name: String?; let organization_name: String? }
+        let rows: [Row]? = try? await Backend.client.rpc("my_agency").execute().value
+        agency = rows?.first.map { ($0.id, $0.organization_name ?? $0.name ?? "Your agency") }
+    }
+
     func saveProfileField(_ column: String, _ value: AnyJSON) async throws {
         guard let id = user?.id else { throw SignInNeeded() }
         try await Backend.client.from("profiles").update([column: value]).eq("id", value: id).execute()

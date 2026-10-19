@@ -133,7 +133,7 @@ struct OnboardingView: View {
                 HStack {
                     Text("Their commission")
                     Spacer()
-                    TextField("%", text: $agentPct).keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 80)
+                    TextField("%", text: $agentPct).keyboardType(.decimalPad).numbersOnly($agentPct).multilineTextAlignment(.trailing).frame(maxWidth: 80)
                     Text("%").foregroundStyle(.secondary)
                 }
             }
@@ -146,7 +146,7 @@ struct OnboardingView: View {
         Section {
             HStack {
                 Text("$").foregroundStyle(.secondary)
-                TextField("Optional, e.g. 40000", text: $goalText).keyboardType(.numberPad)
+                TextField("Optional, e.g. 40000", text: $goalText).keyboardType(.numberPad).numbersOnly($goalText, decimals: false)
             }
         } header: { Text("Earning goal for \(String(Calendar.current.component(.year, from: Date())))") } footer: {
             Text("What you'd like to earn from film work this year, before tax. Your Wrap shows how close you are.")

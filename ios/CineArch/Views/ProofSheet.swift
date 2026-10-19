@@ -125,6 +125,7 @@ struct DocumentScanner: UIViewControllerRepresentable {
 // and the Union Pack attaches the stub, annotated.
 struct JobProofSheet: View {
     @Environment(JobsStore.self) private var jobs
+    @Environment(Session.self) private var session
     @Environment(LedgerStore.self) private var ledger
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
@@ -132,6 +133,8 @@ struct JobProofSheet: View {
 
     @State private var uploading = false
     @State private var error: String?
+    @State private var agent = AgentChoice()
+    @State private var showPlans = false
 
     private var current: Job { jobs.jobs.first { $0.id == job.id } ?? job }
 
@@ -143,8 +146,27 @@ struct JobProofSheet: View {
                     LabeledContent("Set", value: current.unionName ?? "Non-union")
                     LabeledContent("Hours", value: current.totalHours.hours)
                     if let g = current.grossEarnings { LabeledContent("Gross", value: g.money) }
+                    LabeledContent("Role", value: current.role)
+                    LabeledContent("Company", value: current.companyName)
                 } header: { Text(current.productionName) }
 
+                Section { AgentPicker(choice: $agent) } header: {
+                    HintedHeader(title: "Booked by", hint: "The agent who got you this job, if one did. Your Slate can then show what each agent brought in.")
+                }
+                .onChange(of: agent) {
+                    guard let id = current.id, agent != AgentChoice(name: current.agentName, agencyId: current.agencyId) else { return }
+                    Task { await jobs.setAgent(id, name: agent.name, agencyId: agent.agencyId) }
+                }
+
+                if !session.isPremium {
+                    Section {
+                        Button { showPlans = true } label: {
+                            LockedRowLabel(title: "Back it with a pay stub", detail: Plan.pro.name)
+                        }
+                    } footer: {
+                        Text("A pay stub on a job makes it Green Lit: proof for your union application.")
+                    }
+                } else {
                 Section {
                     if current.isGreenLit {
                         Label("Green Lit: backed with a pay stub", systemImage: "checkmark.seal.fill").foregroundStyle(Color.green)
@@ -157,16 +179,20 @@ struct JobProofSheet: View {
                     } failed: { error = $0 }
                     if uploading { HStack { ProgressView(); Text("Uploading…").foregroundStyle(.secondary) } }
                 } header: {
-                    Text(current.isGreenLit ? "Pay stub" : "Back it with a pay stub")
+                    HintedHeader(title: current.isGreenLit ? "Pay stub" : "Back it with a pay stub",
+                                 hint: "Unions ask for proof of your days. A pay stub on the job makes it Green Lit, and it goes into your Union Pack with the dates, hours and pay highlighted.")
                 } footer: {
                     Text("Up to 1 MB (photos are shrunk to fit). Green Lit jobs carry their pay stub into your Union Pack, highlighted where the dates, hours and pay appear.")
                 }
                 .disabled(uploading)
+                }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
-            .navigationTitle(current.isGreenLit ? "Green Lit" : "Needs a pay stub")
+            .onAppear { agent = AgentChoice(name: current.agentName, agencyId: current.agencyId) }
+            .navigationDestination(isPresented: $showPlans) { PlansView() }
+            .navigationTitle(!session.isPremium || current.status == "TENTATIVE" ? "Job" : current.isGreenLit ? "Green Lit" : "Needs a pay stub")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(current.isGreenLit ? "Done" : "Later") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(current.isGreenLit || !session.isPremium ? "Done" : "Later") { dismiss() } } }
         }
     }
 
@@ -175,5 +201,62 @@ struct JobProofSheet: View {
         defer { uploading = false }
         do { try await jobs.attachProof(to: current, file: file, ledger: ledger); error = nil }
         catch { self.error = "Couldn't upload: \(error.localizedDescription)" }
+    }
+}
+
+// MARK: Booked by
+
+/// Who booked a job: nobody, the agency linked to the account, or a typed name.
+/// A locked row's label: what it is, and the plan it comes with.
+struct LockedRowLabel: View {
+    let title: String
+    let detail: String
+    var body: some View {
+        HStack {
+            Label(title, systemImage: "lock.fill")
+            Spacer()
+            Text(detail).font(.caption.bold()).foregroundStyle(Theme.accent)
+        }
+    }
+}
+
+struct AgentChoice: Equatable {
+    var name: String?
+    var agencyId: UUID?
+}
+
+struct AgentPicker: View {
+    @Environment(Session.self) private var session
+    @Environment(JobsStore.self) private var jobs
+    @Binding var choice: AgentChoice
+    @State private var typing = false
+    @State private var typed = ""
+
+    private enum Pick: Hashable { case none, agency, named(String), other }
+
+    var body: some View {
+        Picker("Agent", selection: Binding<Pick>(get: {
+            if typing { return .other }
+            if choice.agencyId != nil { return .agency }
+            return choice.name.map { .named($0) } ?? .none
+        }, set: { pick in
+            switch pick {
+            case .none: typing = false; choice = AgentChoice()
+            case .agency: typing = false; choice = AgentChoice(name: session.agency?.name, agencyId: session.agency?.id)
+            case .named(let n): typing = false; choice = AgentChoice(name: n)
+            case .other: typing = true; typed = ""; choice = AgentChoice()
+            }
+        })) {
+            Text("No agent").tag(Pick.none)
+            if let a = session.agency { Text(a.name).tag(Pick.agency) }
+            ForEach(jobs.agents.filter { $0 != session.agency?.name }, id: \.self) { Text($0).tag(Pick.named($0)) }
+            if let n = choice.name, choice.agencyId == nil, !jobs.agents.contains(n), !typing { Text(n).tag(Pick.named(n)) }
+            Text("Someone else…").tag(Pick.other)
+        }
+        if typing {
+            TextField("Agent's name", text: $typed).textInputAutocapitalization(.words)
+                .onChange(of: typed) { choice = AgentChoice(name: typed.trimmed.isEmpty ? nil : String(typed.trimmed.prefix(120))) }
+        }
+        EmptyView().task { await session.loadAgency() }
     }
 }

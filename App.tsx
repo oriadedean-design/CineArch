@@ -31,6 +31,7 @@ const Resources            = lazy(() => import('./pages/Resources').then(m => ({
 const Manual               = lazy(() => import('./pages/Manual').then(m => ({ default: m.Manual })));
 const About                = lazy(() => import('./pages/About').then(m => ({ default: m.About })));
 const Privacy              = lazy(() => import('./pages/Privacy').then(m => ({ default: m.Privacy })));
+const AdminVerify          = lazy(() => import('./pages/AdminVerify').then(m => ({ default: m.AdminVerify })));
 
 // Thin spinner shown while a lazy chunk loads (keeps OLED black intact)
 const PageLoader = () => (
@@ -179,6 +180,9 @@ const MainApp = () => {
             <PrivateRoute><Finance /></PrivateRoute>
           } />
 
+          <Route path="/admin" element={
+            <PrivateRoute><AdminVerify /></PrivateRoute>
+          } />
           <Route path="/reports" element={
             <PrivateRoute><Reports /></PrivateRoute>
           } />

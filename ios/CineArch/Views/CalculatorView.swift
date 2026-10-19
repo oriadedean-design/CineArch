@@ -82,7 +82,7 @@ struct PayForm: View {
                     Text("Hourly rate")
                     Spacer()
                     TextField(p.minimum?.hourly.map { String(format: "%.2f", $0) } ?? "0.00", text: $rateText)
-                        .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 120)
+                        .keyboardType(.decimalPad).numbersOnly($rateText).multilineTextAlignment(.trailing).frame(maxWidth: 120)
                     ScaleBadge(status: p.status)
                 }
             } footer: {
@@ -186,6 +186,7 @@ struct PositionPicker: View {
 // Production, company and role, then saves to the shared jobs table.
 struct SaveJobSheet: View {
     @Environment(JobsStore.self) private var jobs
+    @Environment(Session.self) private var session
     @Environment(\.dismiss) private var dismiss
     let input: JobInput
     let priced: PricedJob
@@ -195,6 +196,7 @@ struct SaveJobSheet: View {
     @State private var production = ""
     @State private var company = ""
     @State private var role = ""
+    @State private var agent = AgentChoice()
     @State private var saving = false
     @State private var error: String?
 
@@ -207,6 +209,9 @@ struct SaveJobSheet: View {
                     TextField("Your role", text: $role).textInputAutocapitalization(.words)
                 } footer: {
                     Text("The company is required. Unions ask for it when you apply.")
+                }
+                Section { AgentPicker(choice: $agent) } header: {
+                    HintedHeader(title: "Booked by", hint: "The agent who got you this job, if one did. Your Slate can then show what each agent brought in.")
                 }
                 if !jobs.knownProductions.isEmpty && production.isEmpty {
                     Section("Recent productions") {
@@ -246,7 +251,8 @@ struct SaveJobSheet: View {
                       hourlyRate: priced.rate, daysWorked: input.days, hoursPerDay: input.hoursPerDay,
                       mealBreakMinutes: Int(input.mealMinutes), overtimeHours: pay?.totalOvertimeHours ?? 0,
                       unionMinimumRate: priced.minimum?.hourly, ratePosition: priced.minimum?.position, grossEarnings: pay?.gross,
-                      province: "Ontario")
+                      province: session.profile?.province ?? (session.isPreview ? "Ontario" : nil),
+                      agentName: agent.name, agencyId: agent.agencyId)
         do {
             try await jobs.add(job)
             dismiss()

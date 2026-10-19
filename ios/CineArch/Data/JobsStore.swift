@@ -28,6 +28,8 @@ struct Job: Codable, Identifiable, Hashable {
     var grossEarnings: Double?
     var province: String?
     var proofPath: String?           // pay stub in documents/<user>/proof/; with it the job is Green Lit
+    var agentName: String?           // who booked it: the linked agency's name, or one typed in
+    var agencyId: UUID?              // set when it's the agency linked to the account
 
     enum CodingKeys: String, CodingKey {
         case id, status, role, department, province
@@ -37,7 +39,7 @@ struct Job: Codable, Identifiable, Hashable {
         case hourlyRate = "hourly_rate", daysWorked = "days_worked", hoursPerDay = "hours_per_day"
         case mealBreakMinutes = "meal_break_minutes", overtimeHours = "overtime_hours"
         case unionMinimumRate = "union_minimum_rate", ratePosition = "rate_position", grossEarnings = "gross_earnings"
-        case proofPath = "proof_path"
+        case proofPath = "proof_path", agentName = "agent_name", agencyId = "agency_id"
     }
 
     /// Days worked: the logged day count, else the inclusive date span (as services/career.ts).
@@ -135,6 +137,28 @@ final class JobsStore {
         jobs.sort { $0.startDate > $1.startDate }
         return job
     }
+
+    /// Who booked a job: the linked agency, a typed name, or nobody.
+    func setAgent(_ id: UUID, name: String?, agencyId: UUID?) async {
+        guard let i = jobs.firstIndex(where: { $0.id == id }) else { return }
+        var updated = jobs
+        updated[i].agentName = name; updated[i].agencyId = agencyId
+        do {
+            switch place {
+            case .phone(let user): try persist(updated, user: user)
+            case .online:
+                struct Agent: Encodable { let agent_name: String?; let agency_id: UUID? }
+                try await Backend.client.from("jobs").update(Agent(agent_name: name, agency_id: agencyId)).eq("id", value: id).execute()
+            default: break
+            }
+            jobs = updated
+        } catch {
+            self.error = "Couldn't save who booked it."
+        }
+    }
+
+    /// Agents named on any job, for the Slate's filter.
+    var agents: [String] { Array(Set(jobs.compactMap(\.agentName))).sorted() }
 
     /// A pencilled-in job that happened: mark it worked so its days count.
     func confirm(_ id: UUID) async {

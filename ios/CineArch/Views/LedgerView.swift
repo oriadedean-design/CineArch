@@ -1,4 +1,5 @@
 import SwiftUI
+import Supabase
 import QuickLook
 import CineArchKit
 
@@ -9,6 +10,7 @@ struct LedgerView: View {
     @Environment(Session.self) private var session
     @Environment(LedgerStore.self) private var ledger
     @State private var showAuth = false
+    @State private var reportsLeft: Int?
     @State private var showNew = false
     @State private var showPlans = false
     @State private var showBulk = false
@@ -34,13 +36,17 @@ struct LedgerView: View {
                 }
             }
             .navigationTitle("Wrap Wallet")
+            .task(id: session.identity) { await loadReportUsage() }
             .previewBadge()
             .toolbar {
                 if session.isSignedIn && session.isPremium {
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
-                            ForEach(ReportKind.allCases) { kind in
-                                Button { Task { await makeReport(kind) } } label: { Label(kind.rawValue + " (PDF)", systemImage: kind.icon) }
+                            Section(reportsLeft.map { "\($0) of 3 reports left this month" } ?? "Reports") {
+                                ForEach(ReportKind.allCases) { kind in
+                                    Button { Task { await makeReport(kind) } } label: { Label(kind.rawValue + " (PDF)", systemImage: kind.icon) }
+                                        .disabled(reportsLeft == 0)
+                                }
                             }
                             ShareLink(item: csvFile(), preview: SharePreview("Wrap Wallet spreadsheet")) {
                                 Label("Spreadsheet (CSV)", systemImage: "tablecells")
@@ -174,7 +180,7 @@ struct LedgerView: View {
             }
             .padding(.vertical, 2)
         } header: {
-            Text("GST/HST")
+            HintedHeader(title: "GST/HST", hint: "Sales tax you charged on your work, less what you paid on work expenses. Past $30,000 of sales in a year you must register with the CRA.")
         } footer: {
             if t.quick != nil {
                 Text("Quick Method: a set share of your sales (tax included), less 1% of the first $30,000. You don't claim back GST/HST on expenses. Meals count half.")
@@ -194,12 +200,19 @@ struct LedgerView: View {
                 Text("Add where you're based in Setting the Scene to estimate tax.").foregroundStyle(.secondary)
             }
         } header: {
-            Text("Set aside")
+            HintedHeader(title: "Set aside", hint: "What to put away from self-employed pay for CPP (or QPP) and income tax, worked out from this year's federal and provincial rates. T4 pay has it taken off already.")
         } footer: {
             if let a = t.setAside, let p = t.province {
                 Text("\(String(a.year)) federal and \(p) rates, after the basic personal amount\(s.employmentIncome > 0 ? ", on top of your T4 pay" : "")\(p == "Ontario" ? ", with Ontario's health premium" : ""). Rough estimate: other credits and deductions aren't included. Check with an accountant.")
             }
         }
+    }
+
+    private func loadReportUsage() async {
+        guard session.isPremium, !session.isPreview, session.user != nil else { reportsLeft = nil; return }
+        struct Usage: Decodable { let used: Int; let report_limit: Int }
+        let u: [Usage]? = try? await Backend.client.rpc("my_report_usage").execute().value
+        reportsLeft = u?.first.map { max(0, $0.report_limit - $0.used) }
     }
 
     /// Builds a branded PDF on the phone, then opens it to look over, share or print.
@@ -216,6 +229,16 @@ struct LedgerView: View {
             isPreview: session.isPreview)
         making = "Starting your \(kind.rawValue)…"
         defer { making = nil }
+        // A-List Pro makes up to 3 reports a month (the sample account doesn't count).
+        if !session.isPreview {
+            do {
+                reportsLeft = try await Backend.client.rpc("start_report", params: ["p_kind": kind.code]).execute().value
+            } catch {
+                let text = "\(error)"
+                ledger.error = text.contains("REPORT_LIMIT") ? "You've made 3 reports this month. You can make more on the 1st." : "Couldn't start the report: \(error.localizedDescription)"
+                return
+            }
+        }
         do {
             reportURL = try await Reports.make(kind, input) { step in making = step }
         } catch {
@@ -414,7 +437,7 @@ struct LedgerEntrySheet: View {
         HStack {
             Text(label)
             Spacer()
-            TextField(placeholder, text: text).keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 120)
+            TextField(placeholder, text: text).keyboardType(.decimalPad).numbersOnly(text).multilineTextAlignment(.trailing).frame(maxWidth: 120)
         }
     }
 

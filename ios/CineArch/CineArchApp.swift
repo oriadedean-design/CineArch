@@ -39,7 +39,7 @@ struct RootView: View {
     var body: some View {
         TabView(selection: $tab) {
             WrapView().tabItem { Label("Wrap", systemImage: "chart.bar.fill") }.tag(Tab.wrap)
-            JobsView().tabItem { Label("Slate", systemImage: "list.bullet.rectangle") }.tag(Tab.jobs)
+            JobsView(tab: $tab).tabItem { Label("Slate", systemImage: "list.bullet.rectangle") }.tag(Tab.jobs)
             GuideView().tabItem { Label("Guide", systemImage: "book") }.tag(Tab.guide)
             LedgerView().tabItem { Label("Wallet", systemImage: "wallet.bifold") }.tag(Tab.ledger)
             AccountView().tabItem { Label("Account", systemImage: "person.crop.circle") }.tag(Tab.account)

@@ -46,62 +46,89 @@ struct JobTimeline: View {
 }
 
 /// Pay from your Slate, added up month by month this year.
+/// Income adding up over time: a curve from the pay on your Slate, over the
+/// last 3 or 6 months, this year, or everything. Your goal and the $30k
+/// GST/HST line show on this year's view.
 struct IncomeChart: View {
     let jobs: [Job]
     let showGSTLine: Bool
     var goal: Double? = nil
 
-    private var points: [(month: Date, total: Double)] {
-        let cal = Calendar.current
-        let year = cal.component(.year, from: Date())
-        let now = cal.component(.month, from: Date())
-        var byMonth = [Int: Double]()
-        for j in jobs where j.status != "TENTATIVE" {
-            guard let d = Date(isoDay: j.startDate), cal.component(.year, from: d) == year else { continue }
-            byMonth[cal.component(.month, from: d), default: 0] += j.grossEarnings ?? 0
+    enum Span: String, CaseIterable, Identifiable {
+        case threeMonths = "3M", sixMonths = "6M", year = "This year", all = "All"
+        var id: String { rawValue }
+    }
+    @State private var span = Span.year
+
+    private var start: Date? {
+        let cal = Calendar.current, now = Date()
+        switch span {
+        case .threeMonths: return cal.date(byAdding: .month, value: -3, to: cal.startOfDay(for: now))
+        case .sixMonths: return cal.date(byAdding: .month, value: -6, to: cal.startOfDay(for: now))
+        case .year: return cal.date(from: cal.dateComponents([.year], from: now))
+        case .all: return nil
         }
+    }
+
+    /// One point a day that pay landed, adding up from the start of the span.
+    private var points: [(day: Date, total: Double)] {
+        let today = Calendar.current.startOfDay(for: Date())
+        let paid = jobs.filter { $0.status != "TENTATIVE" }
+            .compactMap { j in Date(isoDay: j.startDate).map { ($0, j.grossEarnings ?? 0) } }
+            .filter { d, _ in d <= today && (start.map { d >= $0 } ?? true) }
+            .sorted { $0.0 < $1.0 }
+        let first = start ?? paid.first?.0 ?? today
         var running = 0.0
-        return (1...now).map { m in
-            running += byMonth[m] ?? 0
-            return (cal.date(from: DateComponents(year: year, month: m, day: 1))!, running)
-        }
+        var pts = [(first, 0.0)]
+        for (d, g) in paid { running += g; pts.append((d, running)) }
+        pts.append((today, running))
+        return pts
     }
 
     var body: some View {
         let pts = points
         let total = pts.last?.total ?? 0
-        VStack(alignment: .leading, spacing: 8) {
+        let showGoal = span == .year && (goal ?? 0) > 0
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                Text(total.money).font(Theme.serif(.title2)).monospacedDigit()
-                Text("so far this year").font(.caption).foregroundStyle(.secondary)
-                if let goal, goal > 0 {
-                    Spacer()
+                Text(total.money).font(Theme.serif(.largeTitle)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+                Spacer()
+                if showGoal, let goal {
                     Text("\(Int((total / goal * 100).rounded()))% of \(goal.money)").font(.caption.bold()).foregroundStyle(Theme.accent)
                 }
             }
+            Picker("Period", selection: $span) {
+                ForEach(Span.allCases) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
             Chart {
-                ForEach(pts, id: \.month) { p in
-                    LineMark(x: .value("Month", p.month, unit: .month), y: .value("Earned", p.total))
-                        .foregroundStyle(Theme.accent).interpolationMethod(.stepEnd)
-                    PointMark(x: .value("Month", p.month, unit: .month), y: .value("Earned", p.total))
-                        .foregroundStyle(Theme.accent).symbolSize(20)
+                ForEach(pts, id: \.day) { p in
+                    AreaMark(x: .value("Day", p.day), y: .value("Earned", p.total))
+                        .interpolationMethod(.monotone)
+                        .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.35), Theme.accent.opacity(0)], startPoint: .top, endPoint: .bottom))
+                    LineMark(x: .value("Day", p.day), y: .value("Earned", p.total))
+                        .interpolationMethod(.monotone)
+                        .foregroundStyle(Theme.accent).lineStyle(StrokeStyle(lineWidth: 2.5))
                 }
-                if let goal, goal > 0 {
+                if let last = pts.last {
+                    PointMark(x: .value("Day", last.day), y: .value("Earned", last.total)).foregroundStyle(Theme.accent).symbolSize(50)
+                }
+                if showGoal, let goal {
                     RuleMark(y: .value("Your goal", goal))
                         .foregroundStyle(Theme.accent.opacity(0.6)).lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 4]))
                         .annotation(position: .top, alignment: .trailing) { Text("Your goal").font(.caption2).foregroundStyle(Theme.accent) }
                 }
-                if showGSTLine {
+                if showGSTLine && span == .year {
                     RuleMark(y: .value("GST/HST line", Ledger.smallSupplierThreshold))
                         .foregroundStyle(.red.opacity(0.7)).lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
                         .annotation(position: .top, alignment: .leading) { Text("$30k GST/HST line").font(.caption2).foregroundStyle(.red) }
                 }
             }
             .chartYAxis { AxisMarks { v in AxisGridLine(); AxisValueLabel { if let d = v.as(Double.self) { Text(d >= 1000 ? "$\(Int(d / 1000))k" : "$\(Int(d))") } } } }
-            .chartXAxis { AxisMarks(values: .stride(by: .month, count: 2)) { AxisGridLine(); AxisValueLabel(format: .dateTime.month(.abbreviated)) } }
-            .frame(height: 180)
-            .accessibilityLabel("Income this year: \(total.money)")
-            Text("From the pay on your Slate, by the month each job started.").font(.caption).foregroundStyle(.secondary)
+            .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) { AxisGridLine(); AxisValueLabel(format: span == .all ? .dateTime.month(.abbreviated).year(.twoDigits) : .dateTime.month(.abbreviated)) } }
+            .frame(height: 200)
+            .animation(.easeInOut(duration: 0.3), value: span)
+            .accessibilityLabel("Income \(span == .year ? "this year" : span == .all ? "in total" : "over the last \(span == .threeMonths ? 3 : 6) months"): \(total.money)")
         }
     }
 }

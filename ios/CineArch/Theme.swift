@@ -55,3 +55,55 @@ extension Date {
         f.dateFormat = "yyyy-MM-dd"; guard let d = f.date(from: isoDay) else { return nil }; self = d
     }
 }
+
+// MARK: Hints and number fields
+
+/// An (i) next to a section title that explains it in a sentence or two.
+struct InfoButton: View {
+    let title: String
+    let text: String
+    @State private var shown = false
+    var body: some View {
+        Button { shown = true } label: { Image(systemName: "info.circle").font(.subheadline) }
+            .buttonStyle(.plain).foregroundStyle(Theme.accent)
+            .accessibilityLabel("About \(title)")
+            .popover(isPresented: $shown) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(title).font(.headline)
+                    Text(text).font(.subheadline).fixedSize(horizontal: false, vertical: true)
+                }
+                .padding()
+                .frame(idealWidth: 300, maxWidth: 320)
+                .presentationCompactAdaptation(.popover)
+            }
+    }
+}
+
+/// A section title with its (i).
+struct HintedHeader: View {
+    let title: String
+    let hint: String
+    var body: some View {
+        HStack(spacing: 6) { Text(title); InfoButton(title: title, text: hint); Spacer() }
+            .textCase(nil)
+    }
+}
+
+extension View {
+    /// Keeps a text field to a number: digits and one decimal point (none
+    /// when `decimals` is false), at most two places after it.
+    func numbersOnly(_ text: Binding<String>, decimals: Bool = true) -> some View {
+        onChange(of: text.wrappedValue) { _, new in
+            var seenPoint = false, places = 0
+            let cleaned = String(new.replacingOccurrences(of: ",", with: ".").filter { c in
+                if c.isASCII && c.isNumber {
+                    if seenPoint { places += 1; return places <= 2 }
+                    return true
+                }
+                if c == "." && decimals && !seenPoint { seenPoint = true; return true }
+                return false
+            })
+            if cleaned != new { text.wrappedValue = cleaned }
+        }
+    }
+}

@@ -162,6 +162,9 @@ export const SettingsIndividual = () => {
                 </Select>
               </div>
             </div>
+            {user?.isAdmin && (
+              <a href="#/admin" className="block text-sm text-accent underline">Verify the facts (admins)</a>
+            )}
             <div className="space-y-4">
               <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Email</label>
               <Input value={profileForm.email || ''} disabled className="h-20 opacity-30 cursor-not-allowed font-serif italic" />
