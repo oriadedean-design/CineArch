@@ -423,6 +423,7 @@ export type Database = {
           has_agent_fee: boolean | null
           id: string
           is_onboarded: boolean
+          is_admin: boolean
           is_premium: boolean
           language: string | null
           managed_by_agency_id: string | null
@@ -459,6 +460,7 @@ export type Database = {
           has_agent_fee?: boolean | null
           id: string
           is_onboarded?: boolean
+          is_admin?: boolean
           is_premium?: boolean
           language?: string | null
           managed_by_agency_id?: string | null
@@ -495,6 +497,7 @@ export type Database = {
           has_agent_fee?: boolean | null
           id?: string
           is_onboarded?: boolean
+          is_admin?: boolean
           is_premium?: boolean
           language?: string | null
           managed_by_agency_id?: string | null
@@ -1228,6 +1231,18 @@ export type Database = {
       }
     }
     Functions: {
+      check_fact: {
+        Args: { p_subject: string; p_key: string; p_outcome: string; p_note?: string }
+        Returns: undefined
+      }
+      my_report_usage: {
+        Args: never
+        Returns: { used: number; report_limit: number }[]
+      }
+      start_report: {
+        Args: { p_kind: string }
+        Returns: number
+      }
       copy_role_coverage: {
         Args: { p_from_role: string; p_to_role: string }
         Returns: number

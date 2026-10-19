@@ -209,7 +209,7 @@ private struct StubEditor: View {
         HStack {
             Text(label)
             Spacer()
-            TextField("—", text: text).keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 120)
+            TextField("—", text: text).keyboardType(.decimalPad).numbersOnly(text).multilineTextAlignment(.trailing).frame(maxWidth: 120)
         }
     }
 }

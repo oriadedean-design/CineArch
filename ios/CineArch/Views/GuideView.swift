@@ -1,34 +1,162 @@
 import SwiftUI
 import CineArchKit
 
-// Unions, what they cover, how to join and their minimum rates. No sign-in needed.
+// Unions, what they cover, how to join and their minimum rates, browsed by
+// union, by role or by province (like the guide on the website). No sign-in needed.
 struct GuideView: View {
     @Environment(EngineStore.self) private var store
+    @Environment(Session.self) private var session
     @State private var search = ""
+    @State private var by = By.unions
+    @State private var province: String?
+
+    enum By: String, CaseIterable, Identifiable {
+        case unions = "Unions", roles = "Roles", provinces = "Province"
+        var id: String { rawValue }
+        var copy: String {
+            switch self {
+            case .unions: "Who represents film and TV crew and performers, how to join, and the minimum rates."
+            case .roles: "Pick your job to see which union covers it where you work."
+            case .provinces: "The unions working in each province and territory."
+            }
+        }
+    }
+
+    static let provinces = ["Ontario", "Quebec", "British Columbia", "Alberta", "Manitoba", "Saskatchewan", "Nova Scotia",
+                            "New Brunswick", "Newfoundland and Labrador", "Prince Edward Island", "Yukon", "Northwest Territories", "Nunavut"]
+
+    private func matches(_ text: String) -> Bool { search.isEmpty || text.localizedCaseInsensitiveContains(search) }
 
     private var unions: [Union] {
-        let all = store.engine.unions
-        guard !search.isEmpty else { return all }
-        return all.filter { $0.name.localizedCaseInsensitiveContains(search) || ($0.description ?? "").localizedCaseInsensitiveContains(search) }
+        store.engine.unions.filter { u in
+            (province == nil || u.jurisdictions.contains { $0.province == province })
+                && (matches(u.name) || matches(u.description ?? "") || matches(u.scope ?? ""))
+        }
     }
 
     var body: some View {
         NavigationStack {
-            List(unions) { u in
-                NavigationLink(value: u) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(u.name).font(.headline)
-                        if let scope = u.scope { Text(scope).font(.subheadline).foregroundStyle(.secondary).lineLimit(2) }
+            List {
+                Section {
+                    Picker("Browse by", selection: $by) { ForEach(By.allCases) { Text($0.rawValue).tag($0) } }
+                        .pickerStyle(.segmented)
+                    if by != .provinces {
+                        Picker("Where you work", selection: $province) {
+                            Text("All of Canada").tag(String?.none)
+                            ForEach(Self.provinces, id: \.self) { Text($0).tag(String?.some($0)) }
+                        }
                     }
-                    .padding(.vertical, 4)
+                } footer: {
+                    Text(by.copy)
+                }
+                switch by {
+                case .unions: unionList
+                case .roles: roleList
+                case .provinces: provinceList
                 }
             }
             .overlay { EngineStatus() }
             .navigationTitle("Union Guide")
             .navigationDestination(for: Union.self) { UnionDetailView(union: $0) }
-            .searchable(text: $search, prompt: "Search unions")
+            .navigationDestination(for: Department.Role.self) { RoleCoverageView(role: $0, province: province) }
+            .navigationDestination(for: String.self) { ProvinceUnionsView(province: $0) }
+            .searchable(text: $search, prompt: by == .roles ? "Search roles" : by == .provinces ? "Search provinces" : "Search unions")
             .refreshable { await store.refresh() }
+            .task { if province == nil, let p = session.profile?.province { province = p } }
         }
+    }
+
+    @ViewBuilder private var unionList: some View {
+        Section {
+            ForEach(unions) { u in NavigationLink(value: u) { UnionRow(union: u) } }
+            if unions.isEmpty && store.isReady { Text("No unions match.").foregroundStyle(.secondary) }
+        } header: {
+            HintedHeader(title: "\(unions.count) unions\(province.map { " in \($0)" } ?? "")", hint: "Tap a union for how to join, what it costs, its minimum rates and overtime. Targets marked not confirmed haven't been checked against the union's own pages yet.")
+        }
+    }
+
+    @ViewBuilder private var roleList: some View {
+        ForEach(store.engine.snapshot.departments) { d in
+            let roles = d.roles.filter { matches($0.name) || $0.aliases.contains(where: matches) || matches(d.name) }
+            if !roles.isEmpty {
+                Section(d.name) {
+                    ForEach(roles) { r in NavigationLink(value: r) { Text(r.name) } }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var provinceList: some View {
+        Section {
+            ForEach(Self.provinces.filter(matches), id: \.self) { p in
+                let n = store.engine.unions.filter { $0.jurisdictions.contains { $0.province == p } }.count
+                NavigationLink(value: p) { LabeledContent(p, value: n == 1 ? "1 union" : "\(n) unions") }
+            }
+        }
+    }
+}
+
+/// A union in a list: name, then who it's for and its first step.
+struct UnionRow: View {
+    let union: Union
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(union.name).font(.headline)
+            Text(subtitle).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+        }
+        .padding(.vertical, 2)
+    }
+    private var subtitle: String {
+        let who = (union.scope ?? "").replacingOccurrences(of: "_", with: " ").capitalized
+        let step = union.tiers.first.map { t in
+            let v = t.targetValue.formatted()
+            let one = t.targetValue == 1
+            let unit = switch t.targetType { case "HOURS": one ? "hour" : "hours"; case "DAYS": one ? "day" : "days"; case "EARNINGS": "earned"; default: one ? "credit" : "credits" }
+            return "\(t.name): \(t.targetType == "EARNINGS" ? t.targetValue.money : "\(v) \(unit)")\(t.isConfirmed ? "" : " (not confirmed)")"
+        }
+        return [who.isEmpty ? nil : who, step].compactMap { $0 }.joined(separator: " · ")
+    }
+}
+
+/// Which unions cover a role, province by province (or just where you work).
+struct RoleCoverageView: View {
+    @Environment(EngineStore.self) private var store
+    let role: Department.Role
+    let province: String?
+
+    var body: some View {
+        let dept = store.engine.department(ofRole: role.name)?.name
+        let places = province.map { [$0] } ?? GuideView.provinces
+        List {
+            ForEach(places, id: \.self) { p in
+                let ids = store.engine.unionsCovering(role: role.name, department: dept, province: p)
+                if !ids.isEmpty || province != nil {
+                    Section(p) {
+                        if ids.isEmpty { Text("No union covers this role here.").foregroundStyle(.secondary) }
+                        ForEach(ids, id: \.self) { id in
+                            if let u = store.engine.union(id) { NavigationLink(value: u) { UnionRow(union: u) } }
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle(role.name)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// The unions working in one province.
+struct ProvinceUnionsView: View {
+    @Environment(EngineStore.self) private var store
+    let province: String
+    var body: some View {
+        List {
+            ForEach(store.engine.unions.filter { $0.jurisdictions.contains { $0.province == province } }) { u in
+                NavigationLink(value: u) { UnionRow(union: u) }
+            }
+        }
+        .navigationTitle(province)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

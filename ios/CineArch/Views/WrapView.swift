@@ -57,6 +57,13 @@ struct WrapView: View {
         let belowScale = confirmed.filter(\.isBelowScale).count
         return ScrollViewReader { proxy in List {
             Section {
+                IncomeChart(jobs: jobs.jobs, showGSTLine: session.isPremium, goal: session.profile?.earningGoal)
+            } header: {
+                HintedHeader(title: "Earned", hint: "Pay from the jobs on your Slate, adding up from the start of the period. Pencilled-in jobs don't count until you mark them worked.")
+            }
+            .id("income")
+
+            Section {
                 ForEach(progress) { p in
                     Button { editing = p.track } label: { TrackRow(progress: p) }
                         .buttonStyle(.plain)
@@ -67,21 +74,23 @@ struct WrapView: View {
                 }
                 Button { showAdd = true } label: { Label("Track a union", systemImage: "plus.circle.fill") }
             } header: {
-                Text("Getting your card")
+                HintedHeader(title: "Getting your card", hint: "Each union you're working toward, and how far along you are. Days on a union set count before you're a member.")
             } footer: {
                 Text("Days on a union set count toward that union even before you're a member. When you mark the slate, pick the union whose set it was.")
             }
 
-            Section("Your year on set") { JobTimeline(jobs: jobs.jobs) }
-            Section("Income this year") {
-                IncomeChart(jobs: jobs.jobs, showGSTLine: session.isPremium, goal: session.profile?.earningGoal)
+            Section {
+                JobTimeline(jobs: jobs.jobs)
                 ProNudge(id: "gst-line", title: "You've earned \(earnedThisYear.money) this year.",
                          detail: "\(Plan.pro.name) tracks it against the $30k GST/HST line and estimates what to set aside for CPP and income tax.")
+            } header: {
+                HintedHeader(title: "Your year on set", hint: "Each production you worked this year, placed on the calendar.")
             }
-            .id("income")
             Section {
                 ComingUp(deadlines: store.engine.snapshot.deadlines ?? [], progress: progress, jobs: jobs.jobs, engine: store.engine)
-            } header: { Text("Coming up") } footer: { Text("Tap a tax date to open its source.") }
+            } header: {
+                HintedHeader(title: "Coming up", hint: "Tax dates, union dues and days about to drop out of a union's time window. Each tax date links to the government page it came from.")
+            } footer: { Text("Tap a tax date to open its source.") }
             .id("coming-up")
 
             Section("Your hours") {
@@ -195,7 +204,7 @@ struct TrackUnionSheet: View {
                         HStack {
                             Text("Already banked")
                             Spacer()
-                            TextField("0", text: $bankedText).keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 100)
+                            TextField("0", text: $bankedText).keyboardType(.decimalPad).numbersOnly($bankedText).multilineTextAlignment(.trailing).frame(maxWidth: 100)
                             Text(draft.unit).foregroundStyle(.secondary)
                         }
                     } footer: {

@@ -72,7 +72,7 @@ struct AccountView: View {
                             Text("Earning goal")
                             Spacer()
                             Text("$").foregroundStyle(.secondary)
-                            TextField("Not set", text: $goal).keyboardType(.numberPad).multilineTextAlignment(.trailing)
+                            TextField("Not set", text: $goal).keyboardType(.numberPad).numbersOnly($goal, decimals: false).multilineTextAlignment(.trailing)
                                 .frame(maxWidth: 110).focused($focus, equals: .goal)
                                 .disabled(session.isPreview)
                             tick(.goal)

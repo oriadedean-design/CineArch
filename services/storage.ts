@@ -55,6 +55,7 @@ const toUser = (p: ProfileRow): User => ({
   region: (p.region ?? undefined) as User['region'],
   isOnboarded: p.is_onboarded || !!p.province,
   isPremium: p.is_premium,
+  isAdmin: p.is_admin ?? false,
   memberStatus: (p.member_status ?? undefined) as User['memberStatus'],
   careerFocus: p.career_focus ?? undefined,
   department: p.department ?? undefined,

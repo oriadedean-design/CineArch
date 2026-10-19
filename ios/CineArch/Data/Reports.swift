@@ -16,6 +16,10 @@ import CineArchKit
 enum ReportKind: String, CaseIterable, Identifiable {
     case union = "Union Pack", tax = "Tax Pack", overview = "Wrap Report"
     var id: String { rawValue }
+    /// The name report_runs and start_report() use.
+    var code: String {
+        switch self { case .union: "union"; case .tax: "tax"; case .overview: "overview" }
+    }
     var blurb: String {
         switch self {
         case .union: "For a union application: your days on union sets, each with its pay stub."

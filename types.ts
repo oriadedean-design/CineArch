@@ -19,6 +19,7 @@ export interface User {
   region?: 'TORONTO' | 'NORTHERN_ON' | 'OTTAWA' | 'OTHER' | 'MONTREAL' | 'QUEBEC_CITY';
   isOnboarded: boolean;
   isPremium?: boolean;
+  isAdmin?: boolean;             // can verify facts on /admin (set in the database only)
   memberStatus?: 'ASPIRING' | 'MEMBER';
   
   careerFocus?: string;

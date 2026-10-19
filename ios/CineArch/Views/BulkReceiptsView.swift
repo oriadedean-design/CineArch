@@ -185,7 +185,7 @@ private struct DraftEditor: View {
         HStack {
             Text(label)
             Spacer()
-            TextField("0.00", text: text).keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 120)
+            TextField("0.00", text: text).keyboardType(.decimalPad).numbersOnly(text).multilineTextAlignment(.trailing).frame(maxWidth: 120)
         }
     }
 }
