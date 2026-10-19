@@ -19,6 +19,7 @@ export interface JobPayInput {
   mealBreakMinutes?: number;
   days?: number;
   hourlyRate?: number;          // what they were paid; defaults to the union minimum
+  workDay?: number;             // the day's place in the work week (6, 7 = premium days)
 }
 
 export interface PricedJob {
@@ -52,10 +53,11 @@ export function priceJob(input: JobPayInput): PricedJob {
         // The union daily fee is the floor only when they're paid at least scale.
         dailyMinimum: minimum?.daily ?? null,
         days: input.days ?? 1,
+        workDay: input.workDay ?? 1,
       })
     : undefined;
 
-  return { schedule, productionTypes, minimum, rule, rate, pay, status: scaleStatus(rate, minimum?.hourly) };
+  return { schedule, productionTypes, minimum, rule, rate, pay, status: scaleStatus(rate, minimum?.hourly, rule?.vacationPayRate) };
 }
 
 /** Loads the rate lines priceJob needs for these jobs (one request). */

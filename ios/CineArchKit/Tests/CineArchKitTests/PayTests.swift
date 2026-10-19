@@ -74,3 +74,33 @@ let actraIPA = PayRule(minimumCallHours: nil, overtimeAfter: [8, 12], overtimeMu
         #expect(p.bands[1].amount == 225)
     }
 }
+
+// IATSE 873 LTA Article 8 (c), (d), 9 (f), (g).
+@Suite struct PremiumDays {
+    let rule = PayRule(minimumCallHours: 8, overtimeAfter: [8, 12, 15], overtimeMultipliers: [1.5, 2, 3], incrementMinutes: 6,
+                       sixthDay: .init(base: 1.5, after: [8, 12], multipliers: [2, 3]),
+                       seventhDay: .init(base: 2, after: [8], multipliers: [3]))
+    @Test func sixthDay() {
+        // 13 worked: 8 x 1.5 + 4 x 2 + 1 x 3 = 23 rate-hours
+        let p = Pay.day(onClock: 14, mealMinutes: 60, rate: 40, rule: rule, workDay: 6)
+        #expect(p.bands.map { [$0.multiplier, $0.hours] } == [[1.5, 8], [2, 4], [3, 1]])
+        #expect(p.total == 920)
+    }
+    @Test func seventhDay() {
+        let p = Pay.day(onClock: 11, mealMinutes: 60, rate: 40, rule: rule, workDay: 7)
+        #expect(p.bands.map { [$0.multiplier, $0.hours] } == [[2, 8], [3, 2]])
+        #expect(p.total == 880)
+    }
+    @Test func shortSixthDayStillPaysTheCallAtPremium() {
+        #expect(Pay.day(onClock: 4, rate: 40, rule: rule, workDay: 6).total == 480)
+    }
+    @Test func regularDayUnchanged() { #expect(Pay.day(onClock: 14, mealMinutes: 60, rate: 40, rule: rule).total == 640) }
+}
+
+@Suite struct VacationPayScale {
+    @Test func stubBaseWithVacationSeparateIsAtScale() {
+        #expect(Pay.scaleStatus(rate: 48.08, minimum: 50, vacationPay: 0.04) == .at)
+        #expect(Pay.scaleStatus(rate: 47, minimum: 50, vacationPay: 0.04) == .below)
+        #expect(Pay.scaleStatus(rate: 48.08, minimum: 50) == .below)
+    }
+}

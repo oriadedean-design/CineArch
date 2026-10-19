@@ -32,12 +32,15 @@ public struct JobInput: Sendable, Hashable {
     public var mealMinutes: Double
     public var days: Int
     public var hourlyRate: Double?       // nil = the union minimum
+    public var workDay: Int              // the day's place in the work week (6, 7 = premium days)
 
     public init(isUnion: Bool, unionId: String? = nil, role: String? = nil, date: String, productionType: String? = nil,
-                ratePosition: String? = nil, hoursPerDay: Double? = nil, mealMinutes: Double = 0, days: Int = 1, hourlyRate: Double? = nil) {
+                ratePosition: String? = nil, hoursPerDay: Double? = nil, mealMinutes: Double = 0, days: Int = 1, hourlyRate: Double? = nil,
+                workDay: Int = 1) {
         self.isUnion = isUnion; self.unionId = unionId; self.role = role; self.date = date
         self.productionType = productionType; self.ratePosition = ratePosition; self.hoursPerDay = hoursPerDay
         self.mealMinutes = mealMinutes; self.days = days; self.hourlyRate = hourlyRate
+        self.workDay = workDay
     }
 }
 
@@ -144,9 +147,10 @@ public struct UnionEngine: Sendable {
         let rate = (input.hourlyRate ?? 0) > 0 ? input.hourlyRate : min?.hourly
         var pay: JobPay?
         if let h = input.hoursPerDay, h > 0, let rate {
-            pay = Pay.job(onClock: h, mealMinutes: input.mealMinutes, rate: rate, rule: rule, dailyMinimum: min?.daily, days: input.days)
+            pay = Pay.job(onClock: h, mealMinutes: input.mealMinutes, rate: rate, rule: rule, dailyMinimum: min?.daily,
+                          days: input.days, workDay: input.workDay)
         }
         return PricedJob(schedule: sched, productionTypes: types, minimum: min, rule: rule, rate: rate, pay: pay,
-                         status: Pay.scaleStatus(rate: rate, minimum: min?.hourly))
+                         status: Pay.scaleStatus(rate: rate, minimum: min?.hourly, vacationPay: rule?.vacationPayRate))
     }
 }

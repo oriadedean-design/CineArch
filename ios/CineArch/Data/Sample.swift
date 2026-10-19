@@ -64,7 +64,10 @@ extension LedgerStats {
     init(entries: [LedgerEntry], year: Int = Calendar.current.component(.year, from: Date())) {
         self.init()
         for e in entries where e.dateIncurred.hasPrefix(String(year)) {
-            if e.isIncome { grossIncome += e.amountBeforeTax; gstCollected += e.taxAmount }
+            if e.isIncome {
+                grossIncome += e.amountBeforeTax; gstCollected += e.taxAmount
+                if e.category == "EMPLOYMENT" { employmentIncome += e.amountBeforeTax }
+            }
             else { totalExpenses += e.amountBeforeTax; deductibleExpenses += e.deductibleAmount ?? e.amountBeforeTax; gstPaid += Ledger.claimableTax(e) }
         }
     }

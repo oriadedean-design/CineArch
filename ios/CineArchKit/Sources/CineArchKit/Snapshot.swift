@@ -14,6 +14,8 @@ public struct EngineSnapshot: Codable, Sendable {
     public var departmentCoverage: [[String?]]? = nil
     /// Tax and union dates, each with its source (public.deadlines).
     public var deadlines: [Deadline]? = nil
+    /// Tax figures by year (public.tax_jurisdictions, pension_plans, sales_tax).
+    public var tax: TaxTables? = nil
 
     public static let empty = EngineSnapshot(version: 0, unions: [], departments: [], rateSchedules: [], payRules: [])
 }
@@ -120,6 +122,19 @@ public struct PayRule: Codable, Sendable, Identifiable, Hashable {
     public var overtimeMultipliers: [Double]
     public var incrementMinutes: Int?
     public var overtimeBase: String?      // "daily_fee" = the daily fee / 8 (ACTRA IPA); else your hourly rate
+    public var sixthDay: PremiumDay?      // how a 6th day worked in the work week pays
+    public var seventhDay: PremiumDay?
+    public var vacationPayRate: Double?   // vacation pay already in the rate sheet's rates (BCMPA 4%)
+
+    /// A day paid at a premium: the minimum call at `base`, then each step from the hour it starts.
+    public struct PremiumDay: Codable, Sendable, Hashable {
+        public var base: Double
+        public var after: [Double]
+        public var multipliers: [Double]
+        public init(base: Double, after: [Double], multipliers: [Double]) { self.base = base; self.after = after; self.multipliers = multipliers }
+    }
+
+    public func premium(workDay: Int) -> PremiumDay? { workDay == 6 ? sixthDay : workDay >= 7 ? seventhDay : nil }
     public var mealBreakNotes: String?
     public var notes: String?
     public var needsVerification: [String]
@@ -127,11 +142,13 @@ public struct PayRule: Codable, Sendable, Identifiable, Hashable {
 
     public init(id: String = "", unionId: String = "", title: String = "", departmentId: String? = nil,
                 minimumCallHours: Double?, overtimeAfter: [Double], overtimeMultipliers: [Double], incrementMinutes: Int?,
-                overtimeBase: String? = nil, mealBreakNotes: String? = nil, notes: String? = nil, needsVerification: [String] = [], sourceUrl: String? = nil) {
+                overtimeBase: String? = nil, sixthDay: PremiumDay? = nil, seventhDay: PremiumDay? = nil,
+                vacationPayRate: Double? = nil, mealBreakNotes: String? = nil, notes: String? = nil, needsVerification: [String] = [], sourceUrl: String? = nil) {
         self.id = id; self.unionId = unionId; self.title = title; self.departmentId = departmentId
         self.minimumCallHours = minimumCallHours; self.overtimeAfter = overtimeAfter
         self.overtimeMultipliers = overtimeMultipliers; self.incrementMinutes = incrementMinutes
-        self.overtimeBase = overtimeBase
+        self.overtimeBase = overtimeBase; self.sixthDay = sixthDay; self.seventhDay = seventhDay
+        self.vacationPayRate = vacationPayRate
         self.mealBreakNotes = mealBreakNotes; self.notes = notes; self.needsVerification = needsVerification; self.sourceUrl = sourceUrl
     }
 }

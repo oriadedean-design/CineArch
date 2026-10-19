@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Heading, Text, Card, Button, Input, Select, Badge, ProgressBar } from '../components/ui';
 import { Lock, Crown, Plus, TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Calculator, PieChart, FileText, Landmark, Wallet, BadgeCheck, Upload, Sheet } from 'lucide-react';
 import { api } from '../services/storage';
-import { financeApi } from '../services/finance';
+import { financeApi, type WalletStats } from '../services/finance';
 import { User, FinanceTransaction, FinanceStats, UserUnionTracking, PLANS } from '../types';
 import { findUnion } from '../services/engine';
 import { clsx } from 'clsx';
@@ -18,7 +18,7 @@ export const Finance = () => {
   const fileInput = useRef<HTMLInputElement>(null);
   const proofFor = useRef<FinanceTransaction | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<(FinanceStats & { estCPP: number; estIncomeTax: number }) | null>(null);
+  const [stats, setStats] = useState<WalletStats | null>(null);
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [tracking, setTracking] = useState<UserUnionTracking[]>([]);
@@ -38,7 +38,7 @@ export const Finance = () => {
       setUser(u);
       if (u?.isPremium && u.id) {
         setTransactions(await financeApi.list(u.id));
-        setStats(await financeApi.getStats(u.id));
+        setStats(await financeApi.getStats(u.id, undefined, { payType: u.payType, province: u.province, gstMethod: u.gstMethod }));
         setTracking(await api.tracking.get());
       }
     };
@@ -77,7 +77,7 @@ export const Finance = () => {
   const refreshData = async () => {
     if (!user?.id) return;
     setTransactions(await financeApi.list(user.id));
-    setStats(await financeApi.getStats(user.id));
+    setStats(await financeApi.getStats(user.id, undefined, { payType: user.payType, province: user.province, gstMethod: user.gstMethod }));
     setTracking(await api.tracking.get());
   };
 
@@ -191,13 +191,33 @@ export const Finance = () => {
             <div className="space-y-8">
               <div className="flex justify-between text-[11px] font-black uppercase tracking-widest">
                 <span className="text-white/40 italic">Current Gross</span>
-                <span className={stats.grossIncomeYTD >= 30000 ? "text-accent" : "text-white"}>
-                  ${stats.grossIncomeYTD.toLocaleString()}
+                <span className={stats.selfEmployedIncome >= 30000 ? "text-accent" : "text-white"}>
+                  ${stats.selfEmployedIncome.toLocaleString()}
                 </span>
               </div>
-              <ProgressBar progress={financeApi.getThresholdProgress(stats.grossIncomeYTD)} />
+              <ProgressBar progress={financeApi.getThresholdProgress(stats.selfEmployedIncome)} />
+              <div className="flex justify-between text-sm text-white/60">
+                <span>{stats.quickMethodRate != null ? `GST/HST owing (Quick Method, ${(stats.quickMethodRate * 100).toFixed(1)}%)` : 'GST/HST owing (charged minus paid back; meals at half)'}</span>
+                <span className="text-white">${stats.gstNetRemittance.toLocaleString()}</span>
+              </div>
+              <div className="border-t border-white/10 pt-6 space-y-2 text-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Set aside</p>
+                {user?.payType === 't4' ? (
+                  <p className="text-white/60 italic">Tax and CPP come off your T4 pay, so there's nothing extra to set aside on it.</p>
+                ) : stats.setAside ? (
+                  <>
+                    <div className="flex justify-between text-white/60"><span>{stats.setAside.pensionPlan} (both halves)</span><span className="text-white">${stats.setAside.pension.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-white/60"><span>Income tax</span><span className="text-white">${stats.setAside.incomeTax.toLocaleString()}</span></div>
+                    <div className="flex justify-between font-bold text-white"><span>Total</span><span>${stats.setAside.total.toLocaleString()}</span></div>
+                    <p className="text-xs text-white/40 italic">{stats.setAside.year} federal and {user?.province} rates, after the basic personal amount{stats.employmentIncome > 0 ? ', on top of your T4 pay' : ''}. Rough estimate: other credits and deductions aren't included. Check with an accountant.</p>
+                    {!user?.payType && <p className="text-xs text-accent">Set how you're paid in Settings: T4 pay has its tax taken off already.</p>}
+                  </>
+                ) : (
+                  <p className="text-white/60 italic">Add your province in Settings to estimate tax.</p>
+                )}
+              </div>
 
-              {financeApi.checkGstThreshold(stats.grossIncomeYTD) && (
+              {financeApi.checkGstThreshold(stats.selfEmployedIncome) && (
                 <div className="p-8 bg-accent/5 border border-accent/20 flex gap-6 items-start">
                   <AlertTriangle className="text-accent" size={24} />
                   <div className="space-y-2">

@@ -22,6 +22,7 @@ struct PayForm: View {
     @State private var hours = 12.0
     @State private var meal = 60
     @State private var days = 1
+    @State private var workDay = 1
     @State private var rateText = ""
     @State private var showAuth = false
     @State private var showSave = false
@@ -33,7 +34,8 @@ struct PayForm: View {
     private var input: JobInput {
         JobInput(isUnion: isUnion, unionId: isUnion ? unionId : nil, role: nil, date: day,
                  productionType: productionType, ratePosition: position, hoursPerDay: hours,
-                 mealMinutes: Double(meal), days: days, hourlyRate: Double(rateText.replacingOccurrences(of: ",", with: ".")))
+                 mealMinutes: Double(meal), days: days, hourlyRate: Double(rateText.replacingOccurrences(of: ",", with: ".")),
+                 workDay: workDay)
     }
     private var priced: PricedJob { store.engine.price(input) }
     private var unionsWithRates: [Union] { store.engine.unions.filter { !store.engine.schedules($0.id).isEmpty } }
@@ -66,6 +68,13 @@ struct PayForm: View {
                 Stepper(value: $hours, in: 0.5...24, step: 0.5) { LabeledContent("Call to wrap", value: hours.hours) }
                 Stepper(value: $meal, in: 0...120, step: 15) { LabeledContent("Unpaid meal", value: "\(meal) min") }
                 Stepper(value: $days, in: 1...60) { LabeledContent("Days", value: "\(days)") }
+                if p.rule?.sixthDay != nil || p.rule?.seventhDay != nil {
+                    Picker("Day of the work week", selection: $workDay) {
+                        Text("1st to 5th").tag(1)
+                        Text("6th day").tag(6)
+                        Text("7th day").tag(7)
+                    }
+                }
             }
 
             Section {

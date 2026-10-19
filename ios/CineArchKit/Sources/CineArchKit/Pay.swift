@@ -47,8 +47,10 @@ public enum Pay {
         return cents(units.rounded(.up) * unit)
     }
 
+    /// `workDay` is the day's place in the work week: a 6th or 7th day pays at a
+    /// premium where the agreement has one (873).
     public static func day(onClock: Double, mealMinutes: Double = 0, rate: Double,
-                           rule: PayRule? = nil, dailyMinimum: Double? = nil) -> DayPay {
+                           rule: PayRule? = nil, dailyMinimum: Double? = nil, workDay: Int = 1) -> DayPay {
         let worked = workedHours(onClock, mealMinutes: mealMinutes, incrementMinutes: rule?.incrementMinutes)
         let rate = max(0, rate)
         guard let rule else {
@@ -59,10 +61,15 @@ public enum Pay {
         }
         // ACTRA's IPA works overtime out from the daily fee divided by 8.
         let otRate = rule.overtimeBase == "daily_fee" ? max(rate, (dailyMinimum ?? 0) / 8) : rate
-        let steps = rule.overtimeAfter.enumerated().map { ($0.element, rule.overtimeMultipliers.indices.contains($0.offset) ? rule.overtimeMultipliers[$0.offset] : 1) }
+        let premium = rule.premium(workDay: workDay)
+        let after = premium?.after ?? rule.overtimeAfter
+        let multipliers = premium?.multipliers ?? rule.overtimeMultipliers
+        let base = premium?.base ?? 1
+        let steps = after.enumerated().map { ($0.element, multipliers.indices.contains($0.offset) ? multipliers[$0.offset] : 1) }
         let straightLimit = steps.first?.0 ?? .infinity
         let straight = min(worked, straightLimit)
-        var bands = [PayBand(label: "Straight time", multiplier: 1, hours: cents(straight), amount: cents(straight * rate))]
+        var bands = [PayBand(label: premium == nil ? "Straight time" : "Minimum call, \(label(base))", multiplier: base,
+                             hours: cents(straight), amount: cents(straight * rate * base))]
         var overtime = 0.0
         for (i, step) in steps.enumerated() {
             let end = i + 1 < steps.count ? steps[i + 1].0 : .infinity
@@ -71,22 +78,26 @@ public enum Pay {
             overtime += hours
             bands.append(PayBand(label: label(step.1), multiplier: step.1, hours: cents(hours), amount: cents(hours * otRate * step.1)))
         }
-        let floor = max(rule.minimumCallHours.map { cents(min($0, straightLimit) * rate) } ?? 0, dailyMinimum ?? 0)
+        let floor = max(rule.minimumCallHours.map { cents(min($0, straightLimit) * rate * base) } ?? 0, (dailyMinimum ?? 0) * base)
         let topUp = cents(max(0, floor - bands[0].amount))
         let total = cents(bands.reduce(0) { $0 + $1.amount } + topUp)
         return DayPay(workedHours: worked, overtimeHours: cents(overtime), bands: bands, minimumTopUp: topUp, total: total)
     }
 
     public static func job(onClock: Double, mealMinutes: Double = 0, rate: Double, rule: PayRule? = nil,
-                           dailyMinimum: Double? = nil, days: Int = 1) -> JobPay {
+                           dailyMinimum: Double? = nil, days: Int = 1, workDay: Int = 1) -> JobPay {
         let days = max(1, days)
-        let d = day(onClock: onClock, mealMinutes: mealMinutes, rate: rate, rule: rule, dailyMinimum: dailyMinimum)
+        let d = day(onClock: onClock, mealMinutes: mealMinutes, rate: rate, rule: rule, dailyMinimum: dailyMinimum, workDay: workDay)
         return JobPay(day: d, days: days, totalHours: cents(d.workedHours * Double(days)),
                       totalOvertimeHours: cents(d.overtimeHours * Double(days)), gross: cents(d.total * Double(days)))
     }
 
-    public static func scaleStatus(rate: Double?, minimum: Double?) -> ScaleStatus {
-        guard let rate, let minimum, rate > 0 else { return .unknown }
+    /// `vacationPay`: the share of vacation pay already in the rate sheet's rates
+    /// (BCMPA 4%). A pay stub shows it on its own line, so a base rate that much
+    /// lower is still at scale.
+    public static func scaleStatus(rate: Double?, minimum: Double?, vacationPay: Double? = nil) -> ScaleStatus {
+        guard var rate, let minimum, rate > 0 else { return .unknown }
+        if let v = vacationPay, rate < minimum - 0.005, rate * (1 + v) >= minimum - 0.005 { rate = minimum }
         let diff = cents(rate) - cents(minimum)
         if abs(diff) < 0.005 { return .at }
         return diff > 0 ? .above : .below

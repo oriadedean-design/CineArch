@@ -148,29 +148,57 @@ struct LedgerView: View {
         }
     }
 
+    private func taxPicture(_ s: LedgerStats) -> TaxPicture {
+        TaxPicture(stats: s, payType: session.payType, province: session.taxProvince, gstMethod: session.gstMethod, tables: store.engine.snapshot.tax)
+    }
+
     @ViewBuilder private func tax(_ s: LedgerStats) -> some View {
+        let t = taxPicture(s)
         Section {
-            LabeledContent("GST/HST collected", value: s.gstCollected.money)
-            LabeledContent("GST/HST paid", value: s.gstPaid.money)
-            LabeledContent(s.gstOwing >= 0 ? "Owing" : "Refund", value: abs(s.gstOwing).money)
+            if !session.isPreview { GSTMethodPicker() }
+            if let q = t.quick {
+                LabeledContent("Sales with GST/HST", value: t.salesWithTax.money)
+                LabeledContent("Quick Method rate", value: "\((q.quickServiceRate * 100).formatted(.number.precision(.fractionLength(1))))%")
+                LabeledContent("Owing", value: t.gstOwing.money)
+            } else {
+                LabeledContent("GST/HST collected", value: s.gstCollected.money)
+                LabeledContent("GST/HST paid back", value: s.gstPaid.money)
+                LabeledContent(t.gstOwing >= 0 ? "Owing" : "Refund", value: abs(t.gstOwing).money)
+            }
             VStack(alignment: .leading, spacing: 6) {
                 SquareProgress(value: s.gstThresholdFraction, color: s.gstThresholdFraction >= 1 ? .red : Theme.accent)
                 Text(s.gstThresholdFraction >= 1
                      ? "You're past $30,000 this year. You need a GST/HST number."
-                     : "\((Ledger.smallSupplierThreshold - s.grossIncome).money) until you must register for GST/HST ($30,000).")
+                     : "\((Ledger.smallSupplierThreshold - s.selfEmployedIncome).money) until you must register for GST/HST ($30,000).")
                     .font(.caption).foregroundStyle(.secondary)
             }
             .padding(.vertical, 2)
         } header: {
             Text("GST/HST")
+        } footer: {
+            if t.quick != nil {
+                Text("Quick Method: a set share of your sales (tax included), less 1% of the first $30,000. You don't claim back GST/HST on expenses. Meals count half.")
+            } else {
+                Text("Only half the GST/HST on meals can be claimed back.")
+            }
         }
         Section {
-            LabeledContent("CPP (self-employed)", value: s.estimatedCPP.money)
-            LabeledContent("Income tax", value: s.estimatedIncomeTax.money)
+            if t.payType == nil, !session.isPreview { PayTypePicker() }
+            if t.payType == .t4 {
+                Text("Tax and CPP come off your T4 pay, so there's nothing extra to set aside on it.").foregroundStyle(.secondary)
+            } else if let a = t.setAside {
+                LabeledContent("\(a.pensionPlan) (both halves)", value: a.pension.money)
+                LabeledContent("Income tax", value: a.incomeTax.money)
+                LabeledContent("Total to set aside", value: a.total.money).bold()
+            } else {
+                Text("Add where you're based in Setting the Scene to estimate tax.").foregroundStyle(.secondary)
+            }
         } header: {
             Text("Set aside")
         } footer: {
-            Text("Rough estimates: CPP at 11.9% from $3,500 to $74,600 plus 8% up to $85,000 (2026), and income tax at 20% of net. Check with an accountant.")
+            if let a = t.setAside, let p = t.province {
+                Text("\(String(a.year)) federal and \(p) rates, after the basic personal amount\(s.employmentIncome > 0 ? ", on top of your T4 pay" : "")\(p == "Ontario" ? ", with Ontario's health premium" : ""). Rough estimate: other credits and deductions aren't included. Check with an accountant.")
+            }
         }
     }
 
@@ -183,7 +211,7 @@ struct LedgerView: View {
             name: session.isPreview ? Sample.name : (p?.name ?? session.displayEmail ?? "You"),
             role: p?.selectedRoles?.first ?? jobs.jobs.first?.role ?? "Film crew",
             place: session.isPreview ? "Toronto, Ontario" : [p?.province].compactMap { $0 }.joined().ifBlank("Canada"),
-            jobs: jobs.jobs, entries: ledger.yearEntries, stats: ledger.stats,
+            jobs: jobs.jobs, entries: ledger.yearEntries, stats: ledger.stats, tax: taxPicture(ledger.stats),
             progress: tracking.tracks.map { TrackProgress(track: $0, jobs: jobs.jobs, engine: store.engine) },
             isPreview: session.isPreview)
         making = "Starting your \(kind.rawValue)…"
@@ -410,6 +438,41 @@ struct LedgerEntrySheet: View {
             dismiss()
         } catch {
             self.error = "Couldn't save: \(error.localizedDescription)"
+        }
+    }
+}
+
+/// How someone is paid, which decides what they set aside for tax.
+struct PayTypePicker: View {
+    @Environment(Session.self) private var session
+    @State private var error: String?
+
+    var body: some View {
+        Picker("How you're paid", selection: Binding(get: { session.payType }, set: { new in
+            Task {
+                do { try await session.saveProfileField("pay_type", new.map { .string($0.rawValue) } ?? .null); error = nil }
+                catch { self.error = "Couldn't save: \(error.localizedDescription)" }
+            }
+        })) {
+            Text("Not set").tag(PayType?.none)
+            Text("T4 (on payroll)").tag(Optional(PayType.t4))
+            Text("Self-employed").tag(Optional(PayType.selfEmployed))
+            Text("Both").tag(Optional(PayType.both))
+        }
+        .disabled(session.isPreview)
+        if let error { Text(error).font(.caption).foregroundStyle(.red) }
+    }
+}
+
+/// Regular GST/HST (charged minus paid) or the Quick Method.
+struct GSTMethodPicker: View {
+    @Environment(Session.self) private var session
+    var body: some View {
+        Picker("Method", selection: Binding(get: { session.gstMethod }, set: { new in
+            Task { try? await session.saveProfileField("gst_method", .string(new)) }
+        })) {
+            Text("Regular").tag("regular")
+            Text("Quick Method").tag("quick")
         }
     }
 }

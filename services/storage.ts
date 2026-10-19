@@ -63,6 +63,8 @@ const toUser = (p: ProfileRow): User => ({
   hasAgentFee: p.has_agent_fee ?? undefined,
   agentFeePercentage: p.agent_fee_pct ?? undefined,
   earningGoal: p.earning_goal ?? undefined,
+  payType: (p.pay_type as User['payType']) ?? undefined,
+  gstMethod: (p.gst_method as User['gstMethod']) ?? 'regular',
   entityType: (p.entity_type ?? undefined) as User['entityType'],
   cohortYear: p.cohort_year ?? undefined,
   programName: p.program_name ?? undefined,
@@ -94,6 +96,8 @@ const toProfileUpdate = (u: Partial<User>): TablesUpdate<'profiles'> => {
   if (u.hasAgentFee !== undefined) row.has_agent_fee = u.hasAgentFee;
   if (u.agentFeePercentage !== undefined) row.agent_fee_pct = u.agentFeePercentage;
   if ('earningGoal' in u) row.earning_goal = u.earningGoal ?? null;
+  if ('payType' in u) row.pay_type = u.payType ?? null;
+  if ('gstMethod' in u) row.gst_method = u.gstMethod ?? 'regular';
   if (u.entityType !== undefined) row.entity_type = u.entityType;
   if (u.organizationName !== undefined) row.organization_name = u.organizationName;
   if (u.businessStructure !== undefined) row.business_structure = u.businessStructure;

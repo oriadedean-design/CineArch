@@ -4,7 +4,8 @@ import { FinanceTransaction, FinanceStats, TransactionType } from '../types';
 import { isDemoMode, DEMO_TRANSACTIONS, DEMO_STATS } from './demo';
 import type { Tables } from './database.types';
 import { fitUnder1MB, uploadError } from './uploads';
-import { CPP_2026, selfEmployedCpp } from './tax';
+import { quickMethodOwing, salesTaxFor, setAside, type PayType, type SetAside } from './tax';
+import { getTaxTables } from './union_engine';
 
 /**
  * MASTER FISCAL PARAMETERS (CANADIAN COMPLIANCE)
@@ -13,9 +14,16 @@ export const CA_FISCAL_CONFIG = {
   GST_RATE: 0.05,
   SMALL_SUPPLIER_THRESHOLD: 30000,
   MEALS_DEDUCTION_LIMIT: 0.50,
-  SELF_EMPLOYED_CPP_RATE: CPP_2026.rate,
-  CPP_EXEMPTION: CPP_2026.exemption,
-  PROJECTED_INCOME_TAX_RATE: 0.20
+
+};
+
+export type WalletStats = FinanceStats & {
+  employmentIncome: number;      // T4 pay: tax and CPP already come off it
+  selfEmployedIncome: number;
+  setAside?: SetAside;           // undefined: T4 only, or no province figures
+  quickMethodRate?: number;      // set when they use the Quick Method
+  estCPP: number;
+  estIncomeTax: number;
 };
 
 const RULES = {
@@ -172,7 +180,9 @@ export const financeApi = {
   },
 
   // Year-to-date totals, aggregated in Postgres (see finance_stats RPC)
-  getStats: async (userId: string, year?: number): Promise<FinanceStats & { estCPP: number; estIncomeTax: number }> => {
+  // `who`: how they're paid and where, for what to set aside (see services/tax.ts).
+  getStats: async (userId: string, year?: number,
+                   who: { payType?: PayType; province?: string; gstMethod?: 'regular' | 'quick' } = {}): Promise<WalletStats> => {
     if (isDemoMode()) return DEMO_STATS;
     const { data, error } = await supabase.rpc('finance_stats', { p_user_id: userId, p_year: year });
     if (error) throw error;
@@ -182,10 +192,16 @@ export const financeApi = {
     const deductibleExpenses = Number(t?.deductible_expenses ?? 0);
     const gstCollected = Number(t?.gst_collected ?? 0);
     const gstPaid = Number(t?.gst_paid ?? 0);
+    const employmentIncome = Number(t?.employment_income ?? 0);
     const netIncome = grossIncome - deductibleExpenses;
+    const selfEmployedIncome = grossIncome - employmentIncome;
+    const taxYear = year ?? new Date().getFullYear();
+    const tables = getTaxTables();
 
-    const estCPP = selfEmployedCpp(netIncome);
-    const estIncomeTax = Math.max(0, netIncome) * CA_FISCAL_CONFIG.PROJECTED_INCOME_TAX_RATE;
+    const plan = who.payType === 't4' || !who.province ? undefined
+      : setAside({ selfEmployedNet: selfEmployedIncome - deductibleExpenses, employmentIncome, province: who.province, year: taxYear }, tables);
+    const quick = who.gstMethod === 'quick' && who.province ? salesTaxFor(who.province, taxYear, tables) : undefined;
+    const gstNetRemittance = quick ? quickMethodOwing(quick, selfEmployedIncome + gstCollected) : gstCollected - gstPaid;
 
     return {
       grossIncomeYTD: grossIncome,
@@ -194,10 +210,14 @@ export const financeApi = {
       netIncomeYTD: netIncome,
       gstCollected,
       gstPaid,
-      gstNetRemittance: gstCollected - gstPaid,
+      gstNetRemittance,
       taxableIncomeProjected: netIncome,
-      estCPP,
-      estIncomeTax
+      employmentIncome,
+      selfEmployedIncome,
+      setAside: plan,
+      quickMethodRate: quick?.quickServiceRate,
+      estCPP: plan?.pension ?? 0,
+      estIncomeTax: plan?.incomeTax ?? 0,
     };
   },
 
