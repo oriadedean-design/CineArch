@@ -65,7 +65,7 @@ extension LedgerStats {
         self.init()
         for e in entries where e.dateIncurred.hasPrefix(String(year)) {
             if e.isIncome { grossIncome += e.amountBeforeTax; gstCollected += e.taxAmount }
-            else { totalExpenses += e.amountBeforeTax; deductibleExpenses += e.deductibleAmount ?? e.amountBeforeTax; gstPaid += e.taxAmount }
+            else { totalExpenses += e.amountBeforeTax; deductibleExpenses += e.deductibleAmount ?? e.amountBeforeTax; gstPaid += Ledger.claimableTax(e) }
         }
     }
 }

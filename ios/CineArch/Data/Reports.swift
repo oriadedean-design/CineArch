@@ -299,7 +299,7 @@ private struct ReportHTML {
         <div class="row"><span>CPP (self-employed)</span><span class="num">\(s.estimatedCPP.money)</span></div>
         <div class="row"><span>Income tax</span><span class="num">\(s.estimatedIncomeTax.money)</span></div>
         <div class="row"><b>Total to set aside</b><b class="num">\((s.estimatedCPP + s.estimatedIncomeTax).money)</b></div>
-        <p class="note">CPP at 11.9% above $3,500; income tax at a flat 20% of net. Rough estimates, not tax advice. Check with an accountant.</p></div></div></div>
+        <p class="note">CPP at 11.9% from $3,500 to $74,600, plus 8% up to $85,000 (2026); income tax at a flat 20% of net. Rough estimates, not tax advice. Check with an accountant.</p></div></div></div>
         """
     }
 
@@ -309,9 +309,9 @@ private struct ReportHTML {
             let t = p.track
             return """
             <div class="row" style="border:0"><span><b>\(Fmt.esc(t.unionName))</b> · \(Fmt.esc(t.tierLabel))</span>
-            <span class="num"><b>\(t.format(p.current))</b> of \(t.format(t.targetValue)) \(t.unit)\(p.remaining > 0 ? " · \(t.format(p.remaining)) to go" : " · ready to apply")</span></div>
+            <span class="num"><b>\(t.format(p.current))</b> of \(t.format(t.targetValue)) \(t.unit)\(p.remaining > 0 ? " · \(t.format(p.remaining)) to go" : p.productionsShort ? " · more productions needed" : " · ready to apply")</span></div>
             <div class="bar"><span style="width:\(String(format: "%.1f", p.fraction * 100))%"></span></div>
-            <span class="muted">\(p.jobs) job\(p.jobs == 1 ? "" : "s") logged in CineArch\(t.startingValue > 0 ? " + \(t.format(t.startingValue)) banked before" : "")\(p.windowMonths.map { ", counted over the last \($0) months" } ?? "").</span>
+            <span class="muted">\(p.jobs) job\(p.jobs == 1 ? "" : "s") logged in CineArch\(t.startingValue > 0 ? " + \(t.format(t.startingValue)) banked before" : "")\(p.windowMonths.map { ", counted over the last \($0) months" } ?? "")\(p.minProductions.map { ", \(p.productions) of \($0) productions" } ?? "")\(p.isConfirmed ? "" : ". Target not confirmed by the union").</span>
             """
         }.joined(separator: "<div style=\"height:10px\"></div>")
         return "<h2>Getting your card <span class=\"label\">Days on union sets</span></h2><div class=\"box\">\(rows)</div>"

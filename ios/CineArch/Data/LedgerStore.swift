@@ -39,8 +39,27 @@ struct LedgerEntry: Codable, Identifiable, Hashable {
 enum Ledger {
     static let gstRate = 0.05
     static let smallSupplierThreshold = 30_000.0
+    static var currentYear: Int { Calendar.current.component(.year, from: Date()) }
+
+    // CPP for the self-employed, 2026 (ESDC): 11.9% of earnings from $3,500 to
+    // $74,600 (most $8,460.90), plus CPP2 at 8% from $74,600 to $85,000 (most $832).
     static let cppRate = 0.119
     static let cppExemption = 3_500.0
+    static let cppCeiling = 74_600.0
+    static let cpp2Rate = 0.08
+    static let cpp2Ceiling = 85_000.0
+
+    static func cpp(net: Double) -> Double {
+        let base = min(max(0, net - cppExemption), cppCeiling - cppExemption) * cppRate
+        let second = max(0, min(net, cpp2Ceiling) - cppCeiling) * cpp2Rate
+        return ((base + second) * 100).rounded() / 100
+    }
+
+    /// GST/HST you can claim back on an expense: half on meals and entertainment (CRA).
+    static func claimableTax(_ e: LedgerEntry) -> Double {
+        let cat = e.category.uppercased()
+        return cat.contains("MEAL") || cat.contains("ENTERTAINMENT") ? e.taxAmount / 2 : e.taxAmount
+    }
     static let projectedTaxRate = 0.20
 
     static let incomeCategories = [("SERVICE_FEES", "Service fees"), ("RESIDUAL", "Residuals")]
@@ -93,7 +112,7 @@ struct LedgerStats: Decodable {
 
     var netIncome: Double { grossIncome - deductibleExpenses }
     var gstOwing: Double { gstCollected - gstPaid }
-    var estimatedCPP: Double { max(0, netIncome - Ledger.cppExemption) * Ledger.cppRate }
+    var estimatedCPP: Double { Ledger.cpp(net: netIncome) }
     var estimatedIncomeTax: Double { max(0, netIncome) * Ledger.projectedTaxRate }
     /// Past $30,000 in a year you must register for GST/HST.
     var gstThresholdFraction: Double { min(1, grossIncome / Ledger.smallSupplierThreshold) }
@@ -120,17 +139,39 @@ final class LedgerStore {
         isLoading = true
         defer { isLoading = false }
         do {
-            async let rows: [LedgerEntry] = Backend.client.from("finance_transactions").select()
-                .eq("user_id", value: userId).order("date_incurred", ascending: false).limit(200).execute().value
+            // All of this year (reports and the spreadsheet cover the whole year),
+            // plus the latest 200 from earlier years to look back on.
+            let jan1 = "\(Ledger.currentYear)-01-01"
+            async let thisYear = Self.all(userId: userId, from: jan1)
+            async let earlier: [LedgerEntry] = Backend.client.from("finance_transactions").select()
+                .eq("user_id", value: userId).lt("date_incurred", value: jan1)
+                .order("date_incurred", ascending: false).limit(200).execute().value
             async let totals: [LedgerStats] = Backend.client
                 .rpc("finance_stats", params: ["p_user_id": userId.uuidString.lowercased()]).execute().value
-            entries = try await rows
+            entries = try await thisYear + earlier
             stats = try await totals.first ?? LedgerStats()
             error = nil
         } catch {
             self.error = "Couldn't load your ledger. Pull to try again."
         }
     }
+
+    /// Every entry on or after a date, a page at a time.
+    private static func all(userId: UUID, from day: String) async throws -> [LedgerEntry] {
+        var rows = [LedgerEntry]()
+        let page = 1000
+        while true {
+            let batch: [LedgerEntry] = try await Backend.client.from("finance_transactions").select()
+                .eq("user_id", value: userId).gte("date_incurred", value: day)
+                .order("date_incurred", ascending: false).order("id")
+                .range(from: rows.count, to: rows.count + page - 1).execute().value
+            rows += batch
+            if batch.count < page { return rows }
+        }
+    }
+
+    /// This year's entries: what the reports and the spreadsheet cover.
+    var yearEntries: [LedgerEntry] { entries.filter { $0.dateIncurred.hasPrefix(String(Ledger.currentYear)) } }
 
     /// Saves an entry and returns it, so the next step can ask for its proof.
     @discardableResult
@@ -190,8 +231,9 @@ final class LedgerStore {
         if let i = entries.firstIndex(where: { $0.id == id }) { entries[i].proofPath = path }
     }
 
-    /// The year's entries as a spreadsheet (CSV), for an accountant or tax time.
+    /// This year's entries as a spreadsheet (CSV), for an accountant or tax time.
     func csv() -> String {
+        let entries = yearEntries
         func cell(_ s: String) -> String { "\"" + s.replacingOccurrences(of: "\"", with: "\"\"") + "\"" }
         let head = "Date,Type,Category,Description,Amount before tax,GST/HST,Total,Deductible,Proof"
         let rows = entries.map { e in

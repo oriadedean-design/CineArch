@@ -4,7 +4,7 @@ import Testing
 // Mirrors tests/pay.test.ts.
 let iatse873 = PayRule(minimumCallHours: 8, overtimeAfter: [8, 12, 15], overtimeMultipliers: [1.5, 2, 3], incrementMinutes: 6)
 let iatse873Transport = PayRule(minimumCallHours: 9, overtimeAfter: [9, 12, 15], overtimeMultipliers: [1.5, 2, 3], incrementMinutes: 6)
-let actraIPA = PayRule(minimumCallHours: nil, overtimeAfter: [8, 12], overtimeMultipliers: [1.5, 2], incrementMinutes: 6)
+let actraIPA = PayRule(minimumCallHours: nil, overtimeAfter: [8, 12], overtimeMultipliers: [1.5, 2], incrementMinutes: 6, overtimeBase: "daily_fee")
 
 @Suite struct WorkedHours {
     @Test func subtractsMeal() { #expect(Pay.workedHours(13, mealMinutes: 60) == 12) }
@@ -42,7 +42,7 @@ let actraIPA = PayRule(minimumCallHours: nil, overtimeAfter: [8, 12], overtimeMu
     @Test func dailyFee() { #expect(Pay.day(onClock: 6, rate: 121.25, rule: actraIPA, dailyMinimum: 972.75).total == 972.75) }
     @Test func overtimeOnTopOfFee() {
         let p = Pay.day(onClock: 10.5, mealMinutes: 30, rate: 121.25, rule: actraIPA, dailyMinimum: 972.75)
-        #expect(p.workedHours == 10); #expect(p.total == 1336.50)
+        #expect(p.workedHours == 10); #expect(p.total == 1337.53)
     }
 }
 
@@ -56,5 +56,21 @@ let actraIPA = PayRule(minimumCallHours: nil, overtimeAfter: [8, 12], overtimeMu
     @Test func nonUnion() {
         let p = Pay.day(onClock: 10, mealMinutes: 30, rate: 22)
         #expect(p.total == 209); #expect(p.overtimeHours == 0)
+    }
+}
+
+// ACTRA's IPA works overtime out from the daily fee divided by 8: the 2026
+// principal fee of $972.75 gives 1.5 x $121.59 = $182.39 an hour, where the
+// chart's $121.25 hourly would give $181.88.
+@Suite struct DailyFeeOvertime {
+    let ipa = PayRule(minimumCallHours: nil, overtimeAfter: [8, 12], overtimeMultipliers: [1.5, 2], incrementMinutes: 6, overtimeBase: "daily_fee")
+    @Test func overtimeFromDailyFee() {
+        let p = Pay.day(onClock: 9, rate: 121.25, rule: ipa, dailyMinimum: 972.75)
+        #expect(p.bands[1].amount == 182.39)
+        #expect(p.total == 1155.14)
+    }
+    @Test func aboveScaleRateWins() {
+        let p = Pay.day(onClock: 9, rate: 150, rule: ipa, dailyMinimum: 972.75)
+        #expect(p.bands[1].amount == 225)
     }
 }

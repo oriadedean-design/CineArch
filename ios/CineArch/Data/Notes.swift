@@ -25,12 +25,12 @@ enum Notes {
 
         for t in tracks {
             let p = TrackProgress(track: t, jobs: jobs, engine: engine, today: today)
-            if t.targetValue <= 0 { continue }
-            if p.remaining == 0 {
+            if p.track.targetValue <= 0 { continue }
+            if p.remaining == 0 && !p.productionsShort {
                 notes.append(Note(id: "ready-\(t.unionTypeId)-\(t.tierLabel)", title: "Ready to apply: \(t.unionName)",
-                                  body: "You've reached \(t.format(t.targetValue)) \(t.unit) toward \(t.tierLabel).",
+                                  body: "You've reached \(t.format(p.track.targetValue)) \(t.unit) toward \(t.tierLabel).",
                                   date: t0, action: .openWrap, actionLabel: "Open Your Wrap"))
-            } else if p.remaining <= t.targetValue * 0.1 {
+            } else if p.remaining <= p.track.targetValue * 0.1 {
                 notes.append(Note(id: "close-\(t.unionTypeId)-\(t.tierLabel)-\(p.remaining)", title: "\(t.format(p.remaining)) \(t.unit) to go for \(t.unionName)",
                                   body: "You're \(Int((p.fraction * 100).rounded()))% of the way to \(t.tierLabel).",
                                   date: t0, action: .openWrap, actionLabel: "Open Your Wrap"))

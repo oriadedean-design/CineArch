@@ -56,6 +56,10 @@ begin
    and daterange(a.effective_from, a.effective_to, '[]') && daterange(b.effective_from, b.effective_to, '[]');
   if n > 0 then raise exception 'FAIL: % pairs of rate schedules for the same production type overlap in time', n; end if;
 
+  -- A confirmed step always says where it comes from and when it was checked.
+  select count(*) into n from public.union_tiers where confirmed and (source_url is null or checked_on is null);
+  if n > 0 then raise exception 'FAIL: % confirmed union steps have no source or check date', n; end if;
+
   select count(*) into n from public.roles r where not exists (select 1 from public.role_coverage c where c.role_id = r.id);
   if n > 0 then raise notice 'Roles with no coverage anywhere: %', n; end if;
 

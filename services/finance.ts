@@ -4,6 +4,7 @@ import { FinanceTransaction, FinanceStats, TransactionType } from '../types';
 import { isDemoMode, DEMO_TRANSACTIONS, DEMO_STATS } from './demo';
 import type { Tables } from './database.types';
 import { fitUnder1MB, uploadError } from './uploads';
+import { CPP_2026, selfEmployedCpp } from './tax';
 
 /**
  * MASTER FISCAL PARAMETERS (CANADIAN COMPLIANCE)
@@ -12,8 +13,8 @@ export const CA_FISCAL_CONFIG = {
   GST_RATE: 0.05,
   SMALL_SUPPLIER_THRESHOLD: 30000,
   MEALS_DEDUCTION_LIMIT: 0.50,
-  SELF_EMPLOYED_CPP_RATE: 0.119,
-  CPP_EXEMPTION: 3500,
+  SELF_EMPLOYED_CPP_RATE: CPP_2026.rate,
+  CPP_EXEMPTION: CPP_2026.exemption,
   PROJECTED_INCOME_TAX_RATE: 0.20
 };
 
@@ -183,8 +184,7 @@ export const financeApi = {
     const gstPaid = Number(t?.gst_paid ?? 0);
     const netIncome = grossIncome - deductibleExpenses;
 
-    const pensionable = Math.max(0, netIncome - CA_FISCAL_CONFIG.CPP_EXEMPTION);
-    const estCPP = pensionable * CA_FISCAL_CONFIG.SELF_EMPLOYED_CPP_RATE;
+    const estCPP = selfEmployedCpp(netIncome);
     const estIncomeTax = Math.max(0, netIncome) * CA_FISCAL_CONFIG.PROJECTED_INCOME_TAX_RATE;
 
     return {

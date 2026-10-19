@@ -121,10 +121,20 @@ struct TrackRow: View {
             HStack {
                 Text("\(t.format(progress.current)) of \(t.format(t.targetValue)) \(t.unit)\(progress.windowMonths.map { " in \($0) months" } ?? "")\(t.countsFrom.map { " since \($0)" } ?? "")")
                 Spacer()
-                Text(progress.remaining > 0 ? "\(t.format(progress.remaining)) to go" : "Ready to apply!")
-                    .foregroundStyle(progress.remaining > 0 ? Color.secondary : Theme.accent)
+                Text(progress.remaining > 0 ? "\(t.format(progress.remaining)) to go" : progress.productionsShort ? "More productions needed" : "Ready to apply!")
+                    .foregroundStyle(progress.remaining > 0 || progress.productionsShort ? Color.secondary : Theme.accent)
             }
             .font(.caption).monospacedDigit()
+            if let min = progress.minProductions {
+                Text("\(progress.productions) of \(min) productions").font(.caption).monospacedDigit()
+                    .foregroundStyle(progress.productionsShort ? Theme.accent : .secondary)
+            }
+            if progress.needsDepartment {
+                Text("Counting every department. Tap to choose yours.").font(.caption).foregroundStyle(Theme.accent)
+            }
+            if !progress.isConfirmed {
+                Text("Target not confirmed by the union").font(.caption).foregroundStyle(.secondary)
+            }
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
@@ -135,6 +145,7 @@ struct TrackRow: View {
 struct TrackUnionSheet: View {
     @Environment(EngineStore.self) private var store
     @Environment(TrackingStore.self) private var tracking
+    @Environment(Session.self) private var session
     @Environment(\.dismiss) private var dismiss
     let existing: TrackedUnion?
 
@@ -143,6 +154,7 @@ struct TrackUnionSheet: View {
     @State private var bankedText = ""
     @State private var since = Date()
     @State private var hasSince = false
+    @State private var department = ""
     @State private var saving = false
     @State private var error: String?
 
@@ -167,8 +179,14 @@ struct TrackUnionSheet: View {
                         }
                         .pickerStyle(.navigationLink)
                     }
+                    if let tier, tier.byDepartment {
+                        Picker(tier.countsAnyWork ? "Department" : "Your department", selection: $department) {
+                            Text("Choose…").tag("")
+                            ForEach(store.engine.snapshot.departments) { Text($0.name).tag($0.name) }
+                        }
+                    }
                 } footer: {
-                    if let tier { Text(tier.description ?? "") }
+                    if let tier { TierFooter(tier: tier) }
                 }
                 if let tier {
                     let draft = TrackedUnion(unionTypeId: unionId, unionName: "", tierLabel: tier.name, targetType: tier.targetType, targetValue: tier.targetValue)
@@ -181,7 +199,7 @@ struct TrackUnionSheet: View {
                             Text(draft.unit).foregroundStyle(.secondary)
                         }
                     } footer: {
-                        Text("Union-set work from before you started logging in CineArch.")
+                        Text(tier.countsAnyWork ? "Relevant work from before you started logging in CineArch." : "Union-set work from before you started logging in CineArch.")
                     }
                     if let label = tier.startLabel {
                         Section {
@@ -208,7 +226,9 @@ struct TrackUnionSheet: View {
                 tierName = existing.tierLabel
                 bankedText = existing.startingValue > 0 ? existing.startingValue.formatted(.number.grouping(.never)) : ""
                 if let d = existing.countsFrom.flatMap(Date.init(isoDay:)) { since = d; hasSince = true }
+                department = existing.department ?? ""
             }
+            .task { if existing == nil, department.isEmpty { department = session.profile?.department ?? "" } }
             .onChange(of: unionId) { if existing == nil || unionId != existing?.unionTypeId { tierName = union?.tiers.first?.name ?? "" } }
         }
     }
@@ -221,10 +241,30 @@ struct TrackUnionSheet: View {
         do {
             try await tracking.save(TrackedUnion(unionTypeId: union.id, unionName: union.name, tierLabel: tier.name,
                                                  targetType: tier.targetType, targetValue: tier.targetValue, startingValue: banked,
-                                                 countsFrom: tier.startLabel != nil && hasSince ? since.isoDay : nil))
+                                                 countsFrom: tier.startLabel != nil && hasSince ? since.isoDay : nil,
+                                                 department: tier.byDepartment && !department.isEmpty ? department : nil))
             dismiss()
         } catch {
             self.error = "Couldn't save: \(error.localizedDescription)"
+        }
+    }
+}
+
+/// What a step asks for, and where that comes from.
+struct TierFooter: View {
+    let tier: Union.Tier
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let d = tier.description { Text(d) }
+            if tier.byDepartment { Text("Only work in your department counts.") }
+            if tier.isConfirmed, let s = tier.sourceUrl, let url = URL(string: s) {
+                Link(destination: url) {
+                    Text("Source\(tier.checkedOn.flatMap(Date.init(isoDay:)).map { ", checked \($0.formatted(date: .abbreviated, time: .omitted))" } ?? "")")
+                }
+            } else {
+                Text("This target isn't confirmed by the union yet. Check with them before relying on it.")
+                    .foregroundStyle(Theme.accent)
+            }
         }
     }
 }

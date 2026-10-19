@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { api } from '../services/storage';
-import { getAllUnions, findUnion, trackProgress } from '../services/engine';
+import { getAllUnions, getDepartments, findUnion, trackProgress } from '../services/engine';
 import type { Job, UserUnionTracking } from '../types';
 import { Button, Card, Input, ProgressBar, Select } from './ui';
 
@@ -14,7 +14,7 @@ export const UnionGoals = () => {
   const [tracks, setTracks] = useState<UserUnionTracking[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ unionId: '', tier: '', banked: '', since: '' });
+  const [form, setForm] = useState({ unionId: '', tier: '', banked: '', since: '', department: '' });
   const [error, setError] = useState('');
 
   const refresh = async () => {
@@ -36,8 +36,9 @@ export const UnionGoals = () => {
         targetType: tier.targetType, targetValue: tier.targetValue,
         startingValue: Number(form.banked) || 0,
         countsFrom: tier.startLabel && form.since ? form.since : undefined,
+        department: tier.requiresDepartment && form.department ? form.department : undefined,
       }]);
-      setAdding(false); setForm({ unionId: '', tier: '', banked: '', since: '' });
+      setAdding(false); setForm({ unionId: '', tier: '', banked: '', since: '', department: '' });
       refresh();
     } catch (e: any) { setError(e.message); }
   };
@@ -68,8 +69,11 @@ export const UnionGoals = () => {
                 <p className="text-xs text-white/40 mt-2">
                   {fmt(p.current)} of {fmt(p.target)} {t.targetType.toLowerCase()}
                   {t.countsFrom && ` · counting from ${t.countsFrom}`}
-                  {p.remaining > 0 ? ` · ${fmt(p.remaining)} to go` : ' · ready to apply!'}
+                  {p.remaining > 0 ? ` · ${fmt(p.remaining)} to go` : p.productionsShort ? ' · more productions needed' : ' · ready to apply!'}
+                  {p.minProductions ? ` · ${p.productions} of ${p.minProductions} productions` : ''}
                 </p>
+                {p.needsDepartment && <p className="text-xs text-yellow-400 mt-1">Counting every department. Track it again with your department to count only that one.</p>}
+                {!p.confirmed && <p className="text-xs text-white/40 mt-1">Target not confirmed by the union.</p>}
               </div>
               <button onClick={() => remove(t)} className="text-white/30 hover:text-red-400" aria-label={`Stop tracking ${t.unionName}`}><Trash2 size={16} /></button>
             </div>
@@ -101,6 +105,18 @@ export const UnionGoals = () => {
           {tier && (
             <>
               <p className="text-xs text-white/50 italic">{tier.description}</p>
+              {tier.confirmed && tier.sourceUrl
+                ? <a href={tier.sourceUrl} target="_blank" rel="noreferrer" className="text-xs text-white/50 underline">Source{tier.checkedOn ? `, checked ${tier.checkedOn}` : ''}</a>
+                : <p className="text-xs text-yellow-400">This target isn't confirmed by the union yet. Check with them before relying on it.</p>}
+              {tier.requiresDepartment && (
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-[0.3em] text-white">Your department (only work in it counts)</label>
+                  <Select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} className="h-14">
+                    <option value="" className="bg-black">Choose a department</option>
+                    {getDepartments().map(d => <option key={d.name} value={d.name} className="bg-black">{d.name}</option>)}
+                  </Select>
+                </div>
+              )}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-[0.3em] text-white">Already banked ({tier.targetType.toLowerCase()})</label>

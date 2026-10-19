@@ -121,3 +121,62 @@ describe('deadlines', () => {
     expect(nextOccurrence({ month: 10, day: 17 }, new Date(2026, 9, 17, 15))).toEqual(new Date(2026, 9, 17));
   });
 });
+
+describe('step rules from the October 2026 review', () => {
+  const base: UserUnionTracking = { id: 't3', userId: 'u1', unionTypeId: 'u-856', unionName: 'IATSE 856', tierLabel: 'Member',
+    targetType: 'DAYS', targetValue: 60, startingValue: 0 };
+  const j856 = (p: Partial<Job>) => job({ unionTypeId: 'u-856', unionName: 'IATSE 856', ...p });
+
+  it('counts a short call as half a day (856: 4 hours or less)', () => {
+    const tier: UnionTier = { name: 'Member', targetType: 'DAYS', targetValue: 60, description: '', shortDayHours: 4, shortDayInclusive: true };
+    const p = trackProgress(base, [j856({ hoursPerDay: 4 }), j856({ hoursPerDay: 10 }), j856({ totalHours: 3, daysWorked: 2 })], { tier });
+    expect(p.current).toBe(0.5 + 1 + 1);
+  });
+
+  it('counts only the chosen department, and says when none is chosen', () => {
+    const tier: UnionTier = { name: 'Member', targetType: 'DAYS', targetValue: 60, description: '', requiresDepartment: true };
+    const jobs = [j856({ department: 'Grip', daysWorked: 5 }), j856({ department: 'Electric', daysWorked: 3 })];
+    expect(trackProgress({ ...base, department: 'Grip' }, jobs, { tier }).current).toBe(5);
+    const open = trackProgress(base, jobs, { tier });
+    expect(open.current).toBe(8);
+    expect(open.needsDepartment).toBe(true);
+  });
+
+  it('checks the number of different productions', () => {
+    const tier: UnionTier = { name: 'Member', targetType: 'DAYS', targetValue: 2, description: '', minProductions: 2 };
+    const p = trackProgress(base, [j856({ productionName: 'A', daysWorked: 3 }), j856({ productionName: ' a ' })], { tier });
+    expect(p).toMatchObject({ remaining: 0, productions: 1, productionsShort: true });
+  });
+
+  it('lets permit steps count relevant work anywhere (NABET 40 days)', () => {
+    const tier: UnionTier = { name: 'Permittee', targetType: 'DAYS', targetValue: 40, description: '', countsWork: 'any' };
+    const nabet = { ...base, unionTypeId: 'u-nabet', unionName: 'NABET 700-M UNIFOR', tierLabel: 'Permittee' };
+    const p = trackProgress(nabet, [job({ isUnion: false, unionTypeId: undefined, unionName: undefined, daysWorked: 10 }), job({ daysWorked: 2 })], { tier });
+    expect(p.current).toBe(12);
+  });
+
+  it('never counts background work toward ACTRA credits, one credit per permit', () => {
+    const tier: UnionTier = { name: 'Apprentice', targetType: 'CREDITS', targetValue: 1, description: '', excludeRoleIds: ['background-performer'] };
+    const actra = { ...base, unionTypeId: 'u-actra', unionName: 'ACTRA', tierLabel: 'Apprentice', targetType: 'CREDITS' as const, targetValue: 1 };
+    const p = trackProgress(actra, [
+      job({ unionTypeId: 'u-actra', unionName: 'ACTRA', role: 'Background Performer' }),
+      job({ unionTypeId: 'u-actra', unionName: 'ACTRA', role: 'Principal Performer', daysWorked: 3 }),
+    ], { tier });
+    expect(p.current).toBe(1);
+  });
+
+  it('uses the step\'s current target over the one saved with the track', () => {
+    const tier: UnionTier = { name: 'Member', targetType: 'DAYS', targetValue: 120, description: '', confirmed: true };
+    const p = trackProgress({ ...base, targetValue: 90 }, [], { tier });
+    expect(p).toMatchObject({ target: 120, confirmed: true });
+  });
+});
+
+describe('self-employed CPP (2026)', () => {
+  it('stops at the yearly ceiling and adds CPP2 up to $85,000', async () => {
+    const { selfEmployedCpp } = await import('../services/tax');
+    expect(selfEmployedCpp(56000)).toBe(6247.5);
+    expect(selfEmployedCpp(100000)).toBe(9292.9);
+    expect(selfEmployedCpp(3000)).toBe(0);
+  });
+});
