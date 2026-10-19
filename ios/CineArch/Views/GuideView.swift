@@ -86,6 +86,11 @@ struct UnionDetailView: View {
                             Text(t.name).font(.headline)
                             Text(tierTarget(t)).font(.subheadline).foregroundStyle(Theme.accent)
                             if let d = t.description { Text(d).font(.footnote).foregroundStyle(.secondary) }
+                            if t.isConfirmed, let s = t.sourceUrl, let url = URL(string: s) {
+                                Link("Source", destination: url).font(.footnote)
+                            } else if !t.isConfirmed {
+                                Text("Not confirmed by the union yet").font(.footnote).foregroundStyle(Theme.accent)
+                            }
                         }
                     }
                 }

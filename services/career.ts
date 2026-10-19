@@ -3,15 +3,20 @@
 // earnings, and union jobs paid below scale. Pure, so the personal
 // dashboard and Agency Mode (one call per client) read it the same way.
 import type { Job, UnionTier, UserUnionTracking } from '../types';
-import { findRole, getUnionSpec } from './union_engine';
+import { findRole, findRoleDepartment, getUnionSpec } from './union_engine';
 
 export interface TrackProgress {
   track: UserUnionTracking;
   current: number;
-  target: number;
+  target: number;        // the step's current target
   remaining: number;
   percent: number;
   jobs: number;          // jobs counted toward it
+  productions: number;   // different productions among them
+  minProductions?: number | null;
+  productionsShort: boolean;   // the step needs more productions than this
+  needsDepartment: boolean;    // counts one department but none is chosen, so all count
+  confirmed: boolean;          // the target has a published source
 }
 
 export interface CareerSummary {
@@ -71,37 +76,61 @@ const ruleHours = (j: Job, tier?: UnionTier) => {
   return days * (j.hoursPerDay != null ? actraBackgroundDayHours(onSet) : Math.max(8, quarterHours(onSet)));
 };
 
-// Progress toward one union tier. Only that union's jobs count, whether or
-// not you're a member yet. A tier can narrow that further: one province, some
-// roles (background work for ACTRA's AABP) or a recent window (the last 12 months).
+// Days a job adds when short days count as half (856: a call of 4 hours or
+// less; AQTIS: under 5 hours). Unknown hours count as full days.
+export const tierDays = (j: Job, tier?: UnionTier) => {
+  const days = workedDays(j);
+  const limit = tier?.shortDayHours;
+  const perDay = j.hoursPerDay ?? (j.totalHours ? j.totalHours / days : undefined);
+  if (!limit || !perDay) return days;
+  return (tier?.shortDayInclusive ? perDay <= limit : perDay < limit) ? days / 2 : days;
+};
+
+const key = (s?: string | null) => (s ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+// Progress toward one union step. By default only that union's jobs count,
+// whether or not you're a member yet. Each step can change that: relevant work
+// anywhere (permit steps like NABET's 40 days), one department, one province,
+// some roles (or never some roles, like background toward ACTRA credits), a
+// recent window, short days as half days, and a minimum number of productions.
 export function trackProgress(
   track: UserUnionTracking, jobs: Job[],
   { tier = tierFor(track), today = new Date() }: { tier?: UnionTier; today?: Date } = {},
 ): TrackProgress {
   const since = tier?.windowMonths ? windowStart(tier.windowMonths, today) : undefined;
   const roles = tier?.roleIds?.length ? new Set(tier.roleIds) : undefined;
+  const excluded = new Set(tier?.excludeRoleIds ?? []);
+  const department = tier?.requiresDepartment && key(track.department) ? key(track.department) : undefined;
   const countsFrom = tier?.startLabel ? track.countsFrom : undefined;
   const eligible = jobs.filter(j =>
-    j.isUnion && ((track.unionTypeId && j.unionTypeId === track.unionTypeId) || j.unionName === track.unionName)
+    (tier?.countsWork === 'any'
+      || (j.isUnion && ((track.unionTypeId && j.unionTypeId === track.unionTypeId) || j.unionName === track.unionName)))
     && (!tier?.province || !j.province || j.province === tier.province)
-    && (!roles || roles.has(roleId(j.role)))
-    && (!since || j.startDate >= since));
+    && (!roles || roles.has(roleId(j.role))) && !excluded.has(roleId(j.role))
+    && (!since || j.startDate >= since)
+    && (!department || key(j.department ?? findRoleDepartment(j.role)) === department));
   const relevant = countsFrom ? eligible.filter(j => j.startDate >= countsFrom) : eligible;
   const earlier = countsFrom ? eligible.filter(j => j.startDate < countsFrom) : [];
   const measure = (j: Job) =>
     track.targetType === 'HOURS' ? ruleHours(j, tier)
     : track.targetType === 'EARNINGS' ? j.grossEarnings || 0
-    : track.targetType === 'DAYS' ? workedDays(j)
-    : 1;  // CREDITS: one per job
+    : track.targetType === 'DAYS' ? tierDays(j, tier)
+    : 1;  // CREDITS: one per job (one work permit or contract)
   const legacy = tier?.hoursRule === 'actra_background' && countsFrom && countsFrom < ACTRA_LEGACY_JOIN
     ? Math.min(ACTRA_LEGACY_HOURS, earlier.reduce((sum, j) => sum + measure(j), 0)) : 0;
   const current = round((track.startingValue || 0) + legacy + relevant.reduce((sum, j) => sum + measure(j), 0));
-  const target = track.targetValue;
+  const target = tier && tier.targetType === track.targetType ? tier.targetValue : track.targetValue;
+  const productions = new Set(relevant.map(j => key(j.productionName))).size;
   return {
-    track, current, target,
+    track: { ...track, targetValue: target }, current, target,
     remaining: round(Math.max(0, target - current)),
     percent: target > 0 ? Math.min(100, (current / target) * 100) : 0,
     jobs: relevant.length,
+    productions,
+    minProductions: tier?.minProductions ?? null,
+    productionsShort: tier?.minProductions ? productions < tier.minProductions : false,
+    needsDepartment: !!tier?.requiresDepartment && !key(track.department),
+    confirmed: !!tier?.confirmed,
   };
 }
 

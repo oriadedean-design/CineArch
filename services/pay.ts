@@ -5,13 +5,15 @@
 // the time worked. Under a union pay rule, worked time is rounded up to the
 // agreement's unit (e.g. 6 minutes), the first hours are paid at the rate
 // (at least the minimum call / daily fee), and each overtime step pays a
-// multiple of the rate from the hour it starts.
+// multiple of the rate from the hour it starts (under ACTRA's IPA, of the
+// daily fee divided by 8).
 
 export interface PayRuleInput {
   minimumCallHours?: number | null;   // hours paid even when fewer are worked
   overtimeAfter: number[];            // e.g. [8, 12, 15]
   overtimeMultipliers: number[];      // e.g. [1.5, 2, 3]
   incrementMinutes?: number | null;   // e.g. 6 = paid in tenths of an hour
+  overtimeBase?: 'rate' | 'daily_fee' | null; // daily_fee = the daily fee / 8 (ACTRA IPA)
 }
 
 export interface DayInput {
@@ -73,6 +75,8 @@ export function dayPay({ hoursOnClock, mealBreakMinutes = 0, hourlyRate, rule, d
   const straightHours = Math.min(worked, straightLimit);
   bands.push({ label: 'Straight time', multiplier: 1, hours: cents(straightHours), amount: cents(straightHours * rate) });
 
+  // ACTRA's IPA works overtime out from the daily fee divided by 8.
+  const overtimeRate = rule.overtimeBase === 'daily_fee' ? Math.max(rate, (dailyMinimum ?? 0) / 8) : rate;
   let overtime = 0;
   steps.forEach((step, i) => {
     const end = steps[i + 1]?.after ?? Infinity;
@@ -80,7 +84,7 @@ export function dayPay({ hoursOnClock, mealBreakMinutes = 0, hourlyRate, rule, d
     if (hours <= 0) return;
     overtime += hours;
     bands.push({ label: multiplierLabel(step.multiplier), multiplier: step.multiplier, hours: cents(hours),
-                 amount: cents(hours * rate * step.multiplier) });
+                 amount: cents(hours * overtimeRate * step.multiplier) });
   });
 
   // The straight-time part of the day is never less than the minimum call / daily fee.

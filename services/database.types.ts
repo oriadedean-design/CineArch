@@ -345,6 +345,7 @@ export type Database = {
           minimum_call_hours: number | null
           needs_verification: string[]
           notes: string | null
+          overtime_base: string
           overtime_after: number[]
           overtime_multipliers: number[]
           sort_order: number
@@ -361,6 +362,7 @@ export type Database = {
           minimum_call_hours?: number | null
           needs_verification?: string[]
           notes?: string | null
+          overtime_base?: string
           overtime_after?: number[]
           overtime_multipliers?: number[]
           sort_order?: number
@@ -377,6 +379,7 @@ export type Database = {
           minimum_call_hours?: number | null
           needs_verification?: string[]
           notes?: string | null
+          overtime_base?: string
           overtime_after?: number[]
           overtime_multipliers?: number[]
           sort_order?: number
@@ -951,13 +954,21 @@ export type Database = {
       }
       union_tiers: {
         Row: {
+          checked_on: string | null
+          confirmed: boolean
+          counts_work: string
           description: string | null
           hours_rule: string | null
+          exclude_role_ids: string[]
           id: number
+          min_productions: number | null
           name: string
           province: string | null
           requires_department: boolean
           role_ids: string[]
+          short_day_hours: number | null
+          short_day_inclusive: boolean
+          source_url: string | null
           sort_order: number
           start_label: string | null
           target_type: string
@@ -967,13 +978,21 @@ export type Database = {
           window_months: number | null
         }
         Insert: {
+          checked_on?: string | null
+          confirmed?: boolean
+          counts_work?: string
           description?: string | null
           hours_rule?: string | null
+          exclude_role_ids?: string[]
           id?: never
+          min_productions?: number | null
           name: string
           province?: string | null
           requires_department?: boolean
           role_ids?: string[]
+          short_day_hours?: number | null
+          short_day_inclusive?: boolean
+          source_url?: string | null
           sort_order?: number
           start_label?: string | null
           target_type: string
@@ -983,13 +1002,21 @@ export type Database = {
           window_months?: number | null
         }
         Update: {
+          checked_on?: string | null
+          confirmed?: boolean
+          counts_work?: string
           description?: string | null
           hours_rule?: string | null
+          exclude_role_ids?: string[]
           id?: never
+          min_productions?: number | null
           name?: string
           province?: string | null
           requires_department?: boolean
           role_ids?: string[]
+          short_day_hours?: number | null
+          short_day_inclusive?: boolean
+          source_url?: string | null
           sort_order?: number
           start_label?: string | null
           target_type?: string

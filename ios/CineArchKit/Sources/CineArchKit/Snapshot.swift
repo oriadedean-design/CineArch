@@ -49,6 +49,19 @@ public struct Union: Codable, Sendable, Identifiable, Hashable {
         public var windowMonths: Int?        // only work in the last N months counts
         public var hoursRule: String?        // "actra_background"
         public var startLabel: String?       // asks when counting starts, e.g. "AABP since"
+        public var requiresDepartment: Bool? // only work in the department, category or position you're going for
+        public var countsWork: String?       // "union" = that union's productions only; "any" = relevant work anywhere
+        public var minProductions: Int?      // at least this many different productions
+        public var shortDayHours: Double?    // a day this short counts as half
+        public var shortDayInclusive: Bool?  // true = "this many hours or less", else "under"
+        public var excludeRoleIds: [String]? // work in these roles never counts
+        public var sourceUrl: String?
+        public var checkedOn: String?        // YYYY-MM-DD
+        public var confirmed: Bool?          // false = no published source; not a firm goal
+
+        public var isConfirmed: Bool { confirmed ?? false }
+        public var countsAnyWork: Bool { countsWork == "any" }
+        public var byDepartment: Bool { requiresDepartment ?? false }
     }
     public struct Requirement: Codable, Sendable, Hashable {
         public var kind: String
@@ -106,6 +119,7 @@ public struct PayRule: Codable, Sendable, Identifiable, Hashable {
     public var overtimeAfter: [Double]
     public var overtimeMultipliers: [Double]
     public var incrementMinutes: Int?
+    public var overtimeBase: String?      // "daily_fee" = the daily fee / 8 (ACTRA IPA); else your hourly rate
     public var mealBreakNotes: String?
     public var notes: String?
     public var needsVerification: [String]
@@ -113,10 +127,11 @@ public struct PayRule: Codable, Sendable, Identifiable, Hashable {
 
     public init(id: String = "", unionId: String = "", title: String = "", departmentId: String? = nil,
                 minimumCallHours: Double?, overtimeAfter: [Double], overtimeMultipliers: [Double], incrementMinutes: Int?,
-                mealBreakNotes: String? = nil, notes: String? = nil, needsVerification: [String] = [], sourceUrl: String? = nil) {
+                overtimeBase: String? = nil, mealBreakNotes: String? = nil, notes: String? = nil, needsVerification: [String] = [], sourceUrl: String? = nil) {
         self.id = id; self.unionId = unionId; self.title = title; self.departmentId = departmentId
         self.minimumCallHours = minimumCallHours; self.overtimeAfter = overtimeAfter
         self.overtimeMultipliers = overtimeMultipliers; self.incrementMinutes = incrementMinutes
+        self.overtimeBase = overtimeBase
         self.mealBreakNotes = mealBreakNotes; self.notes = notes; self.needsVerification = needsVerification; self.sourceUrl = sourceUrl
     }
 }

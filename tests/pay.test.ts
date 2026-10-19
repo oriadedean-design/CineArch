@@ -4,7 +4,7 @@ import { dayPay, jobPay, scaleStatus, workedHours } from '../services/engine';
 // Rules as seeded from the agreements (supabase/migrations/20261009000004_pay_rules_seed.sql).
 const IATSE_873 = { minimumCallHours: 8, overtimeAfter: [8, 12, 15], overtimeMultipliers: [1.5, 2, 3], incrementMinutes: 6 };
 const IATSE_873_TRANSPORT = { minimumCallHours: 9, overtimeAfter: [9, 12, 15], overtimeMultipliers: [1.5, 2, 3], incrementMinutes: 6 };
-const ACTRA_IPA = { minimumCallHours: null, overtimeAfter: [8, 12], overtimeMultipliers: [1.5, 2], incrementMinutes: 6 };
+const ACTRA_IPA = { minimumCallHours: null, overtimeAfter: [8, 12], overtimeMultipliers: [1.5, 2], incrementMinutes: 6, overtimeBase: 'daily_fee' as const };
 
 const GRIP_873_FEATURE_2026 = 48.60;
 const DRIVER_873_FEATURE_2026 = 43.38;
@@ -72,11 +72,16 @@ describe('ACTRA IPA performer day (Principal Actor 2026: $972.75/day, $121.25/hr
     expect(dayPay({ ...base, hoursOnClock: 6 }).total).toBe(972.75);
   });
 
-  it('pays 150% after 8 hours on top of the daily fee', () => {
-    // 10h worked: daily fee + 2h x 181.875
+  it('pays 150% of the daily fee / 8 after 8 hours, on top of the daily fee', () => {
+    // 10h worked: daily fee + 2h x 1.5 x (972.75 / 8)
     const pay = dayPay({ ...base, hoursOnClock: 10.5, mealBreakMinutes: 30 });
     expect(pay.workedHours).toBe(10);
-    expect(pay.total).toBe(1336.50); // 972.75 + 2h x 181.875
+    expect(pay.total).toBe(1337.53);
+  });
+
+  it('matches the 2026 principal overtime minimum ($182.50 on the chart)', () => {
+    // 1.5 x 972.75 / 8 = 182.39; the chart's 121.25 hourly would give 181.88.
+    expect(dayPay({ ...base, hoursOnClock: 9 }).bands[1].amount).toBe(182.39);
   });
 
   it('pays 200% after 12 hours', () => {

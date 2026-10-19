@@ -22,6 +22,14 @@ public enum Eligibility {
         return String(format: "%04d-%02d-%02d", c.year!, c.month!, c.day!)
     }
 
+    /// Days a job adds when short days count as half (856: a call of 4 hours or
+    /// less; AQTIS: under 5 hours). Unknown hours count as full days.
+    public static func days(_ days: Int, hoursPerDay: Double?, shortDayHours: Double?, inclusive: Bool) -> Double {
+        let d = Double(max(1, days))
+        guard let limit = shortDayHours, let h = hoursPerDay, h > 0 else { return d }
+        return (inclusive ? h <= limit : h < limit) ? d / 2 : d
+    }
+
     /// Hours a job adds under a tier's hours rule. `hoursPerDay` is call to wrap.
     public static func hours(rule: String?, totalHours: Double, days: Int, hoursPerDay: Double?) -> Double {
         guard rule == "actra_background" else { return totalHours }

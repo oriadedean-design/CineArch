@@ -76,12 +76,20 @@ export interface UnionTier {
   targetType: 'HOURS' | 'DAYS' | 'CREDITS' | 'EARNINGS';
   targetValue: number;
   description: string;
-  requiresDepartment?: boolean; 
+  requiresDepartment?: boolean;  // only work in your department, category or position counts
   province?: string | null;      // the branch it applies to (null = everywhere)
   roleIds?: string[];            // only jobs in these roles count (empty = any)
   windowMonths?: number | null;  // only work in the last N months counts
   hoursRule?: 'actra_background' | null;
   startLabel?: string | null;    // asks when counting starts, e.g. 'AABP since'
+  countsWork?: 'union' | 'any';  // 'any' = relevant work anywhere counts (permit steps)
+  minProductions?: number | null; // at least this many different productions
+  shortDayHours?: number | null; // a day this short counts as half
+  shortDayInclusive?: boolean;   // true = "this many hours or less", else "under"
+  excludeRoleIds?: string[];     // work in these roles never counts
+  sourceUrl?: string | null;
+  checkedOn?: string | null;     // YYYY-MM-DD
+  confirmed?: boolean;           // false = no published source; not a firm goal
   initiationFee?: number;
   annualDues?: number;
   requiredCertificates?: string[];

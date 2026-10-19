@@ -40,3 +40,19 @@ struct DeadlineTests {
         #expect(d.next(after: jun15, calendar: cal) == jun15)
     }
 }
+
+// 856: a call of 4 hours or less is half a day. AQTIS: under 5 hours is half.
+@Suite struct ShortDays {
+    @Test func inclusive() {
+        #expect(Eligibility.days(1, hoursPerDay: 4, shortDayHours: 4, inclusive: true) == 0.5)
+        #expect(Eligibility.days(1, hoursPerDay: 4.1, shortDayHours: 4, inclusive: true) == 1)
+    }
+    @Test func under() {
+        #expect(Eligibility.days(2, hoursPerDay: 4.9, shortDayHours: 5, inclusive: false) == 1)
+        #expect(Eligibility.days(2, hoursPerDay: 5, shortDayHours: 5, inclusive: false) == 2)
+    }
+    @Test func unknownHoursCountInFull() {
+        #expect(Eligibility.days(3, hoursPerDay: nil, shortDayHours: 5, inclusive: false) == 3)
+        #expect(Eligibility.days(3, hoursPerDay: 2, shortDayHours: nil, inclusive: false) == 3)
+    }
+}

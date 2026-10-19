@@ -45,7 +45,7 @@ struct LedgerView: View {
                             ShareLink(item: csvFile(), preview: SharePreview("Wrap Wallet spreadsheet")) {
                                 Label("Spreadsheet (CSV)", systemImage: "tablecells")
                             }
-                            .disabled(ledger.entries.isEmpty)
+                            .disabled(ledger.yearEntries.isEmpty)
                         } label: { Image(systemName: "square.and.arrow.up") }
                         .accessibilityLabel("Export a report or spreadsheet")
                         .disabled(making != nil)
@@ -170,7 +170,7 @@ struct LedgerView: View {
         } header: {
             Text("Set aside")
         } footer: {
-            Text("Rough estimates: CPP at 11.9% above $3,500 and income tax at 20% of net. Check with an accountant.")
+            Text("Rough estimates: CPP at 11.9% from $3,500 to $74,600 plus 8% up to $85,000 (2026), and income tax at 20% of net. Check with an accountant.")
         }
     }
 
@@ -183,7 +183,7 @@ struct LedgerView: View {
             name: session.isPreview ? Sample.name : (p?.name ?? session.displayEmail ?? "You"),
             role: p?.selectedRoles?.first ?? jobs.jobs.first?.role ?? "Film crew",
             place: session.isPreview ? "Toronto, Ontario" : [p?.province].compactMap { $0 }.joined().ifBlank("Canada"),
-            jobs: jobs.jobs, entries: ledger.entries, stats: ledger.stats,
+            jobs: jobs.jobs, entries: ledger.yearEntries, stats: ledger.stats,
             progress: tracking.tracks.map { TrackProgress(track: $0, jobs: jobs.jobs, engine: store.engine) },
             isPreview: session.isPreview)
         making = "Starting your \(kind.rawValue)…"

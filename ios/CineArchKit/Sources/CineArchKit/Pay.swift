@@ -3,7 +3,8 @@ import Foundation
 // Pay for work logged by the hour. Same rules as services/pay.ts:
 // worked = on the clock minus the unpaid meal, rounded up to the agreement's
 // unit; straight time is never less than the minimum call / daily fee; each
-// overtime step pays a multiple of the rate from the hour it starts.
+// overtime step pays a multiple of the rate from the hour it starts (under
+// ACTRA's IPA, of the daily fee divided by 8).
 
 public struct PayBand: Sendable, Hashable {
     public var label: String
@@ -56,6 +57,8 @@ public enum Pay {
                           bands: [PayBand(label: "Straight time", multiplier: 1, hours: worked, amount: amount)],
                           minimumTopUp: 0, total: amount)
         }
+        // ACTRA's IPA works overtime out from the daily fee divided by 8.
+        let otRate = rule.overtimeBase == "daily_fee" ? max(rate, (dailyMinimum ?? 0) / 8) : rate
         let steps = rule.overtimeAfter.enumerated().map { ($0.element, rule.overtimeMultipliers.indices.contains($0.offset) ? rule.overtimeMultipliers[$0.offset] : 1) }
         let straightLimit = steps.first?.0 ?? .infinity
         let straight = min(worked, straightLimit)
@@ -66,7 +69,7 @@ public enum Pay {
             let hours = max(0, min(worked, end) - step.0)
             guard hours > 0 else { continue }
             overtime += hours
-            bands.append(PayBand(label: label(step.1), multiplier: step.1, hours: cents(hours), amount: cents(hours * rate * step.1)))
+            bands.append(PayBand(label: label(step.1), multiplier: step.1, hours: cents(hours), amount: cents(hours * otRate * step.1)))
         }
         let floor = max(rule.minimumCallHours.map { cents(min($0, straightLimit) * rate) } ?? 0, dailyMinimum ?? 0)
         let topUp = cents(max(0, floor - bands[0].amount))
