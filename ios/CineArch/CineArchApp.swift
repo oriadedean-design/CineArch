@@ -33,6 +33,7 @@ struct RootView: View {
     @State private var tab = Tab(rawValue: UserDefaults.standard.string(forKey: "cinearch.tab") ?? "") ?? .wrap
     /// `-cinearch.onboarding YES` opens the call sheet (for screenshots).
     @State private var showOnboarding = UserDefaults.standard.bool(forKey: "cinearch.onboarding")
+    @State private var showPermissions = false
     enum Tab: String { case wrap, jobs, ledger = "wallet", guide, account }
 
     var body: some View {
@@ -53,6 +54,16 @@ struct RootView: View {
         .buttonBorderShape(.roundedRectangle(radius: 0))
         .fullScreenCover(isPresented: Binding(get: { session.needsOnboarding || showOnboarding }, set: { if !$0 { showOnboarding = false } })) {
             OnboardingView().tint(Theme.accent).listStyle(.grouped).buttonBorderShape(.roundedRectangle(radius: 0))
+        }
+        // Once, after signing in and setting the scene: camera and reminders, out of the way.
+        .sheet(isPresented: $showPermissions, onDismiss: { UserDefaults.standard.set(true, forKey: Permissions.shownKey) }) {
+            NavigationStack { PermissionsView(firstTime: true) }
+                .tint(Theme.accent).listStyle(.grouped).buttonBorderShape(.roundedRectangle(radius: 0))
+        }
+        .task(id: session.identity.map { "\($0)-\(session.needsOnboarding)" }) {
+            guard session.user != nil, !session.isPreview, !session.needsOnboarding,
+                  !UserDefaults.standard.bool(forKey: Permissions.shownKey) else { return }
+            showPermissions = true
         }
     }
 }

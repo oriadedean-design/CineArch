@@ -122,6 +122,7 @@ struct AccountView: View {
                         Toggle("Phone reminders", isOn: Binding(get: { reminders }, set: { on in
                             Task { reminders = on ? await Notes.requestPermission() : false }
                         }))
+                        NavigationLink { PermissionsView() } label: { Label("Permissions and scanning", systemImage: "lock.shield") }
                     } footer: {
                         Text("A 9 a.m. reminder before tax dates and days leaving your union window. Everything else waits in Notes from set on Your Wrap.")
                     }
