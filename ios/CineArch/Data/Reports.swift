@@ -39,6 +39,7 @@ struct ReportInput {
     var jobs: [Job]
     var entries: [LedgerEntry]
     var stats: LedgerStats
+    var tax: TaxPicture
     var progress: [TrackProgress]
     var isPreview: Bool
 }
@@ -285,21 +286,38 @@ private struct ReportHTML {
     }
 
     private func gstSetAside() -> String {
-        let s = input.stats
-        let pct = min(100, s.grossIncome / Ledger.smallSupplierThreshold * 100)
-        let left = max(0, Ledger.smallSupplierThreshold - s.grossIncome)
+        let s = input.stats, t = input.tax
+        let pct = min(100, s.selfEmployedIncome / Ledger.smallSupplierThreshold * 100)
+        let left = max(0, Ledger.smallSupplierThreshold - s.selfEmployedIncome)
+        let gstRows = t.quick.map { q in """
+        <div class="row"><span>Sales with GST/HST</span><span class="num">\(t.salesWithTax.money)</span></div>
+        <div class="row"><span>Quick Method, \((q.quickServiceRate * 100).formatted(.number.precision(.fractionLength(1))))% less 1% of $30,000</span><span class="num">\(t.gstOwing.money)</span></div>
+        """ } ?? """
+        <div class="row"><span>Collected</span><span class="num">\(s.gstCollected.money)</span></div>
+        <div class="row"><span>Paid on expenses (meals at half)</span><span class="num">\(s.gstPaid.money)</span></div>
+        <div class="row"><span>\(t.gstOwing >= 0 ? "Owing" : "Refund")</span><span class="num">\(abs(t.gstOwing).money)</span></div>
+        """
+        let setAside: String
+        if t.payType == .t4 {
+            setAside = "<p class=\"note\">Tax and CPP come off T4 pay, so there's nothing extra to set aside on it.</p>"
+        } else if let a = t.setAside, let p = t.province {
+            setAside = """
+            <div class="row"><span>\(a.pensionPlan) (both halves)</span><span class="num">\(a.pension.money)</span></div>
+            <div class="row"><span>Income tax</span><span class="num">\(a.incomeTax.money)</span></div>
+            <div class="row"><b>Total to set aside</b><b class="num">\(a.total.money)</b></div>
+            <p class="note">\(String(a.year)) federal and \(Fmt.esc(p)) rates, after the basic personal amount\(s.employmentIncome > 0 ? ", on top of T4 pay" : ""). Rough estimates, not tax advice: other credits and deductions aren't included. Check with an accountant.</p>
+            """
+        } else {
+            setAside = "<p class=\"note\">Add where you're based to estimate tax.</p>"
+        }
         return """
         <div class="two" style="margin-top:18px"><div><h2 style="margin-top:0">GST/HST</h2><div class="box">
-        <div class="row"><span>Collected</span><span class="num">\(s.gstCollected.money)</span></div>
-        <div class="row"><span>Paid on expenses</span><span class="num">\(s.gstPaid.money)</span></div>
+        \(gstRows)
         <div class="row"><span>Small-supplier line</span><span class="num">\(Ledger.smallSupplierThreshold.money)</span></div>
         <div class="bar signal"><span style="width:\(String(format: "%.1f", pct))%"></span></div>
         <span class="muted">\(left > 0 ? "\(left.money) until you must register" : "Past the line: you need a GST/HST number")</span></div></div>
         <div><h2 style="margin-top:0">Set aside <span class="label">Estimates</span></h2><div class="box">
-        <div class="row"><span>CPP (self-employed)</span><span class="num">\(s.estimatedCPP.money)</span></div>
-        <div class="row"><span>Income tax</span><span class="num">\(s.estimatedIncomeTax.money)</span></div>
-        <div class="row"><b>Total to set aside</b><b class="num">\((s.estimatedCPP + s.estimatedIncomeTax).money)</b></div>
-        <p class="note">CPP at 11.9% from $3,500 to $74,600, plus 8% up to $85,000 (2026); income tax at a flat 20% of net. Rough estimates, not tax advice. Check with an accountant.</p></div></div></div>
+        \(setAside)</div></div></div>
         """
     }
 

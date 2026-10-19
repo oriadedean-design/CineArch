@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Heading, Text, Card, Button, Badge } from '../components/ui';
 import { Lock, Download, FileSpreadsheet, Landmark, Target, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/storage';
-import { financeApi } from '../services/finance';
+import { financeApi, type WalletStats } from '../services/finance';
 import { Job, User, UserUnionTracking, FinanceStats, PLANS } from '../types';
 import { clsx } from 'clsx';
 import Papa from 'papaparse';
@@ -13,7 +13,7 @@ export const Reports = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [tracking, setTracking] = useState<UserUnionTracking[]>([]);
-  const [stats, setStats] = useState<(FinanceStats & { estCPP: number; estIncomeTax: number }) | null>(null);
+  const [stats, setStats] = useState<WalletStats | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,7 +24,7 @@ export const Reports = () => {
       const tracks = await api.tracking.get();
       setTracking(tracks);
       if (u?.id) {
-        setStats(await financeApi.getStats(u.id));
+        setStats(await financeApi.getStats(u.id, undefined, { payType: u.payType, province: u.province, gstMethod: u.gstMethod }));
       }
     };
     fetchData();
@@ -122,8 +122,8 @@ export const Reports = () => {
       line(`GST Collected:          $${stats.gstCollected.toLocaleString()}`);
       line(`GST Paid:               $${stats.gstPaid.toLocaleString()}`);
       line(`GST Net Remittance:     $${stats.gstNetRemittance.toLocaleString()}`);
-      line(`Est. CPP Contribution:  $${stats.estCPP.toFixed(2)}`);
-      line(`Est. Income Tax (20%):  $${stats.estIncomeTax.toFixed(2)}`);
+      line(`Est. CPP/QPP:           $${stats.estCPP.toFixed(2)}`);
+      line(`Est. Income Tax:        $${stats.estIncomeTax.toFixed(2)}`);
     }
 
     // Production Credits

@@ -39,7 +39,19 @@ The engine never fetches data itself. A host connects it: `services/engine_loade
 | `department_coverage` | The fallback for job titles that aren't in the catalog. |
 | `rate_schedules` | One published rate card for one period (and production type, e.g. 873 "Feature Film" vs "Low Budget Feature ($3M and below)"). `hourly_column` / `daily_column` name the columns the app uses as the minimum hourly rate and daily fee. |
 | `rate_lines` | One position on a rate card. `rates[i]` is the rate for `columns[i]`; `null` means negotiable. `role_id` links the position to a catalog role so the app can suggest its minimum. |
-| `pay_rules` | How a union day is paid: `minimum_call_hours`, `overtime_after` + `overtime_multipliers` (`{8,12,15}` + `{1.5,2,3}` = 1.5x after 8 hours, 2x after 12, 3x after 15), `increment_minutes`, `overtime_base` (`daily_fee` = overtime from the daily fee divided by 8, as in ACTRA's IPA), meal break notes. A row with a `department_id` (e.g. 873 Transportation) replaces the union-wide rule for that department. |
+| `pay_rules` | How a union day is paid: `minimum_call_hours`, `overtime_after` + `overtime_multipliers` (`{8,12,15}` + `{1.5,2,3}` = 1.5x after 8 hours, 2x after 12, 3x after 15), `increment_minutes`, `overtime_base` (`daily_fee` = overtime from the daily fee divided by 8, as in ACTRA's IPA), `sixth_day` / `seventh_day` (`{base, after, multipliers}` for a 6th or 7th day worked in the work week), `vacation_pay_rate` (vacation pay already in the rate sheet, so a pay stub's lower base rate is still at scale), meal break notes. A row with a `department_id` (e.g. 873 Transportation) replaces the union-wide rule for that department. |
+
+### Tax tables
+
+The Wrap Wallet's "set aside" and GST/HST figures come from three tables, one row per year. A new tax year is new rows, not new code. Each row cites its source and the day it was checked.
+
+| Table | What a row is |
+|---|---|
+| `tax_jurisdictions` | Federal (`FED`) or one province's income tax for a year: `brackets` (`[[from, rate], ...]`), `basic_amount` (with `basic_amount_phaseout` where it shrinks at high incomes), Ontario's `surtax`, `health_premium` and `tax_reduction_base`, and Québec's `federal_abatement`. Source: CRA T4127 (Tables 8.1 and 8.2) each January, with the July edition's changes; Québec from Revenu Québec. |
+| `pension_plans` | CPP and QPP for the self-employed (both halves): exemption, YMPE, YAMPE and the combined base, first additional and second rates. Source: T4127 Tables 8.3 to 8.6. |
+| `sales_tax` | GST/HST rate by province and the Quick Method rate for a service business (CRA RC4058), with the 1% credit on the first $30,000. |
+
+How someone is paid (`profiles.pay_type`: `t4`, `self_employed` or `both`) and their GST/HST method (`profiles.gst_method`) decide what the Wallet shows. T4 pay has tax and CPP taken off already, so only what self-employed income adds on top of it is set aside. The rules live in `services/tax.ts` and `ios/CineArchKit/Sources/CineArchKit/Tax.swift`.
 
 To check the data, use the read-only view `union_roles`: the roles each union covers, by province.
 

@@ -30,6 +30,8 @@ export interface User {
   hasAgentFee?: boolean;
   agentFeePercentage?: number;
   earningGoal?: number;          // what they want to earn from film work this year (CAD)
+  payType?: 't4' | 'self_employed' | 'both';  // decides what the Wallet says to set aside
+  gstMethod?: 'regular' | 'quick';
 
   // Enterprise Specifics
   entityType?: EntityType;

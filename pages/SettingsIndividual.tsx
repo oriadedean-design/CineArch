@@ -143,6 +143,25 @@ export const SettingsIndividual = () => {
                 className="h-20 text-2xl font-serif italic" />
               <p className="text-xs text-white/50 italic">From film work, before tax. Your Wrap shows how close you are.</p>
             </div>
+            <div className="grid md:grid-cols-2 gap-12">
+              <div className="space-y-4">
+                <label htmlFor="pay-type" className="text-xs font-black uppercase tracking-[0.4em] text-white">How you're paid</label>
+                <Select id="pay-type" value={profileForm.payType ?? ''} onChange={e => setProfileForm({ ...profileForm, payType: (e.target.value || undefined) as User['payType'] })} className="h-20 text-2xl font-serif italic">
+                  <option value="" className="bg-black text-white">Not set</option>
+                  <option value="t4" className="bg-black text-white">T4 (on payroll)</option>
+                  <option value="self_employed" className="bg-black text-white">Self-employed</option>
+                  <option value="both" className="bg-black text-white">Both</option>
+                </Select>
+                <p className="text-xs text-white/50 italic">Decides what the Wrap Wallet tells you to set aside for tax.</p>
+              </div>
+              <div className="space-y-4">
+                <label htmlFor="gst-method" className="text-xs font-black uppercase tracking-[0.4em] text-white">GST/HST method</label>
+                <Select id="gst-method" value={profileForm.gstMethod ?? 'regular'} onChange={e => setProfileForm({ ...profileForm, gstMethod: e.target.value as User['gstMethod'] })} className="h-20 text-2xl font-serif italic">
+                  <option value="regular" className="bg-black text-white">Regular</option>
+                  <option value="quick" className="bg-black text-white">Quick Method</option>
+                </Select>
+              </div>
+            </div>
             <div className="space-y-4">
               <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Email</label>
               <Input value={profileForm.email || ''} disabled className="h-20 opacity-30 cursor-not-allowed font-serif italic" />

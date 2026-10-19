@@ -108,3 +108,26 @@ describe('scale check', () => {
     expect(scaleStatus(undefined, 48.60)).toBe('unknown');
   });
 });
+
+// IATSE 873 LTA Article 8 (c), (d), 9 (f), (g). Mirrors PremiumDays in PayTests.swift.
+describe('6th and 7th days (873)', () => {
+  const rule = { ...IATSE_873, sixthDay: { base: 1.5, after: [8, 12], multipliers: [2, 3] }, seventhDay: { base: 2, after: [8], multipliers: [3] } };
+  it('6th day: the minimum call at 1.5x, then 2x to the 12th hour, then 3x', () => {
+    const pay = dayPay({ hoursOnClock: 14, mealBreakMinutes: 60, hourlyRate: 40, rule, workDay: 6 });
+    expect(pay.bands.map(b => [b.multiplier, b.hours])).toEqual([[1.5, 8], [2, 4], [3, 1]]);
+    expect(pay.total).toBe(920);
+  });
+  it('7th day: the minimum call at 2x, then 3x', () => {
+    expect(dayPay({ hoursOnClock: 11, mealBreakMinutes: 60, hourlyRate: 40, rule, workDay: 7 }).total).toBe(880);
+  });
+  it('a short 6th day still pays the call at 1.5x', () => {
+    expect(dayPay({ hoursOnClock: 4, hourlyRate: 40, rule, workDay: 6 }).total).toBe(480);
+  });
+});
+
+describe('vacation pay in the rate (BCMPA 4%)', () => {
+  it('treats a stub base rate 4% under the sheet as at scale', () => {
+    expect(scaleStatus(48.08, 50, 0.04)).toBe('at');
+    expect(scaleStatus(47, 50, 0.04)).toBe('below');
+  });
+});

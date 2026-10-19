@@ -172,11 +172,3 @@ describe('step rules from the October 2026 review', () => {
   });
 });
 
-describe('self-employed CPP (2026)', () => {
-  it('stops at the yearly ceiling and adds CPP2 up to $85,000', async () => {
-    const { selfEmployedCpp } = await import('../services/tax');
-    expect(selfEmployedCpp(56000)).toBe(6247.5);
-    expect(selfEmployedCpp(100000)).toBe(9292.9);
-    expect(selfEmployedCpp(3000)).toBe(0);
-  });
-});

@@ -1,4 +1,5 @@
 import { User, Job, UserUnionTracking, FinanceTransaction, FinanceStats } from '../types';
+import type { WalletStats } from './finance';
 
 export const DEMO_FLAG = 'cinearch_demo';
 
@@ -208,7 +209,7 @@ export const DEMO_TRANSACTIONS: FinanceTransaction[] = [
   },
 ];
 
-export const DEMO_STATS: FinanceStats & { estCPP: number; estIncomeTax: number } = {
+export const DEMO_STATS: WalletStats = {
   grossIncomeYTD: 16240,
   totalExpensesYTD: 619.24,
   deductibleExpensesYTD: 514,
@@ -217,6 +218,8 @@ export const DEMO_STATS: FinanceStats & { estCPP: number; estIncomeTax: number }
   gstPaid: 71.24,
   gstNetRemittance: -71.24,
   taxableIncomeProjected: 15106.76,
+  employmentIncome: 0,
+  selfEmployedIncome: 16240,
   estCPP: 878,
   estIncomeTax: 2265,
 };

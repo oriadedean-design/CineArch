@@ -1,4 +1,5 @@
 import Foundation
+import CineArchKit
 import Observation
 import Supabase
 
@@ -13,6 +14,8 @@ struct Profile: Codable, Equatable {
     var hasAgentFee: Bool?
     var agentFeePct: Double?
     var earningGoal: Double?         // what they want to earn from film work this year (CAD)
+    var payType: String?             // t4, self_employed or both
+    var gstMethod: String?           // regular or quick
     var isOnboarded: Bool = false
     var isPremium: Bool = false
 
@@ -20,6 +23,7 @@ struct Profile: Codable, Equatable {
         case name, province, region, department
         case selectedRoles = "selected_roles", memberStatus = "member_status", hasAgentFee = "has_agent_fee"
         case agentFeePct = "agent_fee_pct", isOnboarded = "is_onboarded", isPremium = "is_premium", earningGoal = "earning_goal"
+        case payType = "pay_type", gstMethod = "gst_method"
     }
 
     /// The columns a user may write (lock_profile_privileges), never is_premium.
@@ -51,6 +55,10 @@ final class Session {
         return isPremium ? .online(id) : .phone(id)
     }
     var displayEmail: String? { isPreview ? Sample.email : user?.email }
+    /// How they're paid and where, for tax (the sample account: self-employed in Ontario).
+    var payType: PayType? { isPreview ? .selfEmployed : profile?.payType.flatMap(PayType.init) }
+    var taxProvince: String? { isPreview ? "Ontario" : profile?.province }
+    var gstMethod: String { isPreview ? "regular" : profile?.gstMethod ?? "regular" }
 
     init() {
         if isPreview { isPremium = UserDefaults.standard.object(forKey: "cinearch.premium") == nil || UserDefaults.standard.bool(forKey: "cinearch.premium") }

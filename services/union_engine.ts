@@ -1,5 +1,6 @@
 import { CanadianProvince, type OntarioRegion, type UnionType, type UnionTier } from '../types';
 import type { PayRuleInput } from './pay';
+import type { TaxTables } from './tax';
 
 // The union engine. Its data lives in Supabase (unions, union_jurisdictions,
 // union_tiers, union_requirements, union_departments, departments, roles,
@@ -112,6 +113,7 @@ export interface EngineSnapshot {
     columns: string[]; hourlyColumn: string | null; dailyColumn: string | null; rateUnit: string; sourceUrl: string | null; notes: string | null; roleIds: string[] }[];
   payRules: PayRule[];
   deadlines?: Deadline[];
+  tax?: TaxTables;
 }
 
 // Tax and union dates people plan around, each with its source (public.deadlines).
@@ -235,6 +237,7 @@ const build = (s: EngineSnapshot) => {
     rateSchedules,
     payRules: s.payRules ?? [],
     deadlines: s.deadlines ?? [],
+    tax: s.tax ?? { jurisdictions: [], pensionPlans: [], salesTax: [] },
   };
 };
 
@@ -320,6 +323,7 @@ export const resolveGuildForRole = (province: string, role: string, department: 
 
 export const getUnionSpec = (id: string): EngineUnion | null => engine.unionById.get(id) ?? null;
 export const getDeadlines = (): Deadline[] => engine.deadlines;
+export const getTaxTables = (): TaxTables => engine.tax;
 export const getAllUnions = (): EngineUnion[] => engine.unions;
 export const getDepartments = (): IndustryDepartment[] => engine.departments;
 export const getRateSchedules = (unionId: string): RateSchedule[] => engine.rateSchedules.filter(s => s.unionId === unionId);

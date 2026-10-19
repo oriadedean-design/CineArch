@@ -56,6 +56,16 @@ begin
    and daterange(a.effective_from, a.effective_to, '[]') && daterange(b.effective_from, b.effective_to, '[]');
   if n > 0 then raise exception 'FAIL: % pairs of rate schedules for the same production type overlap in time', n; end if;
 
+  -- Tax brackets start at 0 and go up; every year with figures has a federal row.
+  select count(*) into n from public.tax_jurisdictions t
+  where (t.brackets->0->>0)::numeric <> 0
+     or exists (select 1 from generate_series(1, jsonb_array_length(t.brackets) - 1) i
+                where (t.brackets->i->>0)::numeric <= (t.brackets->(i - 1)->>0)::numeric);
+  if n > 0 then raise exception 'FAIL: % tax rows have brackets out of order', n; end if;
+  select count(*) into n from (select distinct year from public.tax_jurisdictions) y
+  where not exists (select 1 from public.tax_jurisdictions f where f.year = y.year and f.code = 'FED');
+  if n > 0 then raise exception 'FAIL: % tax years have no federal row', n; end if;
+
   -- A confirmed step always says where it comes from and when it was checked.
   select count(*) into n from public.union_tiers where confirmed and (source_url is null or checked_on is null);
   if n > 0 then raise exception 'FAIL: % confirmed union steps have no source or check date', n; end if;

@@ -48,6 +48,7 @@ struct AccountView: View {
                             tick(.name)
                         }
                         LabeledContent(session.isPreview ? "Preview" : "Signed in as", value: session.displayEmail ?? "")
+                        PayTypePicker()
                         if !session.isPreview {
                             Button { showScene = true } label: {
                                 LabeledContent("Setting the Scene") {
@@ -57,7 +58,7 @@ struct AccountView: View {
                             .foregroundStyle(.primary)
                         }
                     } header: { Text("You") } footer: {
-                        if !session.isPreview { Text("Setting the Scene is where you're based, what you do and who's in your corner.") }
+                        if !session.isPreview { Text("How you're paid decides what the Wrap Wallet tells you to set aside for tax. Setting the Scene is where you're based, what you do and who's in your corner.") }
                     }
 
                     Section {

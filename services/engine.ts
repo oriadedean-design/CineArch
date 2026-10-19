@@ -17,6 +17,7 @@ export * from './pay';
 export * from './job_pay';
 export * from './job_import';
 export * from './career';
+export * from './tax';
 
 // Hosts connect the engine to its data: the app through services/engine_loader.ts
 // (Supabase client, cached snapshot), the guide in site/src/lib/guide.ts (build-time fetch).

@@ -14,7 +14,13 @@ export interface PayRuleInput {
   overtimeMultipliers: number[];      // e.g. [1.5, 2, 3]
   incrementMinutes?: number | null;   // e.g. 6 = paid in tenths of an hour
   overtimeBase?: 'rate' | 'daily_fee' | null; // daily_fee = the daily fee / 8 (ACTRA IPA)
+  sixthDay?: PremiumDay | null;       // how a 6th day worked in the work week pays (873)
+  seventhDay?: PremiumDay | null;
+  vacationPayRate?: number | null;    // vacation pay already in the rate sheet's rates (BCMPA 4%)
 }
+
+// A day paid at a premium: the minimum call at `base`, then each step from the hour it starts.
+export interface PremiumDay { base: number; after: number[]; multipliers: number[] }
 
 export interface DayInput {
   hoursOnClock: number;        // call to wrap
@@ -22,6 +28,7 @@ export interface DayInput {
   hourlyRate: number;
   rule?: PayRuleInput | null;  // null = no union rule (non-union set): rate x hours
   dailyMinimum?: number | null; // union daily fee, when the agreement has one
+  workDay?: number;            // the day's place in the work week (6, 7 = premium days)
 }
 
 export interface PayBand {
@@ -59,7 +66,7 @@ export function workedHours(hoursOnClock: number, mealBreakMinutes = 0, incremen
   return cents(Math.ceil(roundTo(raw / unit, 1e-6)) * unit);
 }
 
-export function dayPay({ hoursOnClock, mealBreakMinutes = 0, hourlyRate, rule, dailyMinimum }: DayInput): DayPay {
+export function dayPay({ hoursOnClock, mealBreakMinutes = 0, hourlyRate, rule, dailyMinimum, workDay = 1 }: DayInput): DayPay {
   const worked = workedHours(hoursOnClock, mealBreakMinutes, rule?.incrementMinutes);
   const rate = Math.max(0, hourlyRate);
 
@@ -69,11 +76,16 @@ export function dayPay({ hoursOnClock, mealBreakMinutes = 0, hourlyRate, rule, d
              bands: [{ label: 'Straight time', multiplier: 1, hours: worked, amount }] };
   }
 
-  const steps = rule.overtimeAfter.map((after, i) => ({ after, multiplier: rule.overtimeMultipliers[i] ?? 1 }));
+  const premium = workDay === 6 ? rule.sixthDay : workDay >= 7 ? rule.seventhDay : null;
+  const base = premium?.base ?? 1;
+  const after = premium?.after ?? rule.overtimeAfter;
+  const multipliers = premium?.multipliers ?? rule.overtimeMultipliers;
+  const steps = after.map((a, i) => ({ after: a, multiplier: multipliers[i] ?? 1 }));
   const straightLimit = steps[0]?.after ?? Infinity;
   const bands: PayBand[] = [];
   const straightHours = Math.min(worked, straightLimit);
-  bands.push({ label: 'Straight time', multiplier: 1, hours: cents(straightHours), amount: cents(straightHours * rate) });
+  bands.push({ label: premium ? `Minimum call, ${multiplierLabel(base)}` : 'Straight time', multiplier: base,
+               hours: cents(straightHours), amount: cents(straightHours * rate * base) });
 
   // ACTRA's IPA works overtime out from the daily fee divided by 8.
   const overtimeRate = rule.overtimeBase === 'daily_fee' ? Math.max(rate, (dailyMinimum ?? 0) / 8) : rate;
@@ -90,8 +102,8 @@ export function dayPay({ hoursOnClock, mealBreakMinutes = 0, hourlyRate, rule, d
   // The straight-time part of the day is never less than the minimum call / daily fee.
   const straightPaid = bands[0].amount;
   const floor = Math.max(
-    rule.minimumCallHours ? cents(Math.min(rule.minimumCallHours, straightLimit) * rate) : 0,
-    dailyMinimum ?? 0,
+    rule.minimumCallHours ? cents(Math.min(rule.minimumCallHours, straightLimit) * rate * base) : 0,
+    (dailyMinimum ?? 0) * base,
   );
   const minimumTopUp = cents(Math.max(0, floor - straightPaid));
   const total = cents(bands.reduce((sum, b) => sum + b.amount, 0) + minimumTopUp);
@@ -114,8 +126,11 @@ export function jobPay(input: DayInput & { days?: number }): JobPay {
 export type ScaleStatus = 'above' | 'at' | 'below' | 'unknown';
 
 // Is the rate at least the union minimum? Rates are compared to the cent.
-export function scaleStatus(rate: number | null | undefined, minimum: number | null | undefined): ScaleStatus {
+// vacationPay: the share already in the rate sheet's rates (BCMPA 4%). A pay stub
+// shows it on its own line, so a base rate that much lower is still at scale.
+export function scaleStatus(rate: number | null | undefined, minimum: number | null | undefined, vacationPay?: number | null): ScaleStatus {
   if (rate == null || minimum == null || !(rate > 0)) return 'unknown';
+  if (vacationPay && rate < minimum - 0.005 && rate * (1 + vacationPay) >= minimum - 0.005) rate = minimum;
   const diff = cents(rate) - cents(minimum);
   if (Math.abs(diff) < 0.005) return 'at';
   return diff > 0 ? 'above' : 'below';

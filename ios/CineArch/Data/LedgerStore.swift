@@ -1,4 +1,5 @@
 import Foundation
+import CineArchKit
 import Observation
 import Supabase
 
@@ -41,28 +42,12 @@ enum Ledger {
     static let smallSupplierThreshold = 30_000.0
     static var currentYear: Int { Calendar.current.component(.year, from: Date()) }
 
-    // CPP for the self-employed, 2026 (ESDC): 11.9% of earnings from $3,500 to
-    // $74,600 (most $8,460.90), plus CPP2 at 8% from $74,600 to $85,000 (most $832).
-    static let cppRate = 0.119
-    static let cppExemption = 3_500.0
-    static let cppCeiling = 74_600.0
-    static let cpp2Rate = 0.08
-    static let cpp2Ceiling = 85_000.0
-
-    static func cpp(net: Double) -> Double {
-        let base = min(max(0, net - cppExemption), cppCeiling - cppExemption) * cppRate
-        let second = max(0, min(net, cpp2Ceiling) - cppCeiling) * cpp2Rate
-        return ((base + second) * 100).rounded() / 100
-    }
-
     /// GST/HST you can claim back on an expense: half on meals and entertainment (CRA).
     static func claimableTax(_ e: LedgerEntry) -> Double {
         let cat = e.category.uppercased()
         return cat.contains("MEAL") || cat.contains("ENTERTAINMENT") ? e.taxAmount / 2 : e.taxAmount
     }
-    static let projectedTaxRate = 0.20
-
-    static let incomeCategories = [("SERVICE_FEES", "Service fees"), ("RESIDUAL", "Residuals")]
+    static let incomeCategories = [("SERVICE_FEES", "Service fees"), ("RESIDUAL", "Residuals"), ("EMPLOYMENT", "Employment (T4)")]
     static let expenseCategories = [
         ("MEALS_ENTERTAINMENT", "Meals (50% rule)"), ("UNION_DUES", "Union dues"), ("APPLICATION_FEE", "Initiation / application fee"),
         ("GEAR_SMALL_TOOLS", "Gear & small tools"), ("OFFICE_SUPPLIES", "Office supplies"),
@@ -94,10 +79,11 @@ struct LedgerStats: Decodable {
     var deductibleExpenses = 0.0
     var gstCollected = 0.0
     var gstPaid = 0.0
+    var employmentIncome = 0.0       // T4 pay: tax and CPP already come off it
 
     enum CodingKeys: String, CodingKey {
         case grossIncome = "gross_income", totalExpenses = "total_expenses", deductibleExpenses = "deductible_expenses"
-        case gstCollected = "gst_collected", gstPaid = "gst_paid"
+        case gstCollected = "gst_collected", gstPaid = "gst_paid", employmentIncome = "employment_income"
     }
 
     init() {}
@@ -107,15 +93,37 @@ struct LedgerStats: Decodable {
             (try? c.decode(Double.self, forKey: k)) ?? Double((try? c.decode(String.self, forKey: k)) ?? "") ?? 0
         }
         grossIncome = num(.grossIncome); totalExpenses = num(.totalExpenses); deductibleExpenses = num(.deductibleExpenses)
-        gstCollected = num(.gstCollected); gstPaid = num(.gstPaid)
+        gstCollected = num(.gstCollected); gstPaid = num(.gstPaid); employmentIncome = num(.employmentIncome)
     }
 
     var netIncome: Double { grossIncome - deductibleExpenses }
+    var selfEmployedIncome: Double { grossIncome - employmentIncome }
+    var selfEmployedNet: Double { selfEmployedIncome - deductibleExpenses }
     var gstOwing: Double { gstCollected - gstPaid }
-    var estimatedCPP: Double { Ledger.cpp(net: netIncome) }
-    var estimatedIncomeTax: Double { max(0, netIncome) * Ledger.projectedTaxRate }
-    /// Past $30,000 in a year you must register for GST/HST.
-    var gstThresholdFraction: Double { min(1, grossIncome / Ledger.smallSupplierThreshold) }
+    /// Past $30,000 of sales in a year you must register for GST/HST.
+    var gstThresholdFraction: Double { min(1, selfEmployedIncome / Ledger.smallSupplierThreshold) }
+}
+
+/// What to set aside and what GST/HST is owed, from the engine's tax tables,
+/// for how someone is paid and where.
+struct TaxPicture {
+    var payType: PayType?
+    var province: String?
+    var setAside: SetAside?          // nil: T4 pay only, or no figures for the province
+    var quick: SalesTax?             // set when they use the Quick Method
+    var gstOwing: Double
+    var salesWithTax: Double
+
+    init(stats s: LedgerStats, payType: PayType?, province: String?, gstMethod: String, tables: TaxTables?) {
+        let year = Ledger.currentYear, tables = tables ?? TaxTables()
+        self.payType = payType; self.province = province
+        salesWithTax = s.selfEmployedIncome + s.gstCollected
+        quick = gstMethod == "quick" ? province.flatMap { Tax.salesTax(province: $0, year: year, tables: tables) } : nil
+        gstOwing = quick?.quickMethodOwing(salesIncludingTax: salesWithTax) ?? s.gstOwing
+        setAside = payType == .t4 ? nil : province.flatMap {
+            Tax.setAside(selfEmployedNet: s.selfEmployedNet, employmentIncome: s.employmentIncome, province: $0, year: year, tables: tables)
+        }
+    }
 }
 
 @MainActor @Observable

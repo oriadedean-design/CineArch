@@ -410,6 +410,7 @@ export type Database = {
           account_type: string
           agent_fee_pct: number | null
           earning_goal: number | null
+          gst_method: string
           business_structure: string | null
           career_focus: string | null
           cohort_year: string | null
@@ -426,6 +427,7 @@ export type Database = {
           language: string | null
           managed_by_agency_id: string | null
           member_status: string | null
+          pay_type: string | null
           name: string | null
           organization_name: string | null
           phone: string | null
@@ -444,6 +446,7 @@ export type Database = {
           account_type?: string
           agent_fee_pct?: number | null
           earning_goal?: number | null
+          gst_method?: string
           business_structure?: string | null
           career_focus?: string | null
           cohort_year?: string | null
@@ -460,6 +463,7 @@ export type Database = {
           language?: string | null
           managed_by_agency_id?: string | null
           member_status?: string | null
+          pay_type?: string | null
           name?: string | null
           organization_name?: string | null
           phone?: string | null
@@ -478,6 +482,7 @@ export type Database = {
           account_type?: string
           agent_fee_pct?: number | null
           earning_goal?: number | null
+          gst_method?: string
           business_structure?: string | null
           career_focus?: string | null
           cohort_year?: string | null
@@ -494,6 +499,7 @@ export type Database = {
           language?: string | null
           managed_by_agency_id?: string | null
           member_status?: string | null
+          pay_type?: string | null
           name?: string | null
           organization_name?: string | null
           phone?: string | null
@@ -1234,6 +1240,7 @@ export type Database = {
           gross_income: number
           gst_collected: number
           gst_paid: number
+          employment_income: number
           total_expenses: number
         }[]
       }
