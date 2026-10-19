@@ -252,7 +252,7 @@ struct SaveJobSheet: View {
                       mealBreakMinutes: Int(input.mealMinutes), overtimeHours: pay?.totalOvertimeHours ?? 0,
                       unionMinimumRate: priced.minimum?.hourly, ratePosition: priced.minimum?.position, grossEarnings: pay?.gross,
                       province: session.profile?.province ?? (session.isPreview ? "Ontario" : nil),
-                      agentName: agent.name, agencyId: agent.agencyId)
+                      agentName: agent.name, agencyId: agent.agencyId, representativeId: agent.representativeId)
         do {
             try await jobs.add(job)
             dismiss()

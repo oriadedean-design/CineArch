@@ -358,6 +358,7 @@ export type Database = {
           proof_path: string | null
           province: string | null
           rate_position: string | null
+          representative_id: string | null
           role: string
           start_date: string
           status: string
@@ -397,6 +398,7 @@ export type Database = {
           proof_path?: string | null
           province?: string | null
           rate_position?: string | null
+          representative_id?: string | null
           role: string
           start_date: string
           status?: string
@@ -436,6 +438,7 @@ export type Database = {
           proof_path?: string | null
           province?: string | null
           rate_position?: string | null
+          representative_id?: string | null
           role?: string
           start_date?: string
           status?: string
@@ -454,6 +457,13 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_representative_id_fkey"
+            columns: ["representative_id"]
+            isOneToOne: false
+            referencedRelation: "representatives"
             referencedColumns: ["id"]
           },
           {
@@ -842,6 +852,60 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "report_runs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      representatives: {
+        Row: {
+          agency: string | null
+          agency_id: string | null
+          applies_to: string
+          commission_pct: number
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency?: string | null
+          agency_id?: string | null
+          applies_to?: string
+          commission_pct: number
+          created_at?: string
+          id?: string
+          kind?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency?: string | null
+          agency_id?: string | null
+          applies_to?: string
+          commission_pct?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "representatives_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "representatives_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

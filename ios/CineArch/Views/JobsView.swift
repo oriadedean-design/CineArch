@@ -4,6 +4,7 @@ import CineArchKit
 // Your logged work, synced with the website.
 struct JobsView: View {
     @Environment(Session.self) private var session
+    @Environment(RepresentationStore.self) private var representation
     @Environment(JobsStore.self) private var jobs
     @Environment(TrackingStore.self) private var tracking
     @Environment(EngineStore.self) private var store
@@ -108,8 +109,10 @@ struct JobsView: View {
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 } footer: {
                     if let a = agent {
-                        let total = rows.filter { $0.status != "TENTATIVE" }.reduce(0) { $0 + ($1.grossEarnings ?? 0) }
-                        Text("\(rows.count) job\(rows.count == 1 ? "" : "s") booked by \(a), \(total.money).")
+                        let worked = rows.filter { $0.status != "TENTATIVE" }
+                        let total = worked.reduce(0) { $0 + ($1.grossEarnings ?? 0) }
+                        let cut = worked.reduce(0) { $0 + representation.commissions(on: $1).filter { $0.representative.name == a }.reduce(0) { $0 + $1.amount } }
+                        Text("\(rows.count) job\(rows.count == 1 ? "" : "s") booked by \(a), \(total.money)\(cut > 0 ? ". Their commission: \(cut.money)" : "").")
                     } else if show == .needsProof {
                         Text("Union days with no pay stub yet. Tap one to back it with proof.")
                     }

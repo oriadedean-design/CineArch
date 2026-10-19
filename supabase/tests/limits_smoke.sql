@@ -2,7 +2,7 @@
 -- LIMITS SMOKE TEST
 -- A-List Pro makes at most 3 PDF reports a month; free accounts make none;
 -- only admins can verify facts or set themselves as admin; amounts outside
--- sane ranges are refused.
+-- sane ranges are refused; representatives are private to their account.
 -- Ends by raising an exception so the test data is rolled back.
 --   PASS → error message starts with LIMITS_TESTS_PASSED
 --
@@ -69,8 +69,23 @@ begin
   exception when check_violation then v_checks := v_checks + 1;
   end;
 
+  -- Representation: your own only, commission 0 to 50%.
+  insert into public.representatives (user_id, name, commission_pct) values (v_pro, 'Smoke Agent', 10);
+  begin
+    insert into public.representatives (user_id, name, commission_pct) values (v_pro, 'Greedy', 60);
+    raise exception 'FAIL: a 60%% commission was saved';
+  exception when check_violation then v_checks := v_checks + 1;
+  end;
+  begin
+    insert into public.representatives (user_id, name, commission_pct) values (v_free, 'Not mine', 10);
+    raise exception 'FAIL: a representative was added to someone else''s account';
+  exception when insufficient_privilege then v_checks := v_checks + 1;
+  end;
+
   -- Free: no reports.
   perform set_config('request.jwt.claims', json_build_object('sub', v_free, 'role', 'authenticated')::text, true);
+  if (select count(*) from public.representatives) <> 0 then raise exception 'FAIL: another account''s representatives are visible'; end if;
+  v_checks := v_checks + 1;
   begin
     perform public.start_report('tax');
     raise exception 'FAIL: a free account made a report';

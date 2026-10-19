@@ -7,6 +7,7 @@ import { UnionGoals } from '../components/UnionGoals';
 import { Vault } from '../components/Vault';
 import { User, CanadianProvince } from '../types';
 import { Heading, Text, Button, Input, Select, Card, Badge } from '../components/ui';
+import { Representation } from '../components/Representation';
 import { Shield, User as UserIcon, Lock, Landmark, FileText, Trash2, Users, XCircle } from 'lucide-react';
 
 export const SettingsIndividual = () => {
@@ -162,6 +163,7 @@ export const SettingsIndividual = () => {
                 </Select>
               </div>
             </div>
+            <Representation />
             {user?.isAdmin && (
               <a href="#/admin" className="block text-sm text-accent underline">Verify the facts (admins)</a>
             )}

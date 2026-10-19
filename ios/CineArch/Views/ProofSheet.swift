@@ -125,6 +125,7 @@ struct DocumentScanner: UIViewControllerRepresentable {
 // and the Union Pack attaches the stub, annotated.
 struct JobProofSheet: View {
     @Environment(JobsStore.self) private var jobs
+    @Environment(RepresentationStore.self) private var representation
     @Environment(Session.self) private var session
     @Environment(LedgerStore.self) private var ledger
     @Environment(\.dismiss) private var dismiss
@@ -154,8 +155,21 @@ struct JobProofSheet: View {
                     HintedHeader(title: "Booked by", hint: "The agent who got you this job, if one did. Your Slate can then show what each agent brought in.")
                 }
                 .onChange(of: agent) {
-                    guard let id = current.id, agent != AgentChoice(name: current.agentName, agencyId: current.agencyId) else { return }
-                    Task { await jobs.setAgent(id, name: agent.name, agencyId: agent.agencyId) }
+                    guard let id = current.id,
+                          agent != AgentChoice(name: current.agentName, agencyId: current.agencyId, representativeId: current.representativeId) else { return }
+                    Task { await jobs.setAgent(id, name: agent.name, agencyId: agent.agencyId, representativeId: agent.representativeId) }
+                }
+
+                let cuts = representation.commissions(on: current)
+                if !cuts.isEmpty, let gross = current.grossEarnings {
+                    Section {
+                        ForEach(cuts, id: \.self) { c in
+                            LabeledContent("\(c.representative.name), \(c.representative.commissionPct.formatted(.number.precision(.fractionLength(0...2))))%", value: "−\(c.amount.money)")
+                        }
+                        LabeledContent("You keep", value: (gross - cuts.reduce(0) { $0 + $1.amount }).money).bold()
+                    } header: {
+                        HintedHeader(title: "Commission", hint: "What your representation takes from this job's gross pay, set in Account > Your representation.")
+                    }
                 }
 
                 if !session.isPremium {
@@ -188,7 +202,7 @@ struct JobProofSheet: View {
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
-            .onAppear { agent = AgentChoice(name: current.agentName, agencyId: current.agencyId) }
+            .onAppear { agent = AgentChoice(name: current.agentName, agencyId: current.agencyId, representativeId: current.representativeId) }
             .navigationDestination(isPresented: $showPlans) { PlansView() }
             .navigationTitle(!session.isPremium || current.status == "TENTATIVE" ? "Job" : current.isGreenLit ? "Green Lit" : "Needs a pay stub")
             .navigationBarTitleDisplayMode(.inline)
@@ -223,34 +237,45 @@ struct LockedRowLabel: View {
 struct AgentChoice: Equatable {
     var name: String?
     var agencyId: UUID?
+    var representativeId: UUID?
 }
 
 struct AgentPicker: View {
     @Environment(Session.self) private var session
     @Environment(JobsStore.self) private var jobs
+    @Environment(RepresentationStore.self) private var representation
     @Binding var choice: AgentChoice
     @State private var typing = false
     @State private var typed = ""
 
-    private enum Pick: Hashable { case none, agency, named(String), other }
+    private enum Pick: Hashable { case none, rep(UUID), agency, named(String), other }
 
     var body: some View {
         Picker("Agent", selection: Binding<Pick>(get: {
             if typing { return .other }
+            if let id = choice.representativeId { return .rep(id) }
             if choice.agencyId != nil { return .agency }
             return choice.name.map { .named($0) } ?? .none
         }, set: { pick in
             switch pick {
             case .none: typing = false; choice = AgentChoice()
+            case .rep(let id):
+                typing = false
+                let r = representation.reps.first { $0.id == id }
+                choice = AgentChoice(name: r?.name, agencyId: r?.agencyId, representativeId: id)
             case .agency: typing = false; choice = AgentChoice(name: session.agency?.name, agencyId: session.agency?.id)
             case .named(let n): typing = false; choice = AgentChoice(name: n)
             case .other: typing = true; typed = ""; choice = AgentChoice()
             }
         })) {
             Text("No agent").tag(Pick.none)
-            if let a = session.agency { Text(a.name).tag(Pick.agency) }
-            ForEach(jobs.agents.filter { $0 != session.agency?.name }, id: \.self) { Text($0).tag(Pick.named($0)) }
-            if let n = choice.name, choice.agencyId == nil, !jobs.agents.contains(n), !typing { Text(n).tag(Pick.named(n)) }
+            ForEach(representation.reps.filter { $0.id != nil }) { r in
+                Text("\(r.name) (\(r.commissionPct.formatted(.number.precision(.fractionLength(0...2))))%)").tag(Pick.rep(r.id!))
+            }
+            if let a = session.agency, !representation.reps.contains(where: { $0.agencyId == a.id }) { Text(a.name).tag(Pick.agency) }
+            let repNames = Set(representation.reps.map(\.name))
+            ForEach(jobs.agents.filter { $0 != session.agency?.name && !repNames.contains($0) }, id: \.self) { Text($0).tag(Pick.named($0)) }
+            if let n = choice.name, choice.agencyId == nil, choice.representativeId == nil, !jobs.agents.contains(n), !typing { Text(n).tag(Pick.named(n)) }
             Text("Someone else…").tag(Pick.other)
         }
         if typing {

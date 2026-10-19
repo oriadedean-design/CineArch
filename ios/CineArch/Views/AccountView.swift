@@ -11,6 +11,7 @@ enum Features {
 
 struct AccountView: View {
     @Environment(Session.self) private var session
+    @Environment(RepresentationStore.self) private var representation
     @Environment(JobsStore.self) private var jobs
     @Environment(TrackingStore.self) private var tracking
     @Environment(LedgerStore.self) private var ledger
@@ -59,6 +60,17 @@ struct AccountView: View {
                         }
                     } header: { Text("You") } footer: {
                         if !session.isPreview { Text("How you're paid decides what the Wrap Wallet tells you to set aside for tax. Setting the Scene is where you're based, what you do and who's in your corner.") }
+                    }
+
+                    Section {
+                        NavigationLink { RepresentationView() } label: {
+                            LabeledContent("Your representation") {
+                                Text(representation.reps.isEmpty ? "None" : representation.reps.map(\.name).joined(separator: ", "))
+                                    .lineLimit(1).foregroundStyle(.secondary)
+                            }
+                        }
+                    } header: {
+                        HintedHeader(title: "Industry representation", hint: "Your agents and managers, and the commission each takes. CineArch shows their cut on every job they book (or every job, for a manager) and what you keep.")
                     }
 
                     Section {
@@ -356,5 +368,135 @@ struct AuthSheet: View {
     private func reset() async {
         do { try await session.sendPasswordReset(email: email.trimmed); message = "We sent a reset link to \(email.trimmed)." }
         catch { message = error.localizedDescription }
+    }
+}
+
+// MARK: Your representation
+
+/// The agents and managers you work with, and what each takes.
+struct RepresentationView: View {
+    @Environment(RepresentationStore.self) private var representation
+    @Environment(JobsStore.self) private var jobs
+    @State private var editing: Representative?
+    @State private var adding = false
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(representation.reps) { r in
+                    Button { editing = r } label: {
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack {
+                                Text(r.name).font(.headline)
+                                Spacer()
+                                Text("\(r.commissionPct.formatted(.number.precision(.fractionLength(0...2))))%").font(Theme.serif(.title3)).foregroundStyle(Theme.accent)
+                            }
+                            Text([r.kindName, r.agency, r.takesFromEveryJob ? "every job" : "jobs they book"].compactMap { $0 }.joined(separator: " · "))
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+                .onDelete { idx in
+                    let doomed = idx.map { representation.reps[$0] }
+                    Task { for r in doomed { await representation.remove(r) } }
+                }
+                Button { adding = true } label: { Label("Add an agent or manager", systemImage: "plus.circle.fill") }
+            } footer: {
+                Text("Agents usually take a percentage of the jobs they book. Managers often take one from every job. Swipe left to remove someone.")
+            }
+            let paid = representation.commissionTotal(jobs.jobs.filter { $0.startDate.hasPrefix(String(Ledger.currentYear)) })
+            if paid > 0 {
+                Section("This year") {
+                    LabeledContent("Commission on your Slate", value: paid.money)
+                }
+            }
+            if let e = representation.error { Section { Text(e).foregroundStyle(.red) } }
+        }
+        .navigationTitle("Your representation")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $adding) { RepresentativeSheet(rep: nil) }
+        .sheet(item: $editing) { RepresentativeSheet(rep: $0) }
+    }
+}
+
+struct RepresentativeSheet: View {
+    @Environment(RepresentationStore.self) private var representation
+    @Environment(Session.self) private var session
+    @Environment(\.dismiss) private var dismiss
+    let rep: Representative?
+
+    @State private var name = ""
+    @State private var agency = ""
+    @State private var kind = "agent"
+    @State private var pct = ""
+    @State private var appliesTo = "booked"
+    @State private var linked = false
+    @State private var saving = false
+    @State private var error: String?
+
+    private var pctValue: Double? { Double(pct).flatMap { (0...50).contains($0) ? $0 : nil } }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    TextField("Name", text: $name).textInputAutocapitalization(.words)
+                    TextField("Agency (optional)", text: $agency).textInputAutocapitalization(.words)
+                    Picker("Role", selection: $kind) {
+                        Text("Agent").tag("agent"); Text("Manager").tag("manager"); Text("Other").tag("other")
+                    }
+                    if let a = session.agency {
+                        Toggle("This is \(a.name) on CineArch", isOn: $linked)
+                    }
+                }
+                Section {
+                    HStack {
+                        Text("Commission")
+                        Spacer()
+                        TextField("10", text: $pct).keyboardType(.decimalPad).numbersOnly($pct)
+                            .multilineTextAlignment(.trailing).frame(maxWidth: 80)
+                        Text("%").foregroundStyle(.secondary)
+                    }
+                    Picker("Takes it from", selection: $appliesTo) {
+                        Text("Jobs they book").tag("booked")
+                        Text("Every job").tag("all")
+                    }
+                } footer: {
+                    Text(pct.isEmpty || pctValue != nil
+                         ? "The percentage of your gross pay they take on each job. Up to 50%."
+                         : "Enter a percentage from 0 to 50.")
+                    .foregroundStyle(pct.isEmpty || pctValue != nil ? Color.secondary : .red)
+                }
+                if let error { Section { Text(error).foregroundStyle(.red) } }
+            }
+            .navigationTitle(rep == nil ? "Add representation" : "Edit")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { Task { await save() } }.disabled(name.trimmed.isEmpty || pctValue == nil || saving)
+                }
+            }
+            .onAppear {
+                guard let r = rep else { return }
+                name = r.name; agency = r.agency ?? ""; kind = r.kind; appliesTo = r.appliesTo
+                pct = r.commissionPct.formatted(.number.grouping(.never).precision(.fractionLength(0...2)))
+                linked = r.agencyId != nil
+            }
+            .task { await session.loadAgency() }
+        }
+    }
+
+    private func save() async {
+        guard let p = pctValue else { return }
+        saving = true
+        defer { saving = false }
+        var r = rep ?? Representative(name: "", commissionPct: 0)
+        r.name = String(name.trimmed.prefix(120)); r.agency = agency.trimmed.isEmpty ? nil : String(agency.trimmed.prefix(120))
+        r.kind = kind; r.commissionPct = p; r.appliesTo = appliesTo
+        r.agencyId = linked ? session.agency?.id : nil
+        do { try await representation.save(r); dismiss() }
+        catch { self.error = "Couldn't save: \(error.localizedDescription)" }
     }
 }
