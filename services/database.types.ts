@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.17"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       agency_invites: {
@@ -51,6 +76,56 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deadlines: {
+        Row: {
+          applies_to: string
+          checked_on: string
+          day: number
+          detail: string | null
+          id: string
+          month: number
+          province: string | null
+          source_url: string
+          title: string
+          union_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          applies_to: string
+          checked_on: string
+          day: number
+          detail?: string | null
+          id: string
+          month: number
+          province?: string | null
+          source_url: string
+          title: string
+          union_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          checked_on?: string
+          day?: number
+          detail?: string | null
+          id?: string
+          month?: number
+          province?: string | null
+          source_url?: string
+          title?: string
+          union_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deadlines_union_id_fkey"
+            columns: ["union_id"]
+            isOneToOne: false
+            referencedRelation: "unions"
             referencedColumns: ["id"]
           },
         ]
@@ -132,6 +207,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      fact_checks: {
+        Row: {
+          checked_at: string
+          checked_by: string | null
+          id: string
+          note: string | null
+          outcome: string
+          subject: string
+          subject_key: string
+        }
+        Insert: {
+          checked_at?: string
+          checked_by?: string | null
+          id?: string
+          note?: string | null
+          outcome: string
+          subject: string
+          subject_key: string
+        }
+        Update: {
+          checked_at?: string
+          checked_by?: string | null
+          id?: string
+          note?: string | null
+          outcome?: string
+          subject?: string
+          subject_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_checks_checked_by_fkey"
+            columns: ["checked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_transactions: {
         Row: {
@@ -219,6 +332,8 @@ export type Database = {
       }
       jobs: {
         Row: {
+          agency_id: string | null
+          agent_name: string | null
           client_id: string | null
           company_name: string
           created_at: string
@@ -240,6 +355,7 @@ export type Database = {
           overtime_hours: number
           production_name: string
           production_tier: string | null
+          proof_path: string | null
           province: string | null
           rate_position: string | null
           role: string
@@ -255,6 +371,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agency_id?: string | null
+          agent_name?: string | null
           client_id?: string | null
           company_name?: string
           created_at?: string
@@ -276,6 +394,7 @@ export type Database = {
           overtime_hours?: number
           production_name: string
           production_tier?: string | null
+          proof_path?: string | null
           province?: string | null
           rate_position?: string | null
           role: string
@@ -291,6 +410,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agency_id?: string | null
+          agent_name?: string | null
           client_id?: string | null
           company_name?: string
           created_at?: string
@@ -312,6 +433,7 @@ export type Database = {
           overtime_hours?: number
           production_name?: string
           production_tier?: string | null
+          proof_path?: string | null
           province?: string | null
           rate_position?: string | null
           role?: string
@@ -328,6 +450,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "jobs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "jobs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -338,6 +467,7 @@ export type Database = {
       }
       pay_rules: {
         Row: {
+          checked_on: string | null
           department_id: string | null
           id: string
           increment_minutes: number | null
@@ -345,16 +475,20 @@ export type Database = {
           minimum_call_hours: number | null
           needs_verification: string[]
           notes: string | null
-          overtime_base: string
           overtime_after: number[]
+          overtime_base: string
           overtime_multipliers: number[]
+          seventh_day: Json | null
+          sixth_day: Json | null
           sort_order: number
           source_url: string | null
           title: string
           union_id: string
           updated_at: string
+          vacation_pay_rate: number | null
         }
         Insert: {
+          checked_on?: string | null
           department_id?: string | null
           id: string
           increment_minutes?: number | null
@@ -362,16 +496,20 @@ export type Database = {
           minimum_call_hours?: number | null
           needs_verification?: string[]
           notes?: string | null
-          overtime_base?: string
           overtime_after?: number[]
+          overtime_base?: string
           overtime_multipliers?: number[]
+          seventh_day?: Json | null
+          sixth_day?: Json | null
           sort_order?: number
           source_url?: string | null
           title: string
           union_id: string
           updated_at?: string
+          vacation_pay_rate?: number | null
         }
         Update: {
+          checked_on?: string | null
           department_id?: string | null
           id?: string
           increment_minutes?: number | null
@@ -379,14 +517,17 @@ export type Database = {
           minimum_call_hours?: number | null
           needs_verification?: string[]
           notes?: string | null
-          overtime_base?: string
           overtime_after?: number[]
+          overtime_base?: string
           overtime_multipliers?: number[]
+          seventh_day?: Json | null
+          sixth_day?: Json | null
           sort_order?: number
           source_url?: string | null
           title?: string
           union_id?: string
           updated_at?: string
+          vacation_pay_rate?: number | null
         }
         Relationships: [
           {
@@ -405,32 +546,74 @@ export type Database = {
           },
         ]
       }
+      pension_plans: {
+        Row: {
+          base_rate: number
+          checked_on: string
+          code: string
+          exemption: number
+          first_additional_rate: number
+          second_rate: number
+          source_url: string
+          updated_at: string
+          yampe: number
+          year: number
+          ympe: number
+        }
+        Insert: {
+          base_rate: number
+          checked_on: string
+          code: string
+          exemption: number
+          first_additional_rate: number
+          second_rate: number
+          source_url: string
+          updated_at?: string
+          yampe: number
+          year: number
+          ympe: number
+        }
+        Update: {
+          base_rate?: number
+          checked_on?: string
+          code?: string
+          exemption?: number
+          first_additional_rate?: number
+          second_rate?: number
+          source_url?: string
+          updated_at?: string
+          yampe?: number
+          year?: number
+          ympe?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_type: string
           agent_fee_pct: number | null
-          earning_goal: number | null
-          gst_method: string
           business_structure: string | null
           career_focus: string | null
           cohort_year: string | null
           country: string | null
           created_at: string
           department: string | null
+          earning_goal: number | null
           email: string
           entity_type: string | null
           goals: string[] | null
+          gst_method: string
           has_agent_fee: boolean | null
           id: string
-          is_onboarded: boolean
           is_admin: boolean
+          is_onboarded: boolean
           is_premium: boolean
           language: string | null
           managed_by_agency_id: string | null
           member_status: string | null
-          pay_type: string | null
           name: string | null
           organization_name: string | null
+          pay_type: string | null
           phone: string | null
           plan: string
           primary_industry: string | null
@@ -446,28 +629,28 @@ export type Database = {
         Insert: {
           account_type?: string
           agent_fee_pct?: number | null
-          earning_goal?: number | null
-          gst_method?: string
           business_structure?: string | null
           career_focus?: string | null
           cohort_year?: string | null
           country?: string | null
           created_at?: string
           department?: string | null
+          earning_goal?: number | null
           email: string
           entity_type?: string | null
           goals?: string[] | null
+          gst_method?: string
           has_agent_fee?: boolean | null
           id: string
-          is_onboarded?: boolean
           is_admin?: boolean
+          is_onboarded?: boolean
           is_premium?: boolean
           language?: string | null
           managed_by_agency_id?: string | null
           member_status?: string | null
-          pay_type?: string | null
           name?: string | null
           organization_name?: string | null
+          pay_type?: string | null
           phone?: string | null
           plan?: string
           primary_industry?: string | null
@@ -483,28 +666,28 @@ export type Database = {
         Update: {
           account_type?: string
           agent_fee_pct?: number | null
-          earning_goal?: number | null
-          gst_method?: string
           business_structure?: string | null
           career_focus?: string | null
           cohort_year?: string | null
           country?: string | null
           created_at?: string
           department?: string | null
+          earning_goal?: number | null
           email?: string
           entity_type?: string | null
           goals?: string[] | null
+          gst_method?: string
           has_agent_fee?: boolean | null
           id?: string
-          is_onboarded?: boolean
           is_admin?: boolean
+          is_onboarded?: boolean
           is_premium?: boolean
           language?: string | null
           managed_by_agency_id?: string | null
           member_status?: string | null
-          pay_type?: string | null
           name?: string | null
           organization_name?: string | null
+          pay_type?: string | null
           phone?: string | null
           plan?: string
           primary_industry?: string | null
@@ -580,6 +763,7 @@ export type Database = {
       }
       rate_schedules: {
         Row: {
+          checked_on: string | null
           columns: string[]
           daily_column: string | null
           effective_from: string
@@ -595,6 +779,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          checked_on?: string | null
           columns: string[]
           daily_column?: string | null
           effective_from: string
@@ -610,6 +795,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          checked_on?: string | null
           columns?: string[]
           daily_column?: string | null
           effective_from?: string
@@ -630,6 +816,35 @@ export type Database = {
             columns: ["union_id"]
             isOneToOne: false
             referencedRelation: "unions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_runs: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_runs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -782,6 +997,45 @@ export type Database = {
           },
         ]
       }
+      sales_tax: {
+        Row: {
+          checked_on: string
+          gst_hst_rate: number
+          notes: string | null
+          province: string
+          quick_credit_limit: number
+          quick_credit_rate: number
+          quick_service_rate: number
+          source_url: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          checked_on: string
+          gst_hst_rate: number
+          notes?: string | null
+          province: string
+          quick_credit_limit?: number
+          quick_credit_rate?: number
+          quick_service_rate: number
+          source_url: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          checked_on?: string
+          gst_hst_rate?: number
+          notes?: string | null
+          province?: string
+          quick_credit_limit?: number
+          quick_credit_rate?: number
+          quick_service_rate?: number
+          source_url?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       sync_queue: {
         Row: {
           attempted_at: string | null
@@ -825,6 +1079,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tax_jurisdictions: {
+        Row: {
+          basic_amount: number
+          basic_amount_phaseout: Json | null
+          brackets: Json
+          checked_on: string
+          code: string
+          federal_abatement: number | null
+          health_premium: Json | null
+          needs_verification: string[]
+          notes: string | null
+          province: string | null
+          source_url: string
+          surtax: Json | null
+          tax_reduction_base: number | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          basic_amount: number
+          basic_amount_phaseout?: Json | null
+          brackets: Json
+          checked_on: string
+          code: string
+          federal_abatement?: number | null
+          health_premium?: Json | null
+          needs_verification?: string[]
+          notes?: string | null
+          province?: string | null
+          source_url: string
+          surtax?: Json | null
+          tax_reduction_base?: number | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          basic_amount?: number
+          basic_amount_phaseout?: Json | null
+          brackets?: Json
+          checked_on?: string
+          code?: string
+          federal_abatement?: number | null
+          health_premium?: Json | null
+          needs_verification?: string[]
+          notes?: string | null
+          province?: string | null
+          source_url?: string
+          surtax?: Json | null
+          tax_reduction_base?: number | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
       }
       union_departments: {
         Row: {
@@ -967,8 +1275,8 @@ export type Database = {
           confirmed: boolean
           counts_work: string
           description: string | null
-          hours_rule: string | null
           exclude_role_ids: string[]
+          hours_rule: string | null
           id: number
           min_productions: number | null
           name: string
@@ -977,8 +1285,8 @@ export type Database = {
           role_ids: string[]
           short_day_hours: number | null
           short_day_inclusive: boolean
-          source_url: string | null
           sort_order: number
+          source_url: string | null
           start_label: string | null
           target_type: string
           target_value: number
@@ -991,8 +1299,8 @@ export type Database = {
           confirmed?: boolean
           counts_work?: string
           description?: string | null
-          hours_rule?: string | null
           exclude_role_ids?: string[]
+          hours_rule?: string | null
           id?: never
           min_productions?: number | null
           name: string
@@ -1001,8 +1309,8 @@ export type Database = {
           role_ids?: string[]
           short_day_hours?: number | null
           short_day_inclusive?: boolean
-          source_url?: string | null
           sort_order?: number
+          source_url?: string | null
           start_label?: string | null
           target_type: string
           target_value: number
@@ -1015,8 +1323,8 @@ export type Database = {
           confirmed?: boolean
           counts_work?: string
           description?: string | null
-          hours_rule?: string | null
           exclude_role_ids?: string[]
+          hours_rule?: string | null
           id?: never
           min_productions?: number | null
           name?: string
@@ -1025,8 +1333,8 @@ export type Database = {
           role_ids?: string[]
           short_day_hours?: number | null
           short_day_inclusive?: boolean
-          source_url?: string | null
           sort_order?: number
+          source_url?: string | null
           start_label?: string | null
           target_type?: string
           target_value?: number
@@ -1232,39 +1540,37 @@ export type Database = {
     }
     Functions: {
       check_fact: {
-        Args: { p_subject: string; p_key: string; p_outcome: string; p_note?: string }
+        Args: {
+          p_key: string
+          p_note?: string
+          p_outcome: string
+          p_subject: string
+        }
         Returns: undefined
-      }
-      my_report_usage: {
-        Args: never
-        Returns: { used: number; report_limit: number }[]
-      }
-      start_report: {
-        Args: { p_kind: string }
-        Returns: number
       }
       copy_role_coverage: {
         Args: { p_from_role: string; p_to_role: string }
         Returns: number
       }
       delete_my_account: { Args: never; Returns: undefined }
+      documents_used_bytes: { Args: { p_user: string }; Returns: number }
       finance_stats: {
         Args: { p_user_id: string; p_year?: number }
         Returns: {
           deductible_expenses: number
+          employment_income: number
           gross_income: number
           gst_collected: number
           gst_paid: number
-          employment_income: number
           total_expenses: number
         }[]
       }
       has_pro: { Args: never; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
       is_agent_of: { Args: { p_client: string }; Returns: boolean }
       is_canadian_province: { Args: { p: string }; Returns: boolean }
       is_engine_region: { Args: { r: string }; Returns: boolean }
-      my_documents_usage: { Args: never; Returns: Json }
       leave_agency: { Args: never; Returns: undefined }
       my_agency: {
         Args: never
@@ -1274,6 +1580,7 @@ export type Database = {
           organization_name: string
         }[]
       }
+      my_documents_usage: { Args: never; Returns: Json }
       my_pending_invites: {
         Args: never
         Returns: {
@@ -1283,16 +1590,25 @@ export type Database = {
           id: string
         }[]
       }
+      my_report_usage: {
+        Args: never
+        Returns: {
+          report_limit: number
+          used: number
+        }[]
+      }
       rate_schedule_lines: { Args: { p_schedule_ids: string[] }; Returns: Json }
       register_user_session: {
         Args: { p_device_label?: string; p_session_token: string }
         Returns: undefined
       }
       release_client: { Args: { p_client: string }; Returns: undefined }
+      report_month_start: { Args: never; Returns: string }
       respond_to_agency_invite: {
         Args: { p_accept: boolean; p_invite_id: string }
         Returns: undefined
       }
+      start_report: { Args: { p_kind: string }; Returns: number }
       union_engine_snapshot: { Args: never; Returns: Json }
       union_engine_version: { Args: never; Returns: number }
     }
@@ -1423,6 +1739,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

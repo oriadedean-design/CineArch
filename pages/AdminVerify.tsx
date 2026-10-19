@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Flag, ExternalLink } from 'lucide-react';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 import { api } from '../services/storage';
 import type { User } from '../types';
@@ -24,9 +23,6 @@ interface Fact {
   ends?: string | null;  // rate cards: when they stop applying
   todo?: string[];       // what's still unconfirmed
 }
-
-// The tax and fact-check tables are newer than the generated types, so this page reads them untyped.
-const db = supabase as unknown as SupabaseClient;
 
 interface Check { subject: string; subject_key: string; outcome: string; note: string | null; checked_at: string }
 
@@ -56,15 +52,15 @@ export const AdminVerify = () => {
 
   const load = async () => {
     const [u, tiers, rules, cards, tax, plans, sales, dates, log] = await Promise.all([
-      db.from('unions').select('id,name,application_fee,dues_rate,needs_verification,source_urls,last_verified').eq('is_active', true).order('sort_order'),
-      db.from('union_tiers').select('union_id,name,target_type,target_value,description,source_url,checked_on,confirmed'),
-      db.from('pay_rules').select('id,title,source_url,checked_on,needs_verification,overtime_after,overtime_multipliers'),
-      db.from('rate_schedules').select('id,title,source_url,checked_on,effective_from,effective_to'),
-      db.from('tax_jurisdictions').select('year,code,province,basic_amount,source_url,checked_on,needs_verification'),
-      db.from('pension_plans').select('year,code,ympe,yampe,source_url,checked_on'),
-      db.from('sales_tax').select('year,province,gst_hst_rate,quick_service_rate,source_url,checked_on'),
-      db.from('deadlines').select('id,title,month,day,source_url,checked_on'),
-      db.from('fact_checks').select('subject,subject_key,outcome,note,checked_at').order('checked_at', { ascending: false }).limit(500),
+      supabase.from('unions').select('id,name,application_fee,dues_rate,needs_verification,source_urls,last_verified').eq('is_active', true).order('sort_order'),
+      supabase.from('union_tiers').select('union_id,name,target_type,target_value,description,source_url,checked_on,confirmed'),
+      supabase.from('pay_rules').select('id,title,source_url,checked_on,needs_verification,overtime_after,overtime_multipliers'),
+      supabase.from('rate_schedules').select('id,title,source_url,checked_on,effective_from,effective_to'),
+      supabase.from('tax_jurisdictions').select('year,code,province,basic_amount,source_url,checked_on,needs_verification'),
+      supabase.from('pension_plans').select('year,code,ympe,yampe,source_url,checked_on'),
+      supabase.from('sales_tax').select('year,province,gst_hst_rate,quick_service_rate,source_url,checked_on'),
+      supabase.from('deadlines').select('id,title,month,day,source_url,checked_on'),
+      supabase.from('fact_checks').select('subject,subject_key,outcome,note,checked_at').order('checked_at', { ascending: false }).limit(500),
     ]);
     const err = [u, tiers, rules, cards, tax, plans, sales, dates, log].find(r => r.error)?.error;
     if (err) { setError(err.message); return; }
@@ -110,7 +106,7 @@ export const AdminVerify = () => {
     const note = outcome === 'flagged' ? window.prompt(`What needs checking on "${f.title}"?`) : null;
     if (outcome === 'flagged' && !note) return;
     setBusy(`${f.subject}:${f.key}`); setError('');
-    const { error } = await db.rpc('check_fact', { p_subject: f.subject, p_key: f.key, p_outcome: outcome, p_note: note ?? undefined });
+    const { error } = await supabase.rpc('check_fact', { p_subject: f.subject, p_key: f.key, p_outcome: outcome, p_note: note ?? undefined });
     setBusy(null);
     if (error) setError(error.message); else load();
   };
