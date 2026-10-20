@@ -30,6 +30,7 @@ struct Job: Codable, Identifiable, Hashable {
     var proofPath: String?           // pay stub in documents/<user>/proof/; with it the job is Green Lit
     var agentName: String?           // who booked it: the linked agency's name, or one typed in
     var agencyId: UUID?              // set when it's the agency linked to the account
+    var representativeId: UUID?      // one of your representatives (Account > Your representation)
 
     enum CodingKeys: String, CodingKey {
         case id, status, role, department, province
@@ -39,7 +40,7 @@ struct Job: Codable, Identifiable, Hashable {
         case hourlyRate = "hourly_rate", daysWorked = "days_worked", hoursPerDay = "hours_per_day"
         case mealBreakMinutes = "meal_break_minutes", overtimeHours = "overtime_hours"
         case unionMinimumRate = "union_minimum_rate", ratePosition = "rate_position", grossEarnings = "gross_earnings"
-        case proofPath = "proof_path", agentName = "agent_name", agencyId = "agency_id"
+        case proofPath = "proof_path", agentName = "agent_name", agencyId = "agency_id", representativeId = "representative_id"
     }
 
     /// Days worked: the logged day count, else the inclusive date span (as services/career.ts).
@@ -139,16 +140,17 @@ final class JobsStore {
     }
 
     /// Who booked a job: the linked agency, a typed name, or nobody.
-    func setAgent(_ id: UUID, name: String?, agencyId: UUID?) async {
+    func setAgent(_ id: UUID, name: String?, agencyId: UUID?, representativeId: UUID? = nil) async {
         guard let i = jobs.firstIndex(where: { $0.id == id }) else { return }
         var updated = jobs
-        updated[i].agentName = name; updated[i].agencyId = agencyId
+        updated[i].agentName = name; updated[i].agencyId = agencyId; updated[i].representativeId = representativeId
         do {
             switch place {
             case .phone(let user): try persist(updated, user: user)
             case .online:
-                struct Agent: Encodable { let agent_name: String?; let agency_id: UUID? }
-                try await Backend.client.from("jobs").update(Agent(agent_name: name, agency_id: agencyId)).eq("id", value: id).execute()
+                struct Agent: Encodable { let agent_name: String?; let agency_id: UUID?; let representative_id: UUID? }
+                try await Backend.client.from("jobs").update(Agent(agent_name: name, agency_id: agencyId, representative_id: representativeId))
+                    .eq("id", value: id).execute()
             default: break
             }
             jobs = updated
@@ -219,5 +221,98 @@ final class JobsStore {
         } catch {
             self.error = "Couldn't delete that job."
         }
+    }
+}
+
+// MARK: Industry representation
+
+/// An agent or manager you work with, and the commission they take.
+struct Representative: Codable, Identifiable, Hashable {
+    var id: UUID?
+    var userId: UUID?
+    var name: String
+    var agency: String?
+    var kind = "agent"                // agent, manager or other
+    var commissionPct: Double         // 0 to 50
+    var appliesTo = "booked"          // booked = jobs they book; all = every job
+    var agencyId: UUID?               // the agency linked in Agency Mode
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, agency, kind
+        case userId = "user_id", commissionPct = "commission_pct", appliesTo = "applies_to", agencyId = "agency_id"
+    }
+
+    var kindName: String { kind == "manager" ? "Manager" : kind == "other" ? "Representative" : "Agent" }
+    var takesFromEveryJob: Bool { appliesTo == "all" }
+    var label: String { agency.map { "\(name), \($0)" } ?? name }
+}
+
+/// One person's cut of a job.
+struct Commission: Hashable {
+    let representative: Representative
+    let amount: Double
+}
+
+/// Your representatives (public.representatives). An account setting, so it is
+/// kept online for every signed-in account.
+@MainActor @Observable
+final class RepresentationStore {
+    private(set) var reps: [Representative] = []
+    private(set) var isPreview = false
+    var error: String?
+
+    func load(preview: Bool) async {
+        isPreview = preview
+        if preview {
+            reps = [Representative(id: UUID(), name: "Dana Whitfield", agency: "Northstar Talent", commissionPct: 10)]
+            return
+        }
+        guard Backend.client.auth.currentUser != nil else { reps = []; return }
+        do {
+            reps = try await Backend.client.from("representatives").select().order("created_at").execute().value
+            error = nil
+        } catch {
+            self.error = "Couldn't load your representation."
+        }
+    }
+
+    func save(_ rep: Representative) async throws {
+        var rep = rep
+        if isPreview {
+            if rep.id == nil { rep.id = UUID(); reps.append(rep) } else if let i = reps.firstIndex(where: { $0.id == rep.id }) { reps[i] = rep }
+            return
+        }
+        guard let user = Backend.client.auth.currentUser?.id else { throw SignInNeeded() }
+        rep.userId = user
+        if let id = rep.id {
+            let saved: Representative = try await Backend.client.from("representatives").update(rep).eq("id", value: id).select().single().execute().value
+            if let i = reps.firstIndex(where: { $0.id == id }) { reps[i] = saved }
+        } else {
+            let saved: Representative = try await Backend.client.from("representatives").insert(rep).select().single().execute().value
+            reps.append(saved)
+        }
+    }
+
+    func remove(_ rep: Representative) async {
+        guard let id = rep.id else { return }
+        if !isPreview {
+            do { try await Backend.client.from("representatives").delete().eq("id", value: id).execute() }
+            catch { self.error = "Couldn't remove \(rep.name)."; return }
+        }
+        reps.removeAll { $0.id == id }
+    }
+
+    /// Who takes a cut of a job, and how much: the person who booked it, plus
+    /// anyone on commission for every job.
+    func commissions(on job: Job) -> [Commission] {
+        guard let gross = job.grossEarnings, gross > 0 else { return [] }
+        return reps.filter { r in
+            r.takesFromEveryJob || (job.representativeId != nil ? job.representativeId == r.id : job.agentName == r.name)
+        }
+        .map { Commission(representative: $0, amount: ((gross * $0.commissionPct / 100) * 100).rounded() / 100) }
+    }
+
+    func commissionTotal(_ jobs: [Job]) -> Double {
+        jobs.filter { $0.status != "TENTATIVE" }.reduce(0) { $0 + commissions(on: $1).reduce(0) { $0 + $1.amount } }
     }
 }

@@ -7,6 +7,7 @@ struct CineArchApp: App {
     @State private var jobs = JobsStore()
     @State private var tracking = TrackingStore()
     @State private var ledger = LedgerStore()
+    @State private var representation = RepresentationStore()
 
     init() { Theme.applyNavigationStyle() }
 
@@ -18,6 +19,7 @@ struct CineArchApp: App {
                 .environment(jobs)
                 .environment(tracking)
                 .environment(ledger)
+                .environment(representation)
                 .preferredColorScheme(.dark)
                 .task { await engine.load() }
                 .task { await session.watch() }
@@ -29,6 +31,7 @@ struct CineArchApp: App {
 // above every tab. The pay calculator opens from the clapperboard.
 struct RootView: View {
     @Environment(Session.self) private var session
+    @Environment(RepresentationStore.self) private var representation
     // `-cinearch.tab wallet` opens on that tab (for screenshots).
     @State private var tab = Tab(rawValue: UserDefaults.standard.string(forKey: "cinearch.tab") ?? "") ?? .wrap
     /// `-cinearch.onboarding YES` opens the call sheet (for screenshots).
@@ -55,6 +58,7 @@ struct RootView: View {
         .fullScreenCover(isPresented: Binding(get: { session.needsOnboarding || showOnboarding }, set: { if !$0 { showOnboarding = false } })) {
             OnboardingView().tint(Theme.accent).listStyle(.grouped).buttonBorderShape(.roundedRectangle(radius: 0))
         }
+        .task(id: session.identity) { await representation.load(preview: session.isPreview) }
         // Once, after signing in and setting the scene: camera and reminders, out of the way.
         .sheet(isPresented: $showPermissions, onDismiss: { UserDefaults.standard.set(true, forKey: Permissions.shownKey) }) {
             NavigationStack { PermissionsView(firstTime: true) }
