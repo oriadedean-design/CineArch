@@ -47,6 +47,9 @@ final class Session {
     private(set) var isPreview = UserDefaults.standard.bool(forKey: "cinearch.preview")
     var isSignedIn: Bool { user != nil || isPreview }
     /// Changes whenever the account on screen changes, so views reload.
+    /// Members have their card already, so union goals are about the next level.
+    var isMember: Bool { profile?.memberStatus == "MEMBER" }
+    var unionGoalsTitle: String { isMember ? "Your next level" : "Getting your card" }
     var identity: String? { isPreview ? "preview-\(isPremium)" : user.map { "\($0.id)-\(isPremium)" } }
     /// Where this account's jobs and unions live: free on this phone, Pro synced online.
     var place: DataPlace {

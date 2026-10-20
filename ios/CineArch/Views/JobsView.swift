@@ -82,7 +82,7 @@ struct JobsView: View {
                     }
                 }
             } header: {
-                HintedHeader(title: "Getting your card", hint: "Your closest union goal. Every union day you mark here counts toward it, member or not. Set goals on Your Wrap.")
+                HintedHeader(title: session.unionGoalsTitle, hint: "Your closest union goal. Every union day you mark here counts toward it, member or not. Set goals on Your Wrap.")
             }
 
             if jobs.jobs.isEmpty && !jobs.isLoading {

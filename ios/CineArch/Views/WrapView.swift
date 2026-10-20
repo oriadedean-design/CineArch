@@ -74,7 +74,7 @@ struct WrapView: View {
                 }
                 Button { showAdd = true } label: { Label("Track a union", systemImage: "plus.circle.fill") }
             } header: {
-                HintedHeader(title: "Getting your card", hint: "Each union you're working toward, and how far along you are. Days on a union set count before you're a member.")
+                HintedHeader(title: session.unionGoalsTitle, hint: session.isMember ? "Each union level you're working toward, such as moving up a tier or joining another union, and how far along you are." : "Each union you're working toward, and how far along you are. Days on a union set count before you're a member.")
             } footer: {
                 Text("Days on a union set count toward that union even before you're a member. When you mark the slate, pick the union whose set it was.")
             }

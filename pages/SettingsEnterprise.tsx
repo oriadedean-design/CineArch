@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storage';
 import { DeleteAccount } from '../components/DeleteAccount';
+import { Feedback } from '../components/Feedback';
 import { User, EntityType, CanadianProvince } from '../types';
 import { Heading, Text, Button, Input, Select, Card, Badge } from '../components/ui';
 import { Landmark, Users, GraduationCap, Building, FolderSync, Percent, Briefcase, UserMinus } from 'lucide-react';
@@ -144,6 +145,7 @@ export const SettingsEnterprise = () => {
             <div className="pt-12 border-t border-white/5 flex justify-end">
                <Button onClick={handleSave} className="h-16 px-16 font-black uppercase tracking-[0.5em]">Synchronize Base</Button>
             </div>
+         <Feedback roster />
          <DeleteAccount isAgent />
          </main>
       </div>

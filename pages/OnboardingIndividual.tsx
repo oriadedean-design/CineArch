@@ -225,11 +225,11 @@ const StepTeam = ({ formData, setFormData, onNext, onBack }: StepProps) => (
       {formData.hasAgent && (
         <div className="space-y-3 max-w-xs">
           <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Their commission (%)</label>
-          <Input type="number" min={0} max={100} step={0.5} inputMode="decimal" value={formData.agentPct}
+          <Input type="number" min={0} max={50} step={0.5} inputMode="decimal" value={formData.agentPct}
             onChange={e => setFormData(f => ({ ...f, agentPct: e.target.value }))} placeholder="%" className="h-16 text-2xl font-serif italic text-white" />
         </div>
       )}
-      <p className="text-xs text-white/50 italic">Saved to your profile. You can change it any time in Your Trailer.</p>
+      <p className="text-xs text-white/50 italic">Up to 50%. They're added to Industry representation in Your Trailer, where you can add others and choose which jobs each takes a cut from.</p>
     </div>
     <div className="flex justify-between pt-20 border-t border-white/5">
       <button onClick={onBack} className="text-xs font-black uppercase tracking-[0.5em] text-white hover:underline transition-colors">Back</button>
@@ -384,7 +384,7 @@ export const OnboardingIndividual = ({ user, onComplete }: { user: User, onCompl
         isOnboarded: true,
         memberStatus: formData.memberStatus,
         hasAgentFee: formData.hasAgent,
-        agentFeePercentage: formData.hasAgent && formData.agentPct !== '' ? Number(formData.agentPct) : 0,
+        agentFeePercentage: formData.hasAgent && formData.agentPct !== '' ? Math.min(50, Math.max(0, Number(formData.agentPct))) : 0,
         earningGoal: formData.earningGoal !== '' ? Number(formData.earningGoal) : undefined,
         role: formData.selectedRoles[0] || 'Film Professional'
       };

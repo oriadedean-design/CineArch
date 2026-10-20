@@ -138,7 +138,7 @@ struct OnboardingView: View {
                 }
             }
         } header: { Text("Do you have an agent?") } footer: {
-            Text("Saved to your profile. You can change it any time from Account.")
+            Text("Up to 50%. They're added to Industry representation in Account, where you can add others and choose which jobs each takes a cut from.")
         }
     }
 
@@ -235,7 +235,7 @@ struct OnboardingView: View {
             try await session.saveCallSheet(Profile.Update(
                 province: province, region: province == "Ontario" ? region : nil, department: department,
                 selected_roles: roles, role: roles.first, member_status: isMember ? "MEMBER" : "ASPIRING",
-                has_agent_fee: hasAgent, agent_fee_pct: hasAgent ? Double(agentPct.replacingOccurrences(of: ",", with: ".")) ?? 0 : 0,
+                has_agent_fee: hasAgent, agent_fee_pct: hasAgent ? min(50, Double(agentPct.replacingOccurrences(of: ",", with: ".")) ?? 0) : 0,
                 earning_goal: Double(goalText.filter(\.isNumber))))
             for id in unions where !tracking.tracks.contains(where: { $0.unionTypeId == id }) {
                 guard let u = engine.union(id), let t = u.tiers.first else { continue }

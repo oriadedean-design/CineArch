@@ -139,6 +139,8 @@ const toJob = (j: JobRow): Job => ({
   documentCount: j.document_ids?.length ?? 0,
   imageUrl: j.image_url ?? undefined,
   genre: j.genre ?? undefined,
+  representativeId: j.representative_id ?? undefined,
+  agentName: j.agent_name ?? undefined,
   province: j.province ?? undefined,
   createdAt: j.created_at,
 });
@@ -180,6 +182,8 @@ const toJobRow = (job: Job) => ({
   notes: job.notes ?? null,
   image_url: job.imageUrl ?? null,
   genre: job.genre ?? null,
+  representative_id: job.representativeId ?? null,
+  agent_name: job.agentName ?? null,
   province: job.province ?? null,
 });
 
