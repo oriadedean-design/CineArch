@@ -74,7 +74,7 @@ export const DashboardIndividual = () => {
       </header>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-0.5 md:gap-1">
-        <DashStat label="Getting Your Card" value={`${Math.round(eligibilityPercent)}%`} subtext={primaryTrack ? `${primaryTrack.unionName}` : 'No union picked'} highlight />
+        <DashStat label={user?.memberStatus === 'MEMBER' ? "Your Next Level" : "Getting Your Card"} value={`${Math.round(eligibilityPercent)}%`} subtext={primaryTrack ? `${primaryTrack.unionName}` : 'No union picked'} highlight />
         <DashStat label="Earned This Year" value={`$${((financeStats?.grossIncomeYTD || 0) / 1000).toFixed(1)}k`} subtext="Before tax" />
         <DashStat label="Vault" value={vaultLabel} subtext="Pay stubs & proof" />
         <DashStat label="GST/HST" value={`${Math.round(gstProgress)}%`} subtext="Of the $30k line" />

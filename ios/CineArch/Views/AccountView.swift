@@ -140,6 +140,16 @@ struct AccountView: View {
                     }
                 }
 
+                if session.isSignedIn {
+                    Section {
+                        NavigationLink { FeedbackView() } label: { Label("Send feedback", systemImage: "envelope") }
+                    } header: {
+                        HintedHeader(title: "Feedback to the developers", hint: "Something wrong, an idea, or something you like. Every note goes straight to the people building CineArch, and you'll see here when it's been read.")
+                    } footer: {
+                        Text("Tell us what's confusing, broken or missing. Notes say which screen they're about.")
+                    }
+                }
+
                 Section("CineArch") {
                     Link(destination: site.appending(path: "guide/")) { Label("Union guide on the web", systemImage: "safari") }
                     Link(destination: URL(string: "\(site)/#/privacy")!) { Label("Privacy policy", systemImage: "hand.raised") }
@@ -161,6 +171,7 @@ struct AccountView: View {
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
+            .contentMargins(.bottom, 96, for: .scrollContent)     // clear of the clapperboard
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -179,7 +190,7 @@ struct AccountView: View {
             .navigationTitle("Account")
             .previewBadge()
             .navigationDestination(isPresented: $showPlans) { PlansView() }
-            .sheet(isPresented: $showScene) { OnboardingView() }
+            .sheet(isPresented: $showScene, onDismiss: { Task { await representation.load(preview: session.isPreview) } }) { OnboardingView() }
             .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in with your CineArch account, or create one.") {} }
             .alert("Delete your account?", isPresented: $confirmDelete) {
                 TextField("Type DELETE", text: $typed).textInputAutocapitalization(.characters)

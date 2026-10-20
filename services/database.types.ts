@@ -246,6 +246,50 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          id: string
+          kind: string
+          message: string
+          platform: string
+          screen: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          message: string
+          platform: string
+          screen?: string | null
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string
+          platform?: string
+          screen?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_transactions: {
         Row: {
           add_back_amount: number | null
@@ -1603,6 +1647,21 @@ export type Database = {
       }
     }
     Functions: {
+      admin_feedback: {
+        Args: { p_status?: string }
+        Returns: {
+          app_version: string
+          created_at: string
+          email: string
+          id: string
+          kind: string
+          message: string
+          name: string
+          platform: string
+          screen: string
+          status: string
+        }[]
+      }
       check_fact: {
         Args: {
           p_key: string

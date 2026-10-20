@@ -175,6 +175,8 @@ export interface Job {
   createdAt: string; 
   imageUrl?: string;
   genre?: string;
+  representativeId?: string;   // who booked it (public.representatives)
+  agentName?: string;          // a typed name, from the phone's "Pick or type"
   province?: string;
 }
 

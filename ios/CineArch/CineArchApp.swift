@@ -58,7 +58,8 @@ struct RootView: View {
         .fullScreenCover(isPresented: Binding(get: { session.needsOnboarding || showOnboarding }, set: { if !$0 { showOnboarding = false } })) {
             OnboardingView().tint(Theme.accent).listStyle(.grouped).buttonBorderShape(.roundedRectangle(radius: 0))
         }
-        .task(id: session.identity) { await representation.load(preview: session.isPreview) }
+        // Again after Setting the Scene: its agent answer becomes "Your agent".
+        .task(id: session.identity.map { "\($0)-\(session.needsOnboarding)" }) { await representation.load(preview: session.isPreview) }
         // Once, after signing in and setting the scene: camera and reminders, out of the way.
         .sheet(isPresented: $showPermissions, onDismiss: { UserDefaults.standard.set(true, forKey: Permissions.shownKey) }) {
             NavigationStack { PermissionsView(firstTime: true) }

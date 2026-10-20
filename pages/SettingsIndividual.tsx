@@ -8,6 +8,7 @@ import { Vault } from '../components/Vault';
 import { User, CanadianProvince } from '../types';
 import { Heading, Text, Button, Input, Select, Card, Badge } from '../components/ui';
 import { Representation } from '../components/Representation';
+import { Feedback } from '../components/Feedback';
 import { Shield, User as UserIcon, Lock, Landmark, FileText, Trash2, Users, XCircle } from 'lucide-react';
 
 export const SettingsIndividual = () => {
@@ -137,6 +138,14 @@ export const SettingsIndividual = () => {
               </div>
             </div>
             <div className="space-y-4">
+              <label htmlFor="member-status" className="text-xs font-black uppercase tracking-[0.4em] text-white">Union member yet?</label>
+              <Select id="member-status" value={profileForm.memberStatus ?? 'ASPIRING'} onChange={e => setProfileForm({ ...profileForm, memberStatus: e.target.value as User['memberStatus'] })} className="h-20 text-2xl font-serif italic">
+                <option value="ASPIRING" className="bg-black text-white">Not yet</option>
+                <option value="MEMBER" className="bg-black text-white">Yes, I'm a member</option>
+              </Select>
+              <p className="text-xs text-white/50 italic">Members track their next level; everyone else tracks getting their card.</p>
+            </div>
+            <div className="space-y-4">
               <label htmlFor="earning-goal" className="text-xs font-black uppercase tracking-[0.4em] text-white">Earning goal for {new Date().getFullYear()} ($)</label>
               <Input id="earning-goal" type="number" min={0} step={1000} inputMode="numeric" placeholder="Not set"
                 value={profileForm.earningGoal ?? ''}
@@ -164,8 +173,9 @@ export const SettingsIndividual = () => {
               </div>
             </div>
             <Representation />
+            <Feedback />
             {user?.isAdmin && (
-              <a href="#/admin" className="block text-sm text-accent underline">Verify the facts (admins)</a>
+              <a href="#/admin" className="block text-sm text-accent underline">Verify the facts and read feedback (admins)</a>
             )}
             <div className="space-y-4">
               <label className="text-xs font-black uppercase tracking-[0.4em] text-white">Email</label>

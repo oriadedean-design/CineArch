@@ -3,6 +3,8 @@ import { api } from '../services/storage';
 import { Job, User, CanadianProvince } from '../types';
 import { resolveGuildsForRole, getUnionSpec, getAllUnions, getDepartments, getRatePositions, priceJob, loadJobRates, describeOvertime, workedHours } from '../services/engine';
 import { Button, Input, Select, Badge, Card } from '../components/ui';
+import { supabase } from '../services/supabase';
+import { commissionsOn, takeHome, type Rep } from '../services/representation';
 import { ArrowLeft, ShieldCheck, Clock, Trash2, AlertTriangle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import clsx from 'clsx';
@@ -28,6 +30,7 @@ export const JobDetail = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ratesLoaded, setRatesLoaded] = useState(0);  // bumps when rate lines arrive
+  const [reps, setReps] = useState<Rep[]>([]);         // Industry representation, for Booked by
 
   const [form, setForm] = useState<Partial<Job>>({
     status: 'CONFIRMED',
@@ -50,6 +53,8 @@ export const JobDetail = () => {
     const fetchData = async () => {
       const u = await api.auth.getUser();
       setUser(u);
+      supabase.from('representatives').select('id, name, commission_pct, applies_to').order('created_at')
+        .then(({ data }) => setReps((data ?? []) as Rep[]));
       const jobs = await api.jobs.list();
       setHistory(jobs);
 
@@ -457,6 +462,37 @@ export const JobDetail = () => {
                 </div>
               )}
             </Card>
+
+            {(reps.length > 0 || form.agentName) && (() => {
+              const gross = pay?.gross ?? form.grossEarnings ?? 0;
+              const cuts = commissionsOn({ ...form, grossEarnings: gross }, reps);
+              const picked = form.representativeId ?? (form.agentName ? `name:${form.agentName}` : '');
+              return (
+                <Card className="p-8 md:p-10 border-white/5 space-y-4">
+                  <div>
+                    <Label>Booked by</Label>
+                    <Select aria-label="Booked by" value={picked} onChange={e => {
+                      const v = e.target.value;
+                      set(v.startsWith('name:') ? { agentName: v.slice(5), representativeId: undefined }
+                        : { representativeId: v || undefined, agentName: v ? reps.find(r => r.id === v)?.name : undefined });
+                    }} className="h-14">
+                      <option value="" className="bg-black">I booked it myself</option>
+                      {reps.map(r => <option key={r.id} value={r.id} className="bg-black">{r.name} ({Number(r.commission_pct)}%)</option>)}
+                      {form.agentName && !form.representativeId && !reps.some(r => r.name === form.agentName) &&
+                        <option value={`name:${form.agentName}`} className="bg-black">{form.agentName} (typed on the phone)</option>}
+                    </Select>
+                  </div>
+                  {gross > 0 && cuts.length > 0 ? (
+                    <div className="text-sm space-y-1">
+                      {cuts.map(c => <p key={c.rep.id} className="flex justify-between text-white/70"><span>{c.rep.name} · {Number(c.rep.commission_pct)}%{c.rep.applies_to === 'all' ? ' of every job' : ''}</span><span>−{money(c.amount)}</span></p>)}
+                      <p className="flex justify-between text-white font-bold border-t border-white/10 pt-2"><span>You keep</span><span>{money(takeHome(gross, cuts))}</span></p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-white/50 italic">{gross > 0 ? 'No commission on this job.' : 'Add your hours and rate to see the commission.'} Manage your agents and managers in Your Config.</p>
+                  )}
+                </Card>
+              );
+            })()}
 
             <div className="pt-4 flex flex-col gap-4 items-end">
               {error && <p role="alert" className="text-sm text-red-400 italic self-stretch">{error}</p>}

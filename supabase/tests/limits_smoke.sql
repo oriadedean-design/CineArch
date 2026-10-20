@@ -2,7 +2,8 @@
 -- LIMITS SMOKE TEST
 -- A-List Pro makes at most 3 PDF reports a month; free accounts make none;
 -- only admins can verify facts or set themselves as admin; amounts outside
--- sane ranges are refused; representatives are private to their account.
+-- sane ranges are refused; representatives are private to their account;
+-- feedback is private to its sender, 10 a day, and only admins read the inbox.
 -- Ends by raising an exception so the test data is rolled back.
 --   PASS → error message starts with LIMITS_TESTS_PASSED
 --
@@ -93,6 +94,58 @@ begin
     if sqlerrm like 'FAIL%' then raise; end if;
     v_checks := v_checks + 1;
   end;
+
+  -- Setting the Scene's agent answer becomes "Your agent", capped at 50%.
+  update public.profiles set has_agent_fee = true, agent_fee_pct = 70 where id = v_free;
+  if (select commission_pct from public.representatives where name = 'Your agent') is distinct from 50 then
+    raise exception 'FAIL: the onboarding agent answer did not become a 50%% representative';
+  end if;
+  update public.profiles set agent_fee_pct = 15 where id = v_free;
+  if (select count(*) from public.representatives) <> 1 or (select commission_pct from public.representatives) <> 15 then
+    raise exception 'FAIL: changing the agent answer should update "Your agent", not add another';
+  end if;
+  v_checks := v_checks + 2;
+
+  -- Feedback: send your own, not someone else's; 10 a day; only admins read the inbox.
+  insert into public.feedback (kind, message, screen, platform) values ('idea', 'Smoke note', 'Account', 'ios');
+  if (select user_id from public.feedback) <> v_free then raise exception 'FAIL: feedback was not filed under the sender'; end if;
+  v_checks := v_checks + 1;
+  begin
+    insert into public.feedback (user_id, kind, message, platform) values (v_pro, 'idea', 'Pretending', 'web');
+    raise exception 'FAIL: feedback was sent as someone else';
+  exception when insufficient_privilege then v_checks := v_checks + 1;
+  end;
+  begin
+    insert into public.feedback (kind, message, platform, status) values ('idea', 'Already done?', 'web', 'done');
+    raise exception 'FAIL: a sender set their own note to done';
+  exception when insufficient_privilege then v_checks := v_checks + 1;
+  end;
+  begin
+    insert into public.feedback (kind, message, platform) values ('idea', '   ', 'web');
+    raise exception 'FAIL: an empty note was saved';
+  exception when check_violation then v_checks := v_checks + 1;
+  end;
+  update public.feedback set status = 'done';
+  if exists (select 1 from public.feedback where status <> 'new') then raise exception 'FAIL: a sender changed a note''s status'; end if;
+  v_checks := v_checks + 1;
+  for i in 2..10 loop
+    insert into public.feedback (kind, message, platform) values ('problem', 'Note ' || i, 'web');
+  end loop;
+  begin
+    insert into public.feedback (kind, message, platform) values ('problem', 'Eleventh', 'web');
+    raise exception 'FAIL: an eleventh note in a day was allowed';
+  exception when raise_exception then
+    if sqlerrm not like 'FEEDBACK_LIMIT%' then raise; end if;
+    v_checks := v_checks + 1;
+  end;
+  begin
+    perform public.admin_feedback();
+    raise exception 'FAIL: a non-admin read the feedback inbox';
+  exception when insufficient_privilege then v_checks := v_checks + 1;
+  end;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_pro, 'role', 'authenticated')::text, true);
+  if (select count(*) from public.feedback) <> 0 then raise exception 'FAIL: another account''s feedback is visible'; end if;
+  v_checks := v_checks + 1;
 
   execute 'reset role';
   raise exception 'LIMITS_TESTS_PASSED: % checks (all test data rolled back)', v_checks;

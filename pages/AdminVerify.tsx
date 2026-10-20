@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { FeedbackInbox } from '../components/FeedbackInbox';
 import { CheckCircle2, Flag, ExternalLink } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { api } from '../services/storage';
@@ -134,6 +135,8 @@ export const AdminVerify = () => {
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
       </div>
+
+      {user?.isAdmin && <FeedbackInbox />}
 
       {groups.map(g => (
         <section key={g} className="space-y-2">
