@@ -17,6 +17,7 @@ struct AccountView: View {
     @Environment(LedgerStore.self) private var ledger
     @State private var showAuth = false
     @State private var showScene = false
+    @State private var showWalkthrough = false
     @AppStorage(Notes.remindersKey) private var reminders = false
     @State private var showPlans = UserDefaults.standard.bool(forKey: "cinearch.plans")
     @State private var confirmDelete = false
@@ -151,6 +152,7 @@ struct AccountView: View {
                 }
 
                 Section("CineArch") {
+                    Button { showWalkthrough = true } label: { Label("How CineArch works", systemImage: "play.rectangle") }
                     Link(destination: site.appending(path: "guide/")) { Label("Union guide on the web", systemImage: "safari") }
                     Link(destination: URL(string: "\(site)/#/privacy")!) { Label("Privacy policy", systemImage: "hand.raised") }
                     Link(destination: URL(string: "\(site)/#/about")!) { Label("Support", systemImage: "questionmark.circle") }
@@ -190,6 +192,7 @@ struct AccountView: View {
             .navigationTitle("Account")
             .previewBadge()
             .navigationDestination(isPresented: $showPlans) { PlansView() }
+            .fullScreenCover(isPresented: $showWalkthrough) { WalkthroughView { showWalkthrough = false } }
             .sheet(isPresented: $showScene, onDismiss: { Task { await representation.load(preview: session.isPreview) } }) { OnboardingView() }
             .sheet(isPresented: $showAuth) { AuthSheet(reason: "Sign in with your CineArch account, or create one.") {} }
             .alert("Delete your account?", isPresented: $confirmDelete) {

@@ -9,6 +9,7 @@ import { User, CanadianProvince } from '../types';
 import { Heading, Text, Button, Input, Select, Card, Badge } from '../components/ui';
 import { Representation } from '../components/Representation';
 import { Feedback } from '../components/Feedback';
+import { startTour } from '../services/tour';
 import { Shield, User as UserIcon, Lock, Landmark, FileText, Trash2, Users, XCircle } from 'lucide-react';
 
 export const SettingsIndividual = () => {
@@ -174,6 +175,7 @@ export const SettingsIndividual = () => {
             </div>
             <Representation />
             <Feedback />
+            <button onClick={startTour} className="block text-sm text-accent underline">How CineArch works (replay the walkthrough)</button>
             {user?.isAdmin && (
               <a href="#/admin" className="block text-sm text-accent underline">Verify the facts and read feedback (admins)</a>
             )}
