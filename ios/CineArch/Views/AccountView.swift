@@ -59,9 +59,9 @@ struct AccountView: View {
                             }
                             .foregroundStyle(.primary)
                         }
-                    } header: { Text("You") } footer: {
+                    } header: { Text("You") } footer: { Group {
                         if !session.isPreview { Text("How you're paid decides what the Wrap Wallet tells you to set aside for tax. Setting the Scene is where you're based, what you do and who's in your corner.") }
-                    }
+                    }.font(Theme.sans(.footnote)) }
 
                     Section {
                         NavigationLink { RepresentationView() } label: {
@@ -90,13 +90,13 @@ struct AccountView: View {
                                 .disabled(session.isPreview)
                             tick(.goal)
                         }
-                    } header: { Text("Your goals") } footer: {
+                    } header: { Text("Your goals") } footer: { Group {
                         if let g = session.profile?.earningGoal, g > 0 {
                             Text("\(earnedThisYear.money) of \(g.money) earned in \(year) (\(Int((earnedThisYear / g * 100).rounded()))%). From film work, before tax.")
                         } else {
                             Text("What you'd like to earn from film work in \(year), before tax. Your Wrap shows how close you are.")
                         }
-                    }
+                    }.font(Theme.sans(.footnote)) }
 
                     Section {
                         NavigationLink { PlansView() } label: {
@@ -117,16 +117,16 @@ struct AccountView: View {
                                     .foregroundStyle(session.isPremium ? Theme.accent : .secondary)
                             }
                         }
-                    } header: { Text("Plan") } footer: {
+                    } header: { Text("Plan") } footer: { Group {
                         if session.isPremium { Text("Proof and receipts, up to 1 MB each and 5 GB in all.") }
-                    }
+                    }.font(Theme.sans(.footnote)) }
                 } else {
                     Section {
                         Button("Sign in or create account") { showAuth = true }
                         Button("Take a look around") { session.startPreview() }
-                    } footer: {
+                    } footer: { Group {
                         Text("The guide and pay calculator work without an account. Sign in to mark the slate, or look around a sample A-List Pro account first.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
                     Section { NavigationLink("What comes with A-List Pro") { PlansView() } }
                 }
 
@@ -136,9 +136,9 @@ struct AccountView: View {
                             Task { reminders = on ? await Notes.requestPermission() : false }
                         }))
                         NavigationLink { PermissionsView() } label: { Label("Permissions and scanning", systemImage: "lock.shield") }
-                    } footer: {
+                    } footer: { Group {
                         Text("A 9 a.m. reminder before tax dates and days leaving your union window. Everything else waits in Notes from set on Your Wrap.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
                 }
 
                 if session.isSignedIn {
@@ -146,9 +146,9 @@ struct AccountView: View {
                         NavigationLink { FeedbackView() } label: { Label("Send feedback", systemImage: "envelope") }
                     } header: {
                         HintedHeader(title: "Feedback to the developers", hint: "Something wrong, an idea, or something you like. Every note goes straight to the people building CineArch, and you'll see here when it's been read.")
-                    } footer: {
+                    } footer: { Group {
                         Text("Tell us what's confusing, broken or missing. Notes say which screen they're about.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
                 }
 
                 Section("CineArch") {
@@ -165,11 +165,11 @@ struct AccountView: View {
                             Button("Delete account", role: .destructive) { typed = ""; confirmDelete = true }
                                 .disabled(working)
                         }
-                    } footer: {
+                    } footer: { Group {
                         if !session.isPreview {
                             Text("Delete account permanently removes your account and everything in it, on this iPhone and online: jobs, union progress, documents and finance records. This can't be undone.")
                         }
-                    }
+                    }.font(Theme.sans(.footnote)) }
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
@@ -265,9 +265,9 @@ struct UnionGoalsView: View {
                     Task { for t in doomed { await tracking.remove(t) } }
                 }
                 Button { showAdd = true } label: { Label("Track a union", systemImage: "plus.square.fill") }
-            } footer: {
+            } footer: { Group {
                 Text("Tap a union to change what you're aiming for or add days already banked. Swipe left to stop tracking it.")
-            }
+            }.font(Theme.sans(.footnote)) }
             if let e = tracking.error { Section { Text(e).foregroundStyle(.red) } }
         }
         .navigationTitle("Union goals")
@@ -307,7 +307,7 @@ struct AuthSheet: View {
                         .signInWithAppleButtonStyle(.white)
                         .frame(height: 50)
                         .listRowInsets(EdgeInsets())
-                    } footer: { Text("Or use your email below.") }
+                    } footer: { Group { Text("Or use your email below.") }.font(Theme.sans(.footnote)) }
                 }
                 Section {
                     if creating { TextField("Your name", text: $name).textContentType(.name) }
@@ -401,12 +401,12 @@ struct RepresentationView: View {
                     Button { editing = r } label: {
                         VStack(alignment: .leading, spacing: 3) {
                             HStack {
-                                Text(r.name).font(.headline)
+                                Text(r.name).font(Theme.sans(.headline))
                                 Spacer()
                                 Text("\(r.commissionPct.formatted(.number.precision(.fractionLength(0...2))))%").font(Theme.serif(.title3)).foregroundStyle(Theme.accent)
                             }
                             Text([r.kindName, r.agency, r.takesFromEveryJob ? "every job" : "jobs they book"].compactMap { $0 }.joined(separator: " · "))
-                                .font(.caption).foregroundStyle(.secondary)
+                                .font(Theme.sans(.caption)).foregroundStyle(.secondary)
                         }
                     }
                     .buttonStyle(.plain)
@@ -416,9 +416,9 @@ struct RepresentationView: View {
                     Task { for r in doomed { await representation.remove(r) } }
                 }
                 Button { adding = true } label: { Label("Add an agent or manager", systemImage: "plus.circle.fill") }
-            } footer: {
+            } footer: { Group {
                 Text("Agents usually take a percentage of the jobs they book. Managers often take one from every job. Swipe left to remove someone.")
-            }
+            }.font(Theme.sans(.footnote)) }
             let paid = representation.commissionTotal(jobs.jobs.filter { $0.startDate.hasPrefix(String(Ledger.currentYear)) })
             if paid > 0 {
                 Section("This year") {
@@ -476,12 +476,12 @@ struct RepresentativeSheet: View {
                         Text("Jobs they book").tag("booked")
                         Text("Every job").tag("all")
                     }
-                } footer: {
+                } footer: { Group {
                     Text(pct.isEmpty || pctValue != nil
                          ? "The percentage of your gross pay they take on each job. Up to 50%."
                          : "Enter a percentage from 0 to 50.")
                     .foregroundStyle(pct.isEmpty || pctValue != nil ? Color.secondary : .red)
-                }
+                }.font(Theme.sans(.footnote)) }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
             .navigationTitle(rep == nil ? "Add representation" : "Edit")

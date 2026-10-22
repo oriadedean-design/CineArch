@@ -57,6 +57,7 @@ struct RootView: View {
         // Outermost, so every screen, sheet and cover gets them: signal yellow,
         // and square corners (film frames, sensors, slates and strips are square).
         .tint(Theme.accent)
+        .font(Theme.sans(.body))          // brand type for every Text without its own font
         .listStyle(.grouped)
         .buttonBorderShape(.roundedRectangle(radius: 0))
         .fullScreenCover(isPresented: Binding(get: { replayWalkthrough || (!walkthroughSeen && !session.isPreview) },
@@ -90,7 +91,7 @@ struct PreviewBadge: View {
                 Text("Sample account. Nothing you do here is saved.")
                 Button("Leave preview") { session.endPreview() }
             } label: {
-                Text("PREVIEW").font(.caption2.weight(.heavy)).tracking(1.5)
+                Text("PREVIEW").font(Theme.sans(.caption2).weight(.heavy)).tracking(1.5)
                     .foregroundStyle(.black).padding(.horizontal, 10).padding(.vertical, 4)
                     .background(Theme.accent)
             }

@@ -36,9 +36,9 @@ struct BulkReceiptsView: View {
                         Task { await read(files) }
                     } failed: { problems.append($0) }
                     if reading > 0 { HStack { ProgressView(); Text("Reading \(reading) receipt\(reading == 1 ? "" : "s")…").foregroundStyle(.secondary) } }
-                } header: { Text("Add receipts") } footer: {
+                } header: { Text("Add receipts") } footer: { Group {
                     Text("Up to 20 at a time. Each is read on your phone and kept as proof, up to 1 MB each (photos are shrunk to fit).")
-                }
+                }.font(Theme.sans(.footnote)) }
 
                 if !drafts.isEmpty {
                     Section {
@@ -49,18 +49,18 @@ struct BulkReceiptsView: View {
                             ForEach(Ledger.expenseCategories, id: \.0) { Text($0.1).tag(Optional($0.0)) }
                         }
                         .disabled(missingCategory == 0)
-                    } footer: {
+                    } footer: { Group {
                         Text(missingCategory == 0 ? "Every receipt has a category." : "\(missingCategory) still need a category. Set them all here, or tap one to set it on its own.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
 
                     Section {
                         ForEach(drafts) { d in
                             Button { editing = d.id } label: { DraftRow(draft: d) }.buttonStyle(.plain)
                         }
                         .onDelete { drafts.remove(atOffsets: $0) }
-                    } header: { Text("\(drafts.count) to check") } footer: {
+                    } header: { Text("\(drafts.count) to check") } footer: { Group {
                         Text("Tap one to check what was read. Swipe left to leave it out.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
                 }
 
                 if let saving { Section { HStack { ProgressView(); Text("Saving \(saving.done) of \(saving.of)…") } } }
@@ -136,11 +136,11 @@ private struct DraftRow: View {
                 Image(uiImage: img).resizable().scaledToFill().frame(width: 44, height: 56).clipped()
             }
             VStack(alignment: .leading, spacing: 3) {
-                Text(draft.description.isEmpty ? "Store not read" : draft.description).font(.headline).lineLimit(1)
+                Text(draft.description.isEmpty ? "Store not read" : draft.description).font(Theme.sans(.headline)).lineLimit(1)
                     .foregroundStyle(draft.description.isEmpty ? .secondary : .primary)
                 Text([draft.date.formatted(date: .abbreviated, time: .omitted), draft.category.map(Ledger.categoryName) ?? "Needs a category"]
                     .joined(separator: " · "))
-                    .font(.caption).foregroundStyle(draft.category == nil ? Theme.accent : .secondary)
+                    .font(Theme.sans(.caption)).foregroundStyle(draft.category == nil ? Theme.accent : .secondary)
             }
             Spacer()
             Text(Double(draft.amount).map { $0.money } ?? "No amount").monospacedDigit()
@@ -167,9 +167,9 @@ private struct DraftEditor: View {
                         ForEach(Ledger.expenseCategories, id: \.0) { Text($0.1).tag(Optional($0.0)) }
                     }
                     DatePicker("Date", selection: $draft.date, displayedComponents: .date)
-                } footer: {
+                } footer: { Group {
                     Text(draft.read ? "Read from the receipt. Check each one." : "Couldn't read this one. Fill it in from the picture.")
-                }
+                }.font(Theme.sans(.footnote)) }
                 Section {
                     field("Amount before tax", $draft.amount)
                     field("GST/HST", $draft.tax)

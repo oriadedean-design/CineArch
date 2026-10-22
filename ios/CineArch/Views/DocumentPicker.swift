@@ -141,16 +141,16 @@ struct PermissionsView: View {
                     why: "A 9 a.m. reminder before tax dates and days leaving your union window.") {
                     _ = await Notes.requestPermission(); reminders = await Permissions.notifications()
                 }
-            } footer: {
+            } footer: { Group {
                 Text("Photos and files need no permission. Apple's picker only gives CineArch the ones you choose.")
-            }
+            }.font(Theme.sans(.footnote)) }
             Section("How scanning works") {
                 Label("The scanner finds the page edges and straightens it.", systemImage: "1.square")
                 Label("Your phone reads the text: store, date, total and GST/HST, or production, dates, hours and pay. Nothing is sent anywhere to be read.", systemImage: "2.square")
                 Label("You check every figure before saving.", systemImage: "3.square")
                 Label("With \(Plan.pro.name), the picture is kept as proof (Green Lit), shrunk to 1 MB and stored privately in your account. Only you can open it.", systemImage: "4.square")
             }
-            .font(.subheadline)
+            .font(Theme.sans(.subheadline))
         }
         .navigationTitle(firstTime ? "Before you roll" : "Permissions")
         .navigationBarTitleDisplayMode(.inline)
@@ -167,15 +167,15 @@ struct PermissionsView: View {
 
     private func row(title: String, icon: String, access: Permissions.Access, why: String, ask: @escaping () async -> Void) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon).font(.title3).foregroundStyle(Theme.accent).frame(width: 28)
+            Image(systemName: icon).font(Theme.sans(.title3)).foregroundStyle(Theme.accent).frame(width: 28)
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.headline)
-                Text(why).font(.caption).foregroundStyle(.secondary)
+                Text(title).font(Theme.sans(.headline))
+                Text(why).font(Theme.sans(.caption)).foregroundStyle(.secondary)
             }
             Spacer()
             switch access {
             case .allowed:
-                Label("On", systemImage: "checkmark").font(.caption.bold()).foregroundStyle(.green)
+                Label("On", systemImage: "checkmark").font(Theme.sans(.caption).bold()).foregroundStyle(.green)
             case .notAsked:
                 Button("Allow") { Task { await ask() } }.buttonStyle(.borderedProminent).foregroundStyle(.black)
             case .off:

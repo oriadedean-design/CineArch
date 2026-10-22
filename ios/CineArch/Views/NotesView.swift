@@ -18,15 +18,15 @@ struct NotesView: View {
                 }
                 ForEach(visible) { n in
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(n.title).font(.headline)
-                        Text(n.body).font(.subheadline).foregroundStyle(.secondary)
+                        Text(n.title).font(Theme.sans(.headline))
+                        Text(n.body).font(Theme.sans(.subheadline)).foregroundStyle(.secondary)
                         HStack(spacing: 10) {
                             Button(n.actionLabel) { Task { await act(n) } }
                                 .buttonStyle(.borderedProminent).buttonBorderShape(.roundedRectangle(radius: 0)).foregroundStyle(.black)
                             Button("Dismiss") { Notes.dismiss(n.id); dismissed = Notes.dismissed }
                                 .buttonStyle(.bordered).buttonBorderShape(.roundedRectangle(radius: 0))
                         }
-                        .font(.caption.bold())
+                        .font(Theme.sans(.caption).bold())
                     }
                     .padding(.vertical, 4)
                 }
@@ -60,7 +60,7 @@ struct NotesBell: View {
         .accessibilityLabel(count > 0 ? "Notes from set: \(count) waiting" : "Notes from set: none waiting")
         .overlay(alignment: .topTrailing) {
             if count > 0 {
-                Text("\(count)").font(.caption2.weight(.heavy)).foregroundStyle(.black)
+                Text("\(count)").font(Theme.sans(.caption2).weight(.heavy)).foregroundStyle(.black)
                     .padding(.horizontal, 4).background(Theme.accent).offset(x: 10, y: -8)
             }
         }

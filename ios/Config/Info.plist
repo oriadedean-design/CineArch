@@ -6,5 +6,14 @@
 	<string>$(SUPABASE_HOST)</string>
 	<key>SupabaseAnonKey</key>
 	<string>$(SUPABASE_ANON_KEY)</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>InstrumentSerif-Regular.ttf</string>
+		<string>InstrumentSerif-Italic.ttf</string>
+		<string>SplineSans-Regular.ttf</string>
+		<string>SplineSans-Medium.ttf</string>
+		<string>SplineSans-SemiBold.ttf</string>
+		<string>SplineSans-Bold.ttf</string>
+	</array>
 </dict>
 </plist>

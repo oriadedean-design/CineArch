@@ -100,9 +100,9 @@ export const DashboardEnterprise = () => {
                                  </div>
                               ) : <span className="text-xs text-white/30 italic">No union goal set</span>}
                            </td>
-                           <td className="p-6 text-right font-mono text-white/80">{fmt(career.hours.union)}</td>
-                           <td className="p-6 text-right font-mono text-white/50">{fmt(career.hours.nonUnion)}</td>
-                           <td className="p-6 text-right font-mono text-white/80">${fmt(career.earnings.total)}</td>
+                           <td className="p-6 text-right font-sans tabular-nums text-white/80">{fmt(career.hours.union)}</td>
+                           <td className="p-6 text-right font-sans tabular-nums text-white/50">{fmt(career.hours.nonUnion)}</td>
+                           <td className="p-6 text-right font-sans tabular-nums text-white/80">${fmt(career.earnings.total)}</td>
                            <td className="p-6 text-xs text-white/50">
                               {career.lastJob ? `${career.lastJob.productionName} · ${career.lastJob.startDate}` : '—'}
                               {career.belowScale.length > 0 && (

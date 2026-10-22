@@ -360,19 +360,19 @@ export const JobDetail = () => {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <Label>Date</Label>
-                <Input type="date" value={form.startDate} onChange={e => set({ startDate: e.target.value })} className="h-16 font-mono text-base" />
+                <Input type="date" value={form.startDate} onChange={e => set({ startDate: e.target.value })} className="h-16 font-sans tabular-nums text-base" />
               </div>
               <div>
                 <Label>Days</Label>
-                <Input type="number" min={1} max={366} step={1} value={form.daysWorked ?? ''} onChange={e => set({ daysWorked: num(e.target.value) })} className="h-16 font-mono text-xl" />
+                <Input type="number" min={1} max={366} step={1} value={form.daysWorked ?? ''} onChange={e => set({ daysWorked: num(e.target.value) })} className="h-16 font-sans tabular-nums text-xl" />
               </div>
               <div>
                 <Label>Hours, call to wrap</Label>
-                <Input type="number" min={0} max={24} step={0.25} inputMode="decimal" value={form.hoursPerDay ?? ''} onChange={e => set({ hoursPerDay: num(e.target.value) })} className="h-16 font-mono text-xl" placeholder="12" />
+                <Input type="number" min={0} max={24} step={0.25} inputMode="decimal" value={form.hoursPerDay ?? ''} onChange={e => set({ hoursPerDay: num(e.target.value) })} className="h-16 font-sans tabular-nums text-xl" placeholder="12" />
               </div>
               <div>
                 <Label>Unpaid meal (min)</Label>
-                <Input type="number" min={0} max={600} step={5} inputMode="numeric" value={form.mealBreakMinutes ?? ''} onChange={e => set({ mealBreakMinutes: num(e.target.value) })} className="h-16 font-mono text-xl" placeholder="0" />
+                <Input type="number" min={0} max={600} step={5} inputMode="numeric" value={form.mealBreakMinutes ?? ''} onChange={e => set({ mealBreakMinutes: num(e.target.value) })} className="h-16 font-sans tabular-nums text-xl" placeholder="0" />
               </div>
             </div>
             {(form.daysWorked ?? 1) > 1 && <p className="text-xs text-white/40 italic -mt-6">Days with the same hours. Log days with different hours as separate entries.</p>}
@@ -384,7 +384,7 @@ export const JobDetail = () => {
                 value={form.hourlyRate ?? ''}
                 onChange={e => set({ hourlyRate: num(e.target.value) })}
                 placeholder={minimum?.hourly != null ? minimum.hourly.toFixed(2) : 'Your rate'}
-                className="h-16 font-mono text-2xl"
+                className="h-16 font-sans tabular-nums text-2xl"
               />
               {form.isUnion && minimum && (
                 <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
@@ -417,19 +417,19 @@ export const JobDetail = () => {
                     {pay.bands.map(b => (
                       <div key={b.label} className="flex justify-between text-white/70">
                         <dt>{b.label} · {hours(b.hours)}{b.multiplier !== 1 && ` @ ${money((priced.rate ?? 0) * b.multiplier)}`}</dt>
-                        <dd className="font-mono">{money(b.amount)}</dd>
+                        <dd className="font-sans tabular-nums">{money(b.amount)}</dd>
                       </div>
                     ))}
                     {pay.minimumTopUp > 0 && (
                       <div className="flex justify-between text-white/70">
                         <dt>{minimum?.daily ? 'Up to the daily fee' : 'Minimum call'}</dt>
-                        <dd className="font-mono">{money(pay.minimumTopUp)}</dd>
+                        <dd className="font-sans tabular-nums">{money(pay.minimumTopUp)}</dd>
                       </div>
                     )}
                     {pay.days > 1 && (
                       <div className="flex justify-between text-white/50 border-t border-white/10 pt-2">
                         <dt>Per day × {pay.days} days</dt>
-                        <dd className="font-mono">{money(pay.total)}</dd>
+                        <dd className="font-sans tabular-nums">{money(pay.total)}</dd>
                       </div>
                     )}
                   </dl>
@@ -457,7 +457,7 @@ export const JobDetail = () => {
                   </p>
                   <div>
                     <Label>Or a flat amount you were paid ($)</Label>
-                    <Input type="number" min={0} step={0.01} value={form.grossEarnings ?? ''} onChange={e => set({ grossEarnings: num(e.target.value) })} className="h-14 font-mono text-lg" />
+                    <Input type="number" min={0} step={0.01} value={form.grossEarnings ?? ''} onChange={e => set({ grossEarnings: num(e.target.value) })} className="h-14 font-sans tabular-nums text-lg" />
                   </div>
                 </div>
               )}

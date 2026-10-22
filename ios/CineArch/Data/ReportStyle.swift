@@ -1,5 +1,21 @@
+import Foundation
+
 // The report design (same as docs/examples/src). Generated from report.css; keep them in step.
 enum ReportStyle {
+    /// The brand fonts from the app bundle, embedded so reports look right with no signal.
+    static let fontFaces: String = {
+        let faces: [(file: String, family: String, weight: Int, style: String)] = [
+            ("SplineSans-Regular", "Spline Sans", 400, "normal"), ("SplineSans-Medium", "Spline Sans", 500, "normal"),
+            ("SplineSans-SemiBold", "Spline Sans", 600, "normal"), ("SplineSans-Bold", "Spline Sans", 700, "normal"),
+            ("InstrumentSerif-Regular", "Instrument Serif", 400, "normal"), ("InstrumentSerif-Italic", "Instrument Serif", 400, "italic"),
+        ]
+        return faces.compactMap { f in
+            guard let url = Bundle.main.url(forResource: f.file, withExtension: "ttf"), let data = try? Data(contentsOf: url) else { return nil }
+            return "@font-face { font-family: '\(f.family)'; font-weight: \(f.weight); font-style: \(f.style); src: url(data:font/ttf;base64,\(data.base64EncodedString())) format('truetype'); }"
+        }
+        .joined(separator: "\n")
+    }()
+
     static let css = """
 
   @page { size: Letter; margin: 0; }

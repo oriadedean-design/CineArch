@@ -65,9 +65,9 @@ struct FeedbackView: View {
                 TextField(placeholder, text: $message, axis: .vertical)
                     .lineLimit(5...12).focused($writing)
                     .onChange(of: message) { _, new in if new.count > limit { message = String(new.prefix(limit)) } }
-            } header: { Text("Your note") } footer: {
+            } header: { Text("Your note") } footer: { Group {
                 Text("\(message.count) of \(limit) characters. It goes to the CineArch team with your account email, so we can reply.")
-            }
+            }.font(Theme.sans(.footnote)) }
 
             Section {
                 Button {
@@ -80,11 +80,11 @@ struct FeedbackView: View {
                     }
                 }
                 .disabled(trimmed.isEmpty || sending || session.isPreview)
-            } footer: {
+            } footer: { Group {
                 if session.isPreview { Text("Sending is off in the sample account. Sign in to send a note.") }
                 else if let error { Text(error).foregroundStyle(.red) }
                 else { Text("Up to 10 notes a day. For anything urgent, use Support on the Account tab.") }
-            }
+            }.font(Theme.sans(.footnote)) }
 
             if !notes.isEmpty {
                 Section("Your notes") {
@@ -97,7 +97,7 @@ struct FeedbackView: View {
                                 Spacer()
                                 Text(n.statusLabel).foregroundStyle(n.status == "new" || n.status == nil ? Color.secondary : Theme.accent)
                             }
-                            .font(.caption).foregroundStyle(.secondary)
+                            .font(Theme.sans(.caption)).foregroundStyle(.secondary)
                         }
                     }
                 }

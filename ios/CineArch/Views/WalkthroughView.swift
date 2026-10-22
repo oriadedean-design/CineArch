@@ -43,9 +43,9 @@ struct WalkthroughView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("TABLE READ").font(.caption.weight(.heavy)).tracking(2).foregroundStyle(Theme.accent)
+                Text("TABLE READ").font(Theme.sans(.caption).weight(.heavy)).tracking(2).foregroundStyle(Theme.accent)
                 Spacer()
-                Button("Skip", action: onDone).font(.subheadline.bold()).foregroundStyle(.secondary)
+                Button("Skip", action: onDone).font(Theme.sans(.subheadline).bold()).foregroundStyle(.secondary)
                     .accessibilityHint("Closes the walkthrough. It's in Account any time.")
             }
             .padding(.horizontal, 24).padding(.top, 12)
@@ -63,7 +63,7 @@ struct WalkthroughView: View {
             Button {
                 if isLast { onDone() } else { withAnimation { page += 1 } }
             } label: {
-                Text(isLast ? "Set the scene" : "Next").font(.headline).foregroundStyle(.black)
+                Text(isLast ? "Set the scene" : "Next").font(Theme.sans(.headline)).foregroundStyle(.black)
                     .frame(maxWidth: .infinity).frame(height: 54)
                     .background(Theme.accent)
             }
@@ -116,14 +116,14 @@ private struct SceneView: View {
                 .overlay(Rectangle().stroke(Color.white.opacity(0.1)))
                 .accessibilityHidden(true)
             HStack(spacing: 8) {
-                Text("SCENE \(index + 1) · \(scene.slug.uppercased())").font(.caption.weight(.heavy)).tracking(1.5).foregroundStyle(.secondary)
+                Text("SCENE \(index + 1) · \(scene.slug.uppercased())").font(Theme.sans(.caption).weight(.heavy)).tracking(1.5).foregroundStyle(.secondary)
                 if let plan = scene.plan {
-                    Text(plan.uppercased()).font(.caption2.weight(.heavy)).tracking(1).foregroundStyle(.black)
+                    Text(plan.uppercased()).font(Theme.sans(.caption2).weight(.heavy)).tracking(1).foregroundStyle(.black)
                         .padding(.horizontal, 6).padding(.vertical, 2).background(Theme.accent)
                 }
             }
             Text(scene.title).font(Theme.serif(.largeTitle)).foregroundStyle(.white).fixedSize(horizontal: false, vertical: true)
-            Text(scene.body).font(.body).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
+            Text(scene.body).font(Theme.sans(.body)).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
         }
         .padding(.horizontal, 24)
@@ -159,7 +159,7 @@ private struct SceneView: View {
 
 private struct ExampleTag: View {
     var body: some View {
-        Text("EXAMPLE").font(.caption2.weight(.heavy)).tracking(1).foregroundStyle(.secondary)
+        Text("EXAMPLE").font(Theme.sans(.caption2).weight(.heavy)).tracking(1).foregroundStyle(.secondary)
             .padding(10)
     }
 }
@@ -171,23 +171,23 @@ private struct MarkTheSlate: View {
         VStack(spacing: 22) {
             ZStack(alignment: .topLeading) {
                 Rectangle().fill(Theme.accent).frame(width: 96, height: 64).offset(y: 18)
-                    .overlay(Image(systemName: "movieclapper").font(.title).foregroundStyle(.black).offset(y: 18))
+                    .overlay(Image(systemName: "movieclapper").font(Theme.sans(.title)).foregroundStyle(.black).offset(y: 18))
                 Stripes().frame(width: 96, height: 16)
                     .rotationEffect(.degrees(stage >= 1 ? 0 : -24), anchor: .bottomLeading)
             }
             .frame(width: 96, height: 82)
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Northern Lights").font(.headline)
-                    Text("Camera Trainee · 10h · union set").font(.caption).foregroundStyle(.secondary)
+                    Text("Northern Lights").font(Theme.sans(.headline))
+                    Text("Camera Trainee · 10h · union set").font(Theme.sans(.caption)).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Text("$440.00").font(.headline).monospacedDigit()
+                Text("$440.00").font(Theme.sans(.headline)).monospacedDigit()
             }
             .padding(12).background(Color.white.opacity(0.08))
             .padding(.horizontal, 24)
             .opacity(stage >= 2 ? 1 : 0).offset(y: stage >= 2 ? 0 : -30)
-            Text("On your Slate").font(.caption.bold()).foregroundStyle(Theme.accent).opacity(stage >= 3 ? 1 : 0)
+            Text("On your Slate").font(Theme.sans(.caption).bold()).foregroundStyle(Theme.accent).opacity(stage >= 3 ? 1 : 0)
         }
     }
 
@@ -211,7 +211,7 @@ private struct CheckThePay: View {
             Divider().overlay(Color.white.opacity(0.3)).opacity(stage >= 2 ? 1 : 0)
             row("Gross pay", stage >= 2 ? "$440.00" : "$320.00", show: stage >= 1, bold: true)
             Label("At or above the union minimum", systemImage: "checkmark.square.fill")
-                .font(.subheadline.bold()).foregroundStyle(Theme.accent)
+                .font(Theme.sans(.subheadline).bold()).foregroundStyle(Theme.accent)
                 .opacity(stage >= 3 ? 1 : 0).scaleEffect(stage >= 3 ? 1 : 0.9, anchor: .leading)
         }
         .padding(.horizontal, 28)
@@ -234,15 +234,15 @@ private struct GetYourCard: View {
     private var days: Int { stage >= 2 ? 42 : 41 }
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Example union · permittee to member").font(.caption).foregroundStyle(.secondary)
+            Text("Example union · permittee to member").font(Theme.sans(.caption)).foregroundStyle(.secondary)
             HStack(alignment: .firstTextBaseline) {
                 Text("\(days)").font(Theme.serif(.largeTitle)).monospacedDigit().contentTransition(.numericText())
                 Text("of 120 days").foregroundStyle(.secondary)
             }
             SquareProgress(value: Double(stage >= 1 ? days : 0) / 120)
             Label("Today's union day counted", systemImage: "plus.square.fill")
-                .font(.subheadline.bold()).foregroundStyle(Theme.accent).opacity(stage >= 2 ? 1 : 0)
-            Text("78 days to go").font(.caption).foregroundStyle(.secondary).opacity(stage >= 3 ? 1 : 0)
+                .font(Theme.sans(.subheadline).bold()).foregroundStyle(Theme.accent).opacity(stage >= 2 ? 1 : 0)
+            Text("78 days to go").font(Theme.sans(.caption)).foregroundStyle(.secondary).opacity(stage >= 3 ? 1 : 0)
         }
         .padding(.horizontal, 28)
     }
@@ -263,14 +263,14 @@ private struct WalletCurve: View {
                 .animation(.easeInOut(duration: 1.1), value: stage)
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Earned, self-employed in Ontario").font(.caption).foregroundStyle(.secondary)
-                    Text("$41,200").font(.headline).monospacedDigit()
+                    Text("Earned, self-employed in Ontario").font(Theme.sans(.caption)).foregroundStyle(.secondary)
+                    Text("$41,200").font(Theme.sans(.headline)).monospacedDigit()
                 }
                 .opacity(stage >= 2 ? 1 : 0)
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("Set aside: CPP and income tax").font(.caption).foregroundStyle(.secondary)
-                    Text("$8,971").font(.headline).monospacedDigit().foregroundStyle(Theme.accent)
+                    Text("Set aside: CPP and income tax").font(Theme.sans(.caption)).foregroundStyle(.secondary)
+                    Text("$8,971").font(Theme.sans(.headline)).monospacedDigit().foregroundStyle(Theme.accent)
                 }
                 .opacity(stage >= 3 ? 1 : 0)
             }
@@ -298,7 +298,7 @@ private struct LedgerPages: View {
         ZStack {
             ForEach(0..<3, id: \.self) { i in
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(["Union days", "Pay stubs", "Income and expenses"][i]).font(.caption.bold()).foregroundStyle(.black)
+                    Text(["Union days", "Pay stubs", "Income and expenses"][i]).font(Theme.sans(.caption).bold()).foregroundStyle(.black)
                     ForEach(0..<4, id: \.self) { _ in Rectangle().fill(Color.black.opacity(0.15)).frame(height: 5) }
                 }
                 .padding(12).frame(width: 150, height: 150, alignment: .topLeading)
@@ -307,7 +307,7 @@ private struct LedgerPages: View {
                 .offset(x: Double(i - 1) * 26, y: stage > i ? Double(i - 1) * 34 : 40)
                 .opacity(stage > i ? 1 : 0)
             }
-            Text("PDF").font(.caption.weight(.heavy)).foregroundStyle(.black).padding(.horizontal, 8).padding(.vertical, 4)
+            Text("PDF").font(Theme.sans(.caption).weight(.heavy)).foregroundStyle(.black).padding(.horizontal, 8).padding(.vertical, 4)
                 .background(Theme.accent).offset(x: 86, y: 100).opacity(stage >= 3 ? 1 : 0)
         }
     }
@@ -327,8 +327,8 @@ private struct WhereItsKept: View {
     private func column(_ title: String, systemImage: String, detail: String, show: Bool, lit: Bool) -> some View {
         VStack(spacing: 10) {
             Image(systemName: systemImage).font(.system(size: 44)).foregroundStyle(lit ? Theme.accent : .white)
-            Text(title).font(.headline)
-            Text(detail).font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            Text(title).font(Theme.sans(.headline))
+            Text(detail).font(Theme.sans(.caption)).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .opacity(show ? 1 : 0).offset(y: show ? 0 : 16)

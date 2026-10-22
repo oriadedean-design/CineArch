@@ -48,9 +48,9 @@ struct ProofSheet: View {
                     if uploading { HStack { ProgressView(); Text("Uploading…").foregroundStyle(.secondary) } }
                 } header: {
                     Text(current.isGreenLit ? "Proof" : "Back it with proof")
-                } footer: {
+                } footer: { Group {
                     Text("A receipt, pay stub or invoice, up to 1 MB (photos and scans are shrunk to fit). Entries with proof are Green Lit: ready for your accountant, an audit or a union application.")
-                }
+                }.font(Theme.sans(.footnote)) }
                 .disabled(uploading)
 
                 if let error { Section { Text(error).foregroundStyle(.red) } }
@@ -177,9 +177,9 @@ struct JobProofSheet: View {
                         Button { showPlans = true } label: {
                             LockedRowLabel(title: "Back it with a pay stub", detail: Plan.pro.name)
                         }
-                    } footer: {
+                    } footer: { Group {
                         Text("A pay stub on a job makes it Green Lit: proof for your union application.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
                 } else {
                 Section {
                     if current.isGreenLit {
@@ -195,9 +195,9 @@ struct JobProofSheet: View {
                 } header: {
                     HintedHeader(title: current.isGreenLit ? "Pay stub" : "Back it with a pay stub",
                                  hint: "Unions ask for proof of your days. A pay stub on the job makes it Green Lit, and it goes into your Union Pack with the dates, hours and pay highlighted.")
-                } footer: {
+                } footer: { Group {
                     Text("Up to 1 MB (photos are shrunk to fit). Green Lit jobs carry their pay stub into your Union Pack, highlighted where the dates, hours and pay appear.")
-                }
+                }.font(Theme.sans(.footnote)) }
                 .disabled(uploading)
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
@@ -229,7 +229,7 @@ struct LockedRowLabel: View {
         HStack {
             Label(title, systemImage: "lock.fill")
             Spacer()
-            Text(detail).font(.caption.bold()).foregroundStyle(Theme.accent)
+            Text(detail).font(Theme.sans(.caption).bold()).foregroundStyle(Theme.accent)
         }
     }
 }

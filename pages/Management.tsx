@@ -195,7 +195,7 @@ export const Management = () => {
                   value={addForm.email}
                   onChange={e => setAddForm({ ...addForm, email: e.target.value })}
                   placeholder="talent@example.com"
-                  className="h-16 text-lg font-mono"
+                  className="h-16 text-lg font-sans tabular-nums"
                 />
               </div>
 
