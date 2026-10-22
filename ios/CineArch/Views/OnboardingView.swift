@@ -44,9 +44,9 @@ struct OnboardingView: View {
             List {
                 Section {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Setting the Scene · \(step.rawValue) of \(Step.allCases.count)").font(.caption.weight(.heavy)).tracking(1.5).foregroundStyle(Theme.accent)
+                        Text("Setting the Scene · \(step.rawValue) of \(Step.allCases.count)").font(Theme.sans(.caption).weight(.heavy)).tracking(1.5).foregroundStyle(Theme.accent)
                         if step == .base {
-                            Text("Give us the context, so we can shape CineArch around you.").font(.subheadline).foregroundStyle(.secondary)
+                            Text("Give us the context, so we can shape CineArch around you.").font(Theme.sans(.subheadline)).foregroundStyle(.secondary)
                         }
                     }
                     .listRowBackground(Color.clear)
@@ -89,9 +89,9 @@ struct OnboardingView: View {
             if province == "Ontario" {
                 Picker("Region", selection: $region) { ForEach(Self.ontarioRegions, id: \.0) { Text($0.1).tag($0.0) } }
             }
-        } footer: {
+        } footer: { Group {
             Text("This decides which unions and rules apply to you.")
-        }
+        }.font(Theme.sans(.footnote)) }
     }
 
     private var work: some View {
@@ -137,9 +137,9 @@ struct OnboardingView: View {
                     Text("%").foregroundStyle(.secondary)
                 }
             }
-        } header: { Text("Do you have an agent?") } footer: {
+        } header: { Text("Do you have an agent?") } footer: { Group {
             Text("Up to 50%. They're added to Industry representation in Account, where you can add others and choose which jobs each takes a cut from.")
-        }
+        }.font(Theme.sans(.footnote)) }
     }
 
     @ViewBuilder private var unionStep: some View {
@@ -148,16 +148,16 @@ struct OnboardingView: View {
                 Text("$").foregroundStyle(.secondary)
                 TextField("Optional, e.g. 40000", text: $goalText).keyboardType(.numberPad).numbersOnly($goalText, decimals: false)
             }
-        } header: { Text("Earning goal for \(String(Calendar.current.component(.year, from: Date())))") } footer: {
+        } header: { Text("Earning goal for \(String(Calendar.current.component(.year, from: Date())))") } footer: { Group {
             Text("What you'd like to earn from film work this year, before tax. Your Wrap shows how close you are.")
-        }
+        }.font(Theme.sans(.footnote)) }
         let picked = suggested.compactMap { engine.union($0) }.filter { !$0.tiers.isEmpty }
         if !picked.isEmpty {
             Section {
                 ForEach(picked) { unionRow($0, covers: true) }
-            } header: { Text("Cover your roles in \(province)") } footer: {
+            } header: { Text("Cover your roles in \(province)") } footer: { Group {
                 Text("Tap the ones you're working toward. Days on their sets count, member or not.")
-            }
+            }.font(Theme.sans(.footnote)) }
         }
         let others = local.filter { u in !picked.contains { $0.id == u.id } }
         if !others.isEmpty {
@@ -172,10 +172,10 @@ struct OnboardingView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(u.name).foregroundStyle(.primary)
-                    if let t = u.tiers.first { Text("Tracks: \(t.name)").font(.caption).foregroundStyle(.secondary) }
+                    if let t = u.tiers.first { Text("Tracks: \(t.name)").font(Theme.sans(.caption)).foregroundStyle(.secondary) }
                 }
                 Spacer()
-                Text(unions.contains(u.id) ? "Tracking" : "Tap to track").font(.caption.bold())
+                Text(unions.contains(u.id) ? "Tracking" : "Tap to track").font(Theme.sans(.caption).bold())
                     .foregroundStyle(unions.contains(u.id) ? Theme.accent : .secondary)
                 Image(systemName: unions.contains(u.id) ? "checkmark.square.fill" : "square")
                     .foregroundStyle(unions.contains(u.id) ? Theme.accent : .secondary)
@@ -204,7 +204,7 @@ struct OnboardingView: View {
             Button {
                 if step == .unions { Task { await save() } } else { step = Step(rawValue: step.rawValue + 1)! }
             } label: {
-                Text(nextLabel).font(.headline).frame(maxWidth: .infinity, minHeight: 50)
+                Text(nextLabel).font(Theme.sans(.headline)).frame(maxWidth: .infinity, minHeight: 50)
             }
             .buttonStyle(.borderedProminent).buttonBorderShape(.roundedRectangle(radius: 0)).foregroundStyle(.black)
             .disabled((step == .work && roles.isEmpty) || saving)

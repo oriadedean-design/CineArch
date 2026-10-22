@@ -107,7 +107,7 @@ struct JobsView: View {
                         .padding(.vertical, 2)
                     }
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                } footer: {
+                } footer: { Group {
                     if let a = agent {
                         let worked = rows.filter { $0.status != "TENTATIVE" }
                         let total = worked.reduce(0) { $0 + ($1.grossEarnings ?? 0) }
@@ -116,7 +116,7 @@ struct JobsView: View {
                     } else if show == .needsProof {
                         Text("Union days with no pay stub yet. Tap one to back it with proof.")
                     }
-                }
+                }.font(Theme.sans(.footnote)) }
             }
 
             Section {
@@ -157,7 +157,7 @@ struct SlateHeadline: View {
             }
             SquareProgress(value: progress.fraction)
             Text("\(t.unionName) · \(t.tierLabel)\(progress.remaining > 0 ? " · \(t.format(progress.remaining)) to go" : "")")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(Theme.sans(.caption)).foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
@@ -176,7 +176,7 @@ struct FilterChip: View {
                 if let systemImage { Image(systemName: systemImage) }
                 Text(title)
             }
-            .font(.subheadline.weight(on ? .semibold : .regular))
+            .font(Theme.sans(.subheadline).weight(on ? .semibold : .regular))
             .padding(.horizontal, 12).padding(.vertical, 6)
             .foregroundStyle(on ? Color.black : .primary)
             .background(on ? Theme.accent : Color.secondary.opacity(0.18))
@@ -192,7 +192,7 @@ struct JobRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
-                Text(job.productionName).font(.headline).lineLimit(1)
+                Text(job.productionName).font(Theme.sans(.headline)).lineLimit(1)
                 Spacer()
                 Text((job.grossEarnings ?? 0).money).monospacedDigit()
             }
@@ -211,7 +211,7 @@ struct JobRow: View {
                         .accessibilityLabel(job.isGreenLit ? "Green Lit" : "Needs a pay stub")
                 }
             }
-            .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            .font(Theme.sans(.caption)).foregroundStyle(.secondary).lineLimit(1)
         }
         .padding(.vertical, 2)
         .contentShape(Rectangle())

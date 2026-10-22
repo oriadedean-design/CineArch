@@ -1,3 +1,4 @@
+import { startTour, tourSeen } from '../services/tour';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Layers, FileText, Settings, Clapperboard, WalletCards, X, Users, BookOpen, Eye } from 'lucide-react';
@@ -28,6 +29,13 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
   };
 
   const isDashboardMode = user && user.isOnboarded;
+
+  // The table read, once, the first time someone lands with the dock showing.
+  useEffect(() => {
+    if (!isDashboardMode || user?.accountType === 'AGENT' || isDemoMode() || tourSeen()) return;
+    const t = setTimeout(startTour, 900);
+    return () => clearTimeout(t);
+  }, [isDashboardMode, user?.accountType]);
   const isAuthPage = location.pathname === '/auth';
   const isViewingClient = !!user?.activeViewId;
 
@@ -139,6 +147,7 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
             {navItems.map((item) => (
               <button
                 key={item.path}
+                data-tour={item.path}
                 onClick={() => navigate(item.path)}
                 className={clsx(
                   "relative flex flex-col items-center justify-center w-14 h-14 transition-all duration-300",
@@ -152,6 +161,7 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
             ))}
             <div className="w-px h-8 bg-white/10 mx-2"></div>
             <button
+              data-tour="mark"
               onClick={() => navigate(user?.accountType === 'AGENT' ? '/roster' : '/jobs/new')}
               className="flex items-center justify-center w-14 h-14 bg-accent text-black hover:scale-105 hover:-rotate-6 transition-all shadow-glow"
               title={user?.accountType === 'AGENT' ? 'Your roster' : 'Mark the slate'}

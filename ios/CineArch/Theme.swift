@@ -5,22 +5,60 @@ import UIKit
 enum Theme {
     static let accent = Color("AccentColor")
 
-    static func serif(_ style: Font.TextStyle) -> Font { .system(style, design: .serif).italic() }
+    // Brand type (same as the website): Instrument Serif italic for titles and
+    // big figures, Spline Sans for everything else. Both scale with Dynamic Type.
+    // Fonts are in CineArch/Fonts (SIL Open Font License), listed in Info.plist.
+    static let serifFont = "InstrumentSerif-Italic"
+    static let sansFont = "SplineSans-Regular"
+
+    /// Apple's default point size for each text style, so custom fonts sit where the system ones did.
+    static func pointSize(_ style: Font.TextStyle) -> CGFloat {
+        switch style {
+        case .largeTitle: 34
+        case .title: 28
+        case .title2: 22
+        case .title3: 20
+        case .headline, .body: 17
+        case .callout: 16
+        case .subheadline: 15
+        case .footnote: 13
+        case .caption: 12
+        case .caption2: 11
+        @unknown default: 17
+        }
+    }
+
+    /// Instrument Serif italic. It runs small for its point size, so it's set a little larger.
+    static func serif(_ style: Font.TextStyle) -> Font {
+        .custom(serifFont, size: (pointSize(style) * 1.18).rounded(), relativeTo: style)
+    }
+
+    /// Spline Sans. Headlines are semibold, like the system's.
+    static func sans(_ style: Font.TextStyle) -> Font {
+        let font = Font.custom(sansFont, size: pointSize(style), relativeTo: style)
+        return style == .headline ? font.weight(.semibold) : font
+    }
 
     static func applyNavigationStyle() {
         // Every screen, sheet and full-screen cover uses signal yellow, not system blue.
         UIWindow.appearance().tintColor = UIColor(named: "AccentColor")
-        func serifItalic(_ style: UIFont.TextStyle, weight: UIFont.Weight = .regular) -> UIFont {
-            let base = UIFontDescriptor.preferredFontDescriptor(withTextStyle: style)
-            let d = (base.withDesign(.serif) ?? base).withSymbolicTraits(.traitItalic) ?? base
-            return UIFont(descriptor: d, size: 0)
+        func serifItalic(_ style: UIFont.TextStyle, size: CGFloat) -> UIFont {
+            let font = UIFont(name: serifFont, size: size) ?? .preferredFont(forTextStyle: style)
+            return UIFontMetrics(forTextStyle: style).scaledFont(for: font)
         }
         let nav = UINavigationBarAppearance()
         nav.configureWithDefaultBackground()
-        nav.largeTitleTextAttributes = [.font: serifItalic(.largeTitle)]
-        nav.titleTextAttributes = [.font: serifItalic(.headline)]
+        nav.largeTitleTextAttributes = [.font: serifItalic(.largeTitle, size: 40)]
+        nav.titleTextAttributes = [.font: serifItalic(.headline, size: 21)]
         UINavigationBar.appearance().standardAppearance = nav
         UINavigationBar.appearance().scrollEdgeAppearance = nav
+        // Tab bar labels and the back button in Spline Sans.
+        if let tab = UIFont(name: "SplineSans-Medium", size: 10) {
+            UITabBarItem.appearance().setTitleTextAttributes([.font: tab], for: .normal)
+        }
+        if let back = UIFont(name: sansFont, size: 17) {
+            UIBarButtonItem.appearance().setTitleTextAttributes([.font: back], for: .normal)
+        }
     }
 }
 
@@ -69,8 +107,8 @@ struct InfoButton: View {
             .accessibilityLabel("About \(title)")
             .popover(isPresented: $shown) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(title).font(.headline)
-                    Text(text).font(.subheadline).fixedSize(horizontal: false, vertical: true)
+                    Text(title).font(Theme.sans(.headline))
+                    Text(text).font(Theme.sans(.subheadline)).fixedSize(horizontal: false, vertical: true)
                 }
                 .padding()
                 .frame(idealWidth: 300, maxWidth: 320)

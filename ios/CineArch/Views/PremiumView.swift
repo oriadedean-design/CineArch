@@ -14,16 +14,16 @@ struct PlansView: View {
                             Text(plan.name).font(Theme.serif(.title2))
                                 .foregroundStyle(plan.id == Plan.pro.id ? Theme.accent : .primary)
                             Spacer()
-                            Text(plan.price).font(.headline).monospacedDigit()
+                            Text(plan.price).font(Theme.sans(.headline)).monospacedDigit()
                         }
-                        Text(plan.pitch).font(.subheadline).foregroundStyle(.secondary)
+                        Text(plan.pitch).font(Theme.sans(.subheadline)).foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 4)
                     ForEach(plan.includes, id: \.self) { item in
-                        Label(item, systemImage: "checkmark").font(.subheadline)
+                        Label(item, systemImage: "checkmark").font(Theme.sans(.subheadline))
                     }
                     if plan.id == current {
-                        Label("Your plan", systemImage: "star.fill").foregroundStyle(Theme.accent).font(.subheadline.bold())
+                        Label("Your plan", systemImage: "star.fill").foregroundStyle(Theme.accent).font(Theme.sans(.subheadline).bold())
                     } else if plan.id == Plan.pro.id {
                         UpgradeButton()
                     }
@@ -31,7 +31,7 @@ struct PlansView: View {
             }
             Section {
                 Text("\(Plan.agency.name) (\(Plan.agency.price)) is for agencies and managers looking after a roster. It's on the website.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(Theme.sans(.footnote)).foregroundStyle(.secondary)
             }
         }
         .navigationTitle("Plans")
@@ -42,11 +42,11 @@ struct UpgradeButton: View {
     var body: some View {
         VStack(spacing: 6) {
             Button {} label: {
-                Label("Go A-List Pro", systemImage: "star.fill").frame(maxWidth: .infinity).font(.headline)
+                Label("Go A-List Pro", systemImage: "star.fill").frame(maxWidth: .infinity).font(Theme.sans(.headline))
             }
             .buttonStyle(.borderedProminent).foregroundStyle(.black)
             .disabled(true)
-            Text("Upgrades open soon.").font(.caption).foregroundStyle(.secondary)
+            Text("Upgrades open soon.").font(Theme.sans(.caption)).foregroundStyle(.secondary)
         }
         .listRowBackground(Color.clear)
         .listRowInsets(EdgeInsets())
@@ -75,7 +75,7 @@ struct FreeWallet: View {
             Section {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(earned.money).font(Theme.serif(.largeTitle)).monospacedDigit()
-                    Text("earned in \(year), from the pay on your Slate").font(.caption).foregroundStyle(.secondary)
+                    Text("earned in \(year), from the pay on your Slate").font(Theme.sans(.caption)).foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 4)
             } header: { Text("Your total") }
@@ -86,14 +86,14 @@ struct FreeWallet: View {
                         HStack {
                             Label(text, systemImage: icon)
                             Spacer()
-                            Image(systemName: "lock.fill").font(.caption).foregroundStyle(.secondary)
+                            Image(systemName: "lock.fill").font(Theme.sans(.caption)).foregroundStyle(.secondary)
                         }
                     }
                 }
                 UpgradeButton()
-            } header: { Text("With \(Plan.pro.name) · \(Plan.pro.price)") } footer: {
+            } header: { Text("With \(Plan.pro.name) · \(Plan.pro.price)") } footer: { Group {
                 Text("Wrap Wallet keeps your receipts and records online, so it comes with \(Plan.pro.name).")
-            }
+            }.font(Theme.sans(.footnote)) }
         }
         .task(id: session.identity) { await jobs.use(session.place) }
     }
@@ -118,16 +118,16 @@ struct ProNudge: View {
     var body: some View {
         if session.isSignedIn && !session.isPremium && Date().timeIntervalSince1970 > hiddenUntil {
             VStack(alignment: .leading, spacing: 8) {
-                Label(Plan.pro.name, systemImage: "star.fill").font(.caption.weight(.heavy)).foregroundStyle(Theme.accent)
-                Text(title).font(.subheadline.weight(.semibold))
-                Text(detail).font(.caption).foregroundStyle(.secondary)
+                Label(Plan.pro.name, systemImage: "star.fill").font(Theme.sans(.caption).weight(.heavy)).foregroundStyle(Theme.accent)
+                Text(title).font(Theme.sans(.subheadline).weight(.semibold))
+                Text(detail).font(Theme.sans(.caption)).foregroundStyle(.secondary)
                 HStack(spacing: 10) {
                     Button("See what's in \(Plan.pro.name)") { showPlans = true }
                         .buttonStyle(.borderedProminent).buttonBorderShape(.roundedRectangle(radius: 0)).foregroundStyle(.black)
                     Button("Not now") { hiddenUntil = Date().addingTimeInterval(7 * 86_400).timeIntervalSince1970 }
                         .buttonStyle(.bordered).buttonBorderShape(.roundedRectangle(radius: 0))
                 }
-                .font(.caption.bold())
+                .font(Theme.sans(.caption).bold())
             }
             .padding(.vertical, 4)
             .sheet(isPresented: $showPlans) {

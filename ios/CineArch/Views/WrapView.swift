@@ -75,9 +75,9 @@ struct WrapView: View {
                 Button { showAdd = true } label: { Label("Track a union", systemImage: "plus.circle.fill") }
             } header: {
                 HintedHeader(title: session.unionGoalsTitle, hint: session.isMember ? "Each union level you're working toward, such as moving up a tier or joining another union, and how far along you are." : "Each union you're working toward, and how far along you are. Days on a union set count before you're a member.")
-            } footer: {
+            } footer: { Group {
                 Text("Days on a union set count toward that union even before you're a member. When you mark the slate, pick the union whose set it was.")
-            }
+            }.font(Theme.sans(.footnote)) }
 
             Section {
                 JobTimeline(jobs: jobs.jobs)
@@ -90,7 +90,7 @@ struct WrapView: View {
                 ComingUp(deadlines: store.engine.snapshot.deadlines ?? [], progress: progress, jobs: jobs.jobs, engine: store.engine)
             } header: {
                 HintedHeader(title: "Coming up", hint: "Tax dates, union dues and days about to drop out of a union's time window. Each tax date links to the government page it came from.")
-            } footer: { Text("Tap a tax date to open its source.") }
+            } footer: { Group { Text("Tap a tax date to open its source.") }.font(Theme.sans(.footnote)) }
             .id("coming-up")
 
             Section("Your hours") {
@@ -120,7 +120,7 @@ struct TrackRow: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(t.unionName).font(Theme.serif(.title3))
-                    Text(t.tierLabel).font(.caption).foregroundStyle(.secondary)
+                    Text(t.tierLabel).font(Theme.sans(.caption)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Text("\(Int((progress.fraction * 100).rounded()))%")
@@ -133,16 +133,16 @@ struct TrackRow: View {
                 Text(progress.remaining > 0 ? "\(t.format(progress.remaining)) to go" : progress.productionsShort ? "More productions needed" : "Ready to apply!")
                     .foregroundStyle(progress.remaining > 0 || progress.productionsShort ? Color.secondary : Theme.accent)
             }
-            .font(.caption).monospacedDigit()
+            .font(Theme.sans(.caption)).monospacedDigit()
             if let min = progress.minProductions {
-                Text("\(progress.productions) of \(min) productions").font(.caption).monospacedDigit()
+                Text("\(progress.productions) of \(min) productions").font(Theme.sans(.caption)).monospacedDigit()
                     .foregroundStyle(progress.productionsShort ? Theme.accent : .secondary)
             }
             if progress.needsDepartment {
-                Text("Counting every department. Tap to choose yours.").font(.caption).foregroundStyle(Theme.accent)
+                Text("Counting every department. Tap to choose yours.").font(Theme.sans(.caption)).foregroundStyle(Theme.accent)
             }
             if !progress.isConfirmed {
-                Text("Target not confirmed by the union").font(.caption).foregroundStyle(.secondary)
+                Text("Target not confirmed by the union").font(Theme.sans(.caption)).foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 4)
@@ -194,9 +194,9 @@ struct TrackUnionSheet: View {
                             ForEach(store.engine.snapshot.departments) { Text($0.name).tag($0.name) }
                         }
                     }
-                } footer: {
+                } footer: { Group {
                     if let tier { TierFooter(tier: tier) }
-                }
+                }.font(Theme.sans(.footnote)) }
                 if let tier {
                     let draft = TrackedUnion(unionTypeId: unionId, unionName: "", tierLabel: tier.name, targetType: tier.targetType, targetValue: tier.targetValue)
                     Section {
@@ -207,16 +207,16 @@ struct TrackUnionSheet: View {
                             TextField("0", text: $bankedText).keyboardType(.decimalPad).numbersOnly($bankedText).multilineTextAlignment(.trailing).frame(maxWidth: 100)
                             Text(draft.unit).foregroundStyle(.secondary)
                         }
-                    } footer: {
+                    } footer: { Group {
                         Text(tier.countsAnyWork ? "Relevant work from before you started logging in CineArch." : "Union-set work from before you started logging in CineArch.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
                     if let label = tier.startLabel {
                         Section {
                             Toggle(label, isOn: $hasSince)
                             if hasSince { DatePicker("Date", selection: $since, in: ...Date(), displayedComponents: .date) }
-                        } footer: {
+                        } footer: { Group {
                             Text("Only work on or after this date counts. Joined before October 31, 2012? Up to 800 earlier hours count too.")
-                        }
+                        }.font(Theme.sans(.footnote)) }
                     }
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }

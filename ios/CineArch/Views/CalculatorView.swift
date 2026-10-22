@@ -85,14 +85,14 @@ struct PayForm: View {
                         .keyboardType(.decimalPad).numbersOnly($rateText).multilineTextAlignment(.trailing).frame(maxWidth: 120)
                     ScaleBadge(status: p.status)
                 }
-            } footer: {
+            } footer: { Group {
                 if let m = p.minimum {
                     Text(m.hourly.map { "Union minimum: \($0.money)/h" } ?? "This position's rate is negotiable.")
                         + Text(m.daily.map { " · \($0.money)/day" } ?? "")
                 } else if isUnion {
                     Text("Pick a position to fill in the union minimum.")
                 }
-            }
+            }.font(Theme.sans(.footnote)) }
 
             if let pay = p.pay {
                 Section {
@@ -104,15 +104,15 @@ struct PayForm: View {
                     }
                     if pay.days > 1 { LabeledContent("Per day", value: pay.day.total.money) }
                     HStack {
-                        Text(pay.days > 1 ? "Total, \(pay.days) days" : "Total").font(.headline)
+                        Text(pay.days > 1 ? "Total, \(pay.days) days" : "Total").font(Theme.sans(.headline))
                         Spacer()
                         Text(pay.gross.money).font(Theme.serif(.title)).foregroundStyle(Theme.accent).monospacedDigit()
                     }
                 } header: {
                     Text("Your pay · \(pay.totalHours.hours) worked")
-                } footer: {
+                } footer: { Group {
                     if let r = p.rule { Text(Pay.describeOvertime(r)) }
-                }
+                }.font(Theme.sans(.footnote)) }
 
                 Section {
                     Button {
@@ -207,9 +207,9 @@ struct SaveJobSheet: View {
                     TextField("Production", text: $production).textInputAutocapitalization(.words)
                     TextField("Production company", text: $company).textInputAutocapitalization(.words)
                     TextField("Your role", text: $role).textInputAutocapitalization(.words)
-                } footer: {
+                } footer: { Group {
                     Text("The company is required. Unions ask for it when you apply.")
-                }
+                }.font(Theme.sans(.footnote)) }
                 Section { AgentPicker(choice: $agent) } header: {
                     HintedHeader(title: "Booked by", hint: "The agent who got you this job, if one did. Your Slate can then show what each agent brought in.")
                 }
@@ -217,7 +217,7 @@ struct SaveJobSheet: View {
                     Section("Recent productions") {
                         ForEach(jobs.knownProductions.prefix(5)) { j in
                             Button { production = j.productionName; company = j.companyName; if role.isEmpty { role = j.role } } label: {
-                                VStack(alignment: .leading) { Text(j.productionName); Text(j.companyName).font(.caption).foregroundStyle(.secondary) }
+                                VStack(alignment: .leading) { Text(j.productionName); Text(j.companyName).font(Theme.sans(.caption)).foregroundStyle(.secondary) }
                             }
                         }
                     }

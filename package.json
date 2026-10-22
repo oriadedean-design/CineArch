@@ -21,6 +21,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "clsx": "^2.1.1",
+    "driver.js": "1.8.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.561.0",
     "papaparse": "^5.5.3",

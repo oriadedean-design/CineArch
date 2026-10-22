@@ -29,7 +29,7 @@ struct JobTimeline: View {
         let bars = bars
         let rows = Array(Set(bars.map(\.production))).count
         if bars.isEmpty {
-            Text("Nothing in the can yet. Mark the slate and your jobs line up here.").font(.subheadline).foregroundStyle(.secondary)
+            Text("Nothing in the can yet. Mark the slate and your jobs line up here.").font(Theme.sans(.subheadline)).foregroundStyle(.secondary)
         } else {
             Chart(bars) { b in
                 BarMark(xStart: .value("Start", b.start), xEnd: .value("End", b.end), y: .value("Production", b.production))
@@ -94,7 +94,7 @@ struct IncomeChart: View {
                 Text(total.money).font(Theme.serif(.largeTitle)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
                 Spacer()
                 if showGoal, let goal {
-                    Text("\(Int((total / goal * 100).rounded()))% of \(goal.money)").font(.caption.bold()).foregroundStyle(Theme.accent)
+                    Text("\(Int((total / goal * 100).rounded()))% of \(goal.money)").font(Theme.sans(.caption).bold()).foregroundStyle(Theme.accent)
                 }
             }
             Picker("Period", selection: $span) {
@@ -116,12 +116,12 @@ struct IncomeChart: View {
                 if showGoal, let goal {
                     RuleMark(y: .value("Your goal", goal))
                         .foregroundStyle(Theme.accent.opacity(0.6)).lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 4]))
-                        .annotation(position: .top, alignment: .trailing) { Text("Your goal").font(.caption2).foregroundStyle(Theme.accent) }
+                        .annotation(position: .top, alignment: .trailing) { Text("Your goal").font(Theme.sans(.caption2)).foregroundStyle(Theme.accent) }
                 }
                 if showGSTLine && span == .year {
                     RuleMark(y: .value("GST/HST line", Ledger.smallSupplierThreshold))
                         .foregroundStyle(.red.opacity(0.7)).lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
-                        .annotation(position: .top, alignment: .leading) { Text("$30k GST/HST line").font(.caption2).foregroundStyle(.red) }
+                        .annotation(position: .top, alignment: .leading) { Text("$30k GST/HST line").font(Theme.sans(.caption2)).foregroundStyle(.red) }
                 }
             }
             .chartYAxis { AxisMarks { v in AxisGridLine(); AxisValueLabel { if let d = v.as(Double.self) { Text(d >= 1000 ? "$\(Int(d / 1000))k" : "$\(Int(d))") } } } }
@@ -179,19 +179,19 @@ struct ComingUp: View {
         ForEach(items) { item in
             let row = HStack(alignment: .top, spacing: 12) {
                 VStack(spacing: 0) {
-                    Text(item.date.formatted(.dateTime.month(.abbreviated))).font(.caption2.weight(.heavy)).textCase(.uppercase)
+                    Text(item.date.formatted(.dateTime.month(.abbreviated))).font(Theme.sans(.caption2).weight(.heavy)).textCase(.uppercase)
                     Text(item.date.formatted(.dateTime.day())).font(Theme.serif(.title3))
                 }
                 .frame(width: 44).padding(.vertical, 4).background(Theme.accent.opacity(0.15)).foregroundStyle(Theme.accent)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(item.title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
-                    if let d = item.detail, !d.isEmpty { Text(d).font(.caption).foregroundStyle(.secondary) }
-                    if let host = item.source?.host() { Label("Source: \(host.replacingOccurrences(of: "www.", with: ""))", systemImage: "arrow.up.right.square").font(.caption2).foregroundStyle(Theme.accent) }
+                    Text(item.title).font(Theme.sans(.subheadline).weight(.semibold)).foregroundStyle(.primary)
+                    if let d = item.detail, !d.isEmpty { Text(d).font(Theme.sans(.caption)).foregroundStyle(.secondary) }
+                    if let host = item.source?.host() { Label("Source: \(host.replacingOccurrences(of: "www.", with: ""))", systemImage: "arrow.up.right.square").font(Theme.sans(.caption2)).foregroundStyle(Theme.accent) }
                 }
             }
             if let url = item.source { Link(destination: url) { row } } else { row }
         }
         Label("Union dues and renewal dates aren't loaded yet.", systemImage: "clock.badge.questionmark")
-            .font(.caption).foregroundStyle(.secondary)
+            .font(Theme.sans(.caption)).foregroundStyle(.secondary)
     }
 }

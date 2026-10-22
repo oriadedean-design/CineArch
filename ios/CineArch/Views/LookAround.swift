@@ -6,7 +6,7 @@ import SwiftUI
 
 /// An amount you can't see until you sign in.
 struct HiddenAmount: View {
-    var font: Font = .body
+    var font: Font = Theme.sans(.body)
     var body: some View {
         Text("$ •••••").font(font).monospacedDigit().foregroundStyle(.secondary)
             .accessibilityLabel("Hidden until you sign in")
@@ -25,8 +25,8 @@ struct LockedRow: View {
             HStack {
                 Label(title, systemImage: systemImage)
                 Spacer()
-                if let detail { Text(detail).font(.caption).foregroundStyle(.secondary) }
-                Text("Sign in").font(.caption.bold()).foregroundStyle(Theme.accent)
+                if let detail { Text(detail).font(Theme.sans(.caption)).foregroundStyle(.secondary) }
+                Text("Sign in").font(Theme.sans(.caption).bold()).foregroundStyle(Theme.accent)
             }
         }
         .accessibilityHint("Opens sign in")
@@ -41,16 +41,16 @@ struct LookAroundFooter: View {
     var body: some View {
         Section {
             Button("Sign in or create an account", action: showAuth)
-                .font(.headline).frame(maxWidth: .infinity)
+                .font(Theme.sans(.headline)).frame(maxWidth: .infinity)
                 .buttonStyle(.borderedProminent).foregroundStyle(.black)
                 .listRowBackground(Color.clear)
             Button("Or look around a sample account") { session.startPreview() }
                 .frame(maxWidth: .infinity)
                 .listRowBackground(Color.clear)
-        } footer: {
+        } footer: { Group {
             Text("Free to start. Your Slate and union tracking stay on your phone unless you go \(Plan.pro.name).")
                 .frame(maxWidth: .infinity).multilineTextAlignment(.center)
-        }
+        }.font(Theme.sans(.footnote)) }
     }
 }
 
@@ -66,9 +66,9 @@ struct LookAroundWrap: View {
             LookAroundFooter(showAuth: showAuth)
             Section {
                 LockedRow(title: "Track a union", systemImage: "chart.bar.fill", action: showAuth)
-            } header: { Text("Getting your card") } footer: {
+            } header: { Text("Getting your card") } footer: { Group {
                 Text("Count your days on union sets toward your card, member or not.")
-            }
+            }.font(Theme.sans(.footnote)) }
             Section("Your year on set") {
                 Button(action: showAuth) {
                     Text("Mark the slate and your jobs line up here.").foregroundStyle(.secondary)
@@ -79,14 +79,14 @@ struct LookAroundWrap: View {
                 Button(action: showAuth) {
                     HStack(alignment: .firstTextBaseline) {
                         HiddenAmount(font: Theme.serif(.title2))
-                        Text("so far this year").font(.caption).foregroundStyle(.secondary)
+                        Text("so far this year").font(Theme.sans(.caption)).foregroundStyle(.secondary)
                     }
                 }
                 .buttonStyle(.plain)
             }
             Section {
                 ComingUp(deadlines: store.engine.snapshot.deadlines ?? [], progress: [], jobs: [], engine: store.engine)
-            } header: { Text("Coming up") } footer: { Text("Tax dates are open to everyone. Tap one to open its source.") }
+            } header: { Text("Coming up") } footer: { Group { Text("Tax dates are open to everyone. Tap one to open its source.") }.font(Theme.sans(.footnote)) }
         }
         .contentMargins(.bottom, 96, for: .scrollContent)     // clear of the clapperboard
     }
@@ -105,7 +105,7 @@ struct LookAroundSlate: View {
                         ForEach(["Hours", "Union", "Earned"], id: \.self) { label in
                             VStack(spacing: 2) {
                                 Text("•••").font(Theme.serif(.title3)).foregroundStyle(.secondary)
-                                Text(label).font(.caption).foregroundStyle(.secondary)
+                                Text(label).font(Theme.sans(.caption)).foregroundStyle(.secondary)
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -116,9 +116,9 @@ struct LookAroundSlate: View {
             }
             Section {
                 LockedRow(title: "Mark your first day", systemImage: "movieclapper", action: showAuth)
-            } footer: {
+            } footer: { Group {
                 Text("Every day you work, with its hours, pay and whose set it was.")
-            }
+            }.font(Theme.sans(.footnote)) }
         }
         .contentMargins(.bottom, 96, for: .scrollContent)     // clear of the clapperboard
     }
@@ -137,7 +137,7 @@ struct LookAroundWallet: View {
                         ForEach(["Income", "Expenses", "Net"], id: \.self) { label in
                             VStack(spacing: 2) {
                                 HiddenAmount(font: Theme.serif(.title3))
-                                Text(label).font(.caption).foregroundStyle(.secondary)
+                                Text(label).font(Theme.sans(.caption)).foregroundStyle(.secondary)
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -150,10 +150,10 @@ struct LookAroundWallet: View {
             Section {
                 Button(action: showAuth) {
                     HStack(spacing: 12) {
-                        Image(systemName: "seal").font(.title2).foregroundStyle(.secondary)
+                        Image(systemName: "seal").font(Theme.sans(.title2)).foregroundStyle(.secondary)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("GREEN LIT").font(.caption.weight(.heavy)).tracking(1.5).foregroundStyle(Color.green)
-                            Text("•• of •• backed with proof").font(.subheadline).foregroundStyle(.secondary)
+                            Text("GREEN LIT").font(Theme.sans(.caption).weight(.heavy)).tracking(1.5).foregroundStyle(Color.green)
+                            Text("•• of •• backed with proof").font(Theme.sans(.subheadline)).foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -166,8 +166,8 @@ struct LookAroundWallet: View {
                         HStack {
                             Image(systemName: "square.dashed").foregroundStyle(.secondary)
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("••••••••••••").font(.headline).foregroundStyle(.secondary)
-                                Text("•••••• · •••").font(.caption).foregroundStyle(.secondary)
+                                Text("••••••••••••").font(Theme.sans(.headline)).foregroundStyle(.secondary)
+                                Text("•••••• · •••").font(Theme.sans(.caption)).foregroundStyle(.secondary)
                             }
                             Spacer()
                             HiddenAmount()

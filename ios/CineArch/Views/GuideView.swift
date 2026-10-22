@@ -46,9 +46,9 @@ struct GuideView: View {
                             ForEach(Self.provinces, id: \.self) { Text($0).tag(String?.some($0)) }
                         }
                     }
-                } footer: {
+                } footer: { Group {
                     Text(by.copy)
-                }
+                }.font(Theme.sans(.footnote)) }
                 switch by {
                 case .unions: unionList
                 case .roles: roleList
@@ -101,8 +101,8 @@ struct UnionRow: View {
     let union: Union
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(union.name).font(.headline)
-            Text(subtitle).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+            Text(union.name).font(Theme.sans(.headline))
+            Text(subtitle).font(Theme.sans(.subheadline)).foregroundStyle(.secondary).lineLimit(2)
         }
         .padding(.vertical, 2)
     }
@@ -198,10 +198,10 @@ struct UnionDetailView: View {
                 Section("Hours and overtime") {
                     ForEach(rules) { r in
                         VStack(alignment: .leading, spacing: 6) {
-                            if r.departmentId != nil { Text(r.title).font(.subheadline.bold()) }
+                            if r.departmentId != nil { Text(r.title).font(Theme.sans(.subheadline).bold()) }
                             if let call = r.minimumCallHours { Label("\(call.hours) minimum call", systemImage: "clock") }
                             if !r.overtimeAfter.isEmpty { Label(Pay.describeOvertime(r), systemImage: "chart.line.uptrend.xyaxis") }
-                            if let notes = r.mealBreakNotes { Text(notes).font(.footnote).foregroundStyle(.secondary) }
+                            if let notes = r.mealBreakNotes { Text(notes).font(Theme.sans(.footnote)).foregroundStyle(.secondary) }
                         }
                     }
                 }
@@ -211,13 +211,13 @@ struct UnionDetailView: View {
                 Section("Membership levels") {
                     ForEach(union.tiers, id: \.self) { t in
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(t.name).font(.headline)
-                            Text(tierTarget(t)).font(.subheadline).foregroundStyle(Theme.accent)
-                            if let d = t.description { Text(d).font(.footnote).foregroundStyle(.secondary) }
+                            Text(t.name).font(Theme.sans(.headline))
+                            Text(tierTarget(t)).font(Theme.sans(.subheadline)).foregroundStyle(Theme.accent)
+                            if let d = t.description { Text(d).font(Theme.sans(.footnote)).foregroundStyle(.secondary) }
                             if t.isConfirmed, let s = t.sourceUrl, let url = URL(string: s) {
-                                Link("Source", destination: url).font(.footnote)
+                                Link("Source", destination: url).font(Theme.sans(.footnote))
                             } else if !t.isConfirmed {
-                                Text("Not confirmed by the union yet").font(.footnote).foregroundStyle(Theme.accent)
+                                Text("Not confirmed by the union yet").font(Theme.sans(.footnote)).foregroundStyle(Theme.accent)
                             }
                         }
                     }
@@ -227,7 +227,7 @@ struct UnionDetailView: View {
             let reqs = union.requirements
             if !reqs.isEmpty {
                 Section("How to join") {
-                    ForEach(reqs, id: \.self) { r in Text(r.text).font(.subheadline) }
+                    ForEach(reqs, id: \.self) { r in Text(r.text).font(Theme.sans(.subheadline)) }
                 }
             }
 
@@ -263,7 +263,7 @@ struct RateScheduleView: View {
         let groups = Dictionary(grouping: positions, by: \.department)
         let order = positions.map(\.department).reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
         List {
-            Section { Text(schedule.title).font(.footnote).foregroundStyle(.secondary) }
+            Section { Text(schedule.title).font(Theme.sans(.footnote)).foregroundStyle(.secondary) }
             ForEach(order, id: \.self) { dept in
                 Section(dept) {
                     ForEach(groups[dept] ?? [], id: \.self) { m in
@@ -272,7 +272,7 @@ struct RateScheduleView: View {
                             Spacer()
                             VStack(alignment: .trailing) {
                                 Text(m.hourly.map { "\($0.money)/h" } ?? "Negotiable").monospacedDigit()
-                                if let d = m.daily { Text("\(d.money)/day").font(.caption).foregroundStyle(.secondary).monospacedDigit() }
+                                if let d = m.daily { Text("\(d.money)/day").font(Theme.sans(.caption)).foregroundStyle(.secondary).monospacedDigit() }
                             }
                         }
                     }

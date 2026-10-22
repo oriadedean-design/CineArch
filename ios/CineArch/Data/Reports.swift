@@ -424,8 +424,7 @@ private struct ReportHTML {
 
     private func head() -> String {
         "<!doctype html><html lang=\"en-CA\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=816\">"
-            + "<link href=\"https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap\" rel=\"stylesheet\">"
-            + "<style>\(ReportStyle.css)</style></head><body>"
+            + "<style>\(ReportStyle.fontFaces)\(ReportStyle.css)</style></head><body>"
     }
 }
 
@@ -453,7 +452,7 @@ enum PDFRenderer {
             loader.done = { c.resume() }
             web.loadHTMLString(html, baseURL: URL(string: "https://cine-arch.vercel.app"))
         }
-        try? await Task.sleep(for: .seconds(1.2))      // web fonts
+        _ = try? await web.callAsyncJavaScript("await document.fonts.ready; return true;", contentWorld: .page)   // embedded fonts decoded
         let doc = PDFDocument()
         for i in 0..<pages {
             let cfg = WKPDFConfiguration()

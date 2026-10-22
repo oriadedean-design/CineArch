@@ -79,7 +79,7 @@ struct LedgerView: View {
             .quickLookPreview($reportURL)
             .overlay {
                 if let making {
-                    VStack(spacing: 12) { ProgressView(); Text(making).font(.subheadline) }
+                    VStack(spacing: 12) { ProgressView(); Text(making).font(Theme.sans(.subheadline)) }
                         .padding(24).background(.regularMaterial)
                 }
             }
@@ -149,9 +149,9 @@ struct LedgerView: View {
                 let doomed = idx.map { shown[$0] }
                 Task { for e in doomed { await ledger.delete(e) } }
             }
-        } footer: {
+        } footer: { Group {
             Text("Tap an entry to back it with proof. Swipe left to delete.")
-        }
+        }.font(Theme.sans(.footnote)) }
     }
 
     private func taxPicture(_ s: LedgerStats) -> TaxPicture {
@@ -176,18 +176,18 @@ struct LedgerView: View {
                 Text(s.gstThresholdFraction >= 1
                      ? "You're past $30,000 this year. You need a GST/HST number."
                      : "\((Ledger.smallSupplierThreshold - s.selfEmployedIncome).money) until you must register for GST/HST ($30,000).")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(Theme.sans(.caption)).foregroundStyle(.secondary)
             }
             .padding(.vertical, 2)
         } header: {
             HintedHeader(title: "GST/HST", hint: "Sales tax you charged on your work, less what you paid on work expenses. Past $30,000 of sales in a year you must register with the CRA.")
-        } footer: {
+        } footer: { Group {
             if t.quick != nil {
                 Text("Quick Method: a set share of your sales (tax included), less 1% of the first $30,000. You don't claim back GST/HST on expenses. Meals count half.")
             } else {
                 Text("Only half the GST/HST on meals can be claimed back.")
             }
-        }
+        }.font(Theme.sans(.footnote)) }
         Section {
             if t.payType == nil, !session.isPreview { PayTypePicker() }
             if t.payType == .t4 {
@@ -201,11 +201,11 @@ struct LedgerView: View {
             }
         } header: {
             HintedHeader(title: "Set aside", hint: "What to put away from self-employed pay for CPP (or QPP) and income tax, worked out from this year's federal and provincial rates. T4 pay has it taken off already.")
-        } footer: {
+        } footer: { Group {
             if let a = t.setAside, let p = t.province {
                 Text("\(String(a.year)) federal and \(p) rates, after the basic personal amount\(s.employmentIncome > 0 ? ", on top of your T4 pay" : "")\(p == "Ontario" ? ", with Ontario's health premium" : ""). Rough estimate: other credits and deductions aren't included. Check with an accountant.")
             }
-        }
+        }.font(Theme.sans(.footnote)) }
     }
 
     private func loadReportUsage() async {
@@ -256,7 +256,7 @@ struct LedgerView: View {
         VStack(spacing: 2) {
             Text(value).font(Theme.serif(.title3)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
                 .foregroundStyle(highlight ? Theme.accent : .primary)
-            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(label).font(Theme.sans(.caption)).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
     }
@@ -276,15 +276,15 @@ struct GreenLitNotice: View {
         let missing = entries.count - lit
         HStack(spacing: 12) {
             Image(systemName: missing == 0 ? "checkmark.seal.fill" : "seal")
-                .font(.title2).foregroundStyle(missing == 0 ? Color.green : .secondary)
+                .font(Theme.sans(.title2)).foregroundStyle(missing == 0 ? Color.green : .secondary)
             VStack(alignment: .leading, spacing: 2) {
-                Text("GREEN LIT").font(.caption.weight(.heavy)).tracking(1.5).foregroundStyle(Color.green)
-                Text("\(lit) of \(entries.count) backed with proof").font(.subheadline)
+                Text("GREEN LIT").font(Theme.sans(.caption).weight(.heavy)).tracking(1.5).foregroundStyle(Color.green)
+                Text("\(lit) of \(entries.count) backed with proof").font(Theme.sans(.subheadline))
             }
             Spacer()
             if missing > 0 {
                 Button("\(missing) need proof", action: showMissing)
-                    .font(.caption.bold()).buttonStyle(.bordered).tint(Theme.accent)
+                    .font(Theme.sans(.caption).bold()).buttonStyle(.bordered).tint(Theme.accent)
             }
         }
         .accessibilityElement(children: .combine)
@@ -299,14 +299,14 @@ struct LedgerRow: View {
                 .foregroundStyle(entry.isGreenLit ? Color.green : .secondary)
                 .accessibilityLabel(entry.isGreenLit ? "Green Lit" : "Needs proof")
             VStack(alignment: .leading, spacing: 3) {
-                Text(entry.description).font(.headline).lineLimit(1)
+                Text(entry.description).font(Theme.sans(.headline)).lineLimit(1)
                 HStack(spacing: 6) {
                     Text(entry.categoryName)
                     Text("·")
                     Text(Date(isoDay: entry.dateIncurred)?.formatted(date: .abbreviated, time: .omitted) ?? entry.dateIncurred)
                     if entry.ruleTags?.contains("MEALS_50_LIMIT") == true, !entry.categoryName.contains("50%") { Text("· 50% rule").foregroundStyle(Theme.accent) }
                 }
-                .font(.caption).foregroundStyle(.secondary)
+                .font(Theme.sans(.caption)).foregroundStyle(.secondary)
             }
             Spacer()
             Text((entry.isIncome ? "+" : "−") + entry.totalAmount.money)
@@ -361,9 +361,9 @@ struct LedgerEntrySheet: View {
                     } failed: { error = $0 }
                 } header: {
                     Text(isIncome ? "Fill it in from an invoice or pay stub" : "Fill it in from a receipt")
-                } footer: {
+                } footer: { Group {
                     Text(readNote ?? "CineArch reads the store, total, GST/HST and date on your phone, and keeps the file as proof (Green Lit).")
-                }
+                }.font(Theme.sans(.footnote)) }
 
                 if isIncome && !jobs.jobs.isEmpty {
                     Section {
@@ -371,9 +371,9 @@ struct LedgerEntrySheet: View {
                             Text("None").tag(UUID?.none)
                             ForEach(jobs.jobs.prefix(30)) { j in Text("\(j.productionName) · \(j.startDate)").tag(j.id) }
                         }
-                    } footer: {
+                    } footer: { Group {
                         Text("Fills in the pay from a job you logged.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
                 }
 
                 Section {
@@ -387,11 +387,11 @@ struct LedgerEntrySheet: View {
                 Section {
                     money("Amount before tax", $amountText, placeholder: "0.00")
                     money("GST/HST", $taxText, placeholder: amount.map { String(format: "%.2f", $0 * Ledger.gstRate) } ?? "0.00")
-                } footer: {
+                } footer: { Group {
                     if !isIncome && category == "MEALS_ENTERTAINMENT" {
                         Text("Only half of meals and entertainment is deductible.")
                     }
-                }
+                }.font(Theme.sans(.footnote)) }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
             .navigationTitle(isIncome ? "Add income" : "Add expense")
@@ -483,7 +483,7 @@ struct PayTypePicker: View {
             Text("Both").tag(Optional(PayType.both))
         }
         .disabled(session.isPreview)
-        if let error { Text(error).font(.caption).foregroundStyle(.red) }
+        if let error { Text(error).font(Theme.sans(.caption)).foregroundStyle(.red) }
     }
 }
 

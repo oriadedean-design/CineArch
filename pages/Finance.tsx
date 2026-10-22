@@ -377,11 +377,11 @@ export const Finance = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Subtotal ($)</label>
-                  <Input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="h-14 text-lg font-mono" />
+                  <Input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="h-14 text-lg font-sans tabular-nums" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">GST/HST ($)</label>
-                  <Input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} className="h-14 text-lg font-mono" />
+                  <Input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} className="h-14 text-lg font-sans tabular-nums" />
                 </div>
               </div>
 

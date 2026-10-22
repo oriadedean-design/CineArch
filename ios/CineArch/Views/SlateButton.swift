@@ -59,9 +59,9 @@ struct MarkSlateSheet: View {
                         } label: {
                             Label(jobs.lastJob == nil ? "Mark your first day" : "A different job", systemImage: "square.and.pencil")
                         }
-                    } footer: {
+                    } footer: { Group {
                         Text("Pick the union whose set it was. Days on a union production count toward joining, even before you're a member.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
                     if let error { Section { Text(error).foregroundStyle(.red) } }
                 }
                 .navigationTitle("Mark the slate")
@@ -84,9 +84,9 @@ struct MarkSlateSheet: View {
         return Section {
             VStack(alignment: .leading, spacing: 4) {
                 Text(last.productionName).font(Theme.serif(.title3))
-                Text("\(last.role) · \(last.companyName)").font(.subheadline).foregroundStyle(.secondary)
+                Text("\(last.role) · \(last.companyName)").font(Theme.sans(.subheadline)).foregroundStyle(.secondary)
                 Text([last.unionName ?? "Non-union", next.totalHours.hours, (next.grossEarnings ?? 0).money].joined(separator: " · "))
-                    .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                    .font(Theme.sans(.caption)).foregroundStyle(.secondary).monospacedDigit()
             }
             .padding(.vertical, 2)
             DatePicker("Day", selection: $date, displayedComponents: .date)
@@ -94,7 +94,7 @@ struct MarkSlateSheet: View {
                 Task { await save(next) }
             } label: {
                 Label(saving ? "Saving…" : "Mark it", systemImage: "movieclapper")
-                    .frame(maxWidth: .infinity).font(.headline)
+                    .frame(maxWidth: .infinity).font(Theme.sans(.headline))
             }
             .buttonStyle(.borderedProminent)
             .foregroundStyle(.black)
@@ -103,9 +103,9 @@ struct MarkSlateSheet: View {
             .listRowInsets(EdgeInsets())
         } header: {
             Text("Back to one")
-        } footer: {
+        } footer: { Group {
             Text("Same as your last day, on a new date.")
-        }
+        }.font(Theme.sans(.footnote)) }
     }
 
     /// One more day like the last one logged, priced again for the chosen date.

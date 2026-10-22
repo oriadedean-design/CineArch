@@ -46,9 +46,9 @@ struct BulkPayStubsView: View {
                         Task { await read(files) }
                     } failed: { problems.append($0) }
                     if reading > 0 { HStack { ProgressView(); Text("Reading \(reading) pay stub\(reading == 1 ? "" : "s")…").foregroundStyle(.secondary) } }
-                } header: { Text("Add pay stubs") } footer: {
+                } header: { Text("Add pay stubs") } footer: { Group {
                     Text("Up to 20 at a time. Read on your phone, then each stub is kept as that job's proof (Green Lit), up to 1 MB each.")
-                }
+                }.font(Theme.sans(.footnote)) }
 
                 if !drafts.isEmpty {
                     Section {
@@ -56,17 +56,17 @@ struct BulkPayStubsView: View {
                             for i in drafts.indices where drafts[i].union == nil { drafts[i].union = u }
                         })) { unionOptions }
                             .disabled(missingUnion == 0)
-                    } footer: {
+                    } footer: { Group {
                         Text(missingUnion == 0 ? "Every job says whose set it was." : "\(missingUnion) still need a union (or non-union). Days on a union set count toward joining.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
                     Section {
                         ForEach(drafts) { d in
                             Button { editing = d.id } label: { StubRow(draft: d, unionName: name(d.union)) }.buttonStyle(.plain)
                         }
                         .onDelete { drafts.remove(atOffsets: $0) }
-                    } header: { Text("\(drafts.count) to check") } footer: {
+                    } header: { Text("\(drafts.count) to check") } footer: { Group {
                         Text("Tap one to check what was read. Swipe left to leave it out.")
-                    }
+                    }.font(Theme.sans(.footnote)) }
                 }
 
                 if let saving { Section { HStack { ProgressView(); Text("Saving \(saving.done) of \(saving.of)…") } } }
@@ -160,10 +160,10 @@ private struct StubRow: View {
         HStack(spacing: 12) {
             if let img = draft.preview { Image(uiImage: img).resizable().scaledToFill().frame(width: 44, height: 56).clipped() }
             VStack(alignment: .leading, spacing: 3) {
-                Text(draft.production.isEmpty ? "Production not read" : draft.production).font(.headline).lineLimit(1)
+                Text(draft.production.isEmpty ? "Production not read" : draft.production).font(Theme.sans(.headline)).lineLimit(1)
                     .foregroundStyle(draft.production.isEmpty ? .secondary : .primary)
                 Text([draft.start.formatted(date: .abbreviated, time: .omitted), unionName ?? "Whose set?"].joined(separator: " · "))
-                    .font(.caption).foregroundStyle(unionName == nil ? Theme.accent : .secondary)
+                    .font(Theme.sans(.caption)).foregroundStyle(unionName == nil ? Theme.accent : .secondary)
             }
             Spacer()
             Text(Double(draft.gross).map { $0.money } ?? "No pay read").monospacedDigit()
@@ -188,9 +188,9 @@ private struct StubEditor: View {
                     TextField("Production", text: $draft.production)
                     TextField("Your role", text: $draft.role)
                     Picker("Whose set", selection: $draft.union) { unionOptions }
-                } footer: {
+                } footer: { Group {
                     Text(draft.read ? "Read from the pay stub. Check each one." : "Couldn't read this one. Fill it in from the picture.")
-                }
+                }.font(Theme.sans(.footnote)) }
                 Section {
                     DatePicker("First day", selection: $draft.start, displayedComponents: .date)
                     DatePicker("Last day", selection: $draft.end, in: draft.start..., displayedComponents: .date)
