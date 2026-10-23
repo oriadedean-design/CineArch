@@ -85,6 +85,7 @@ export const DEMO_JOBS: Job[] = [
     userId: DEMO_USER.id,
     status: 'CONFIRMED',
     productionName: 'Northern Lights (Series)',
+    agentName: 'Dana Whitfield',   // same sample agent as the phone's look-around
     companyName: 'Apex Screen Partners',
     role: 'First Assistant Camera',
     department: 'Camera Department',
