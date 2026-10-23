@@ -2,7 +2,7 @@ import SwiftUI
 import CineArchKit
 
 // Your Wrap: progress toward each union you're working toward. Days on a
-// union set count whether or not you're a member yet (permit work).
+// union production count whether or not you're a member yet (permit work).
 struct WrapView: View {
     @Environment(Session.self) private var session
     @Environment(JobsStore.self) private var jobs
@@ -74,9 +74,9 @@ struct WrapView: View {
                 }
                 Button { showAdd = true } label: { Label("Track a union", systemImage: "plus.circle.fill") }
             } header: {
-                HintedHeader(title: session.unionGoalsTitle, hint: session.isMember ? "Each union level you're working toward, such as moving up a tier or joining another union, and how far along you are." : "Each union you're working toward, and how far along you are. Days on a union set count before you're a member.")
+                HintedHeader(title: session.unionGoalsTitle, hint: session.isMember ? "Each union level you're working toward, such as moving up a tier or joining another union, and how far along you are." : "Each union you're working toward, and how far along you are. Days on a union production count before you're a member.")
             } footer: { Group {
-                Text("Days on a union set count toward that union even before you're a member. When you mark the slate, pick the union whose set it was.")
+                Text("Days on a union production count toward that union even before you're a member. When you mark the slate, say whether the production was union, and which union.")
             }.font(Theme.sans(.footnote)) }
 
             Section {
@@ -94,7 +94,7 @@ struct WrapView: View {
             .id("coming-up")
 
             Section("Your hours") {
-                LabeledContent("On union sets", value: unionHours.hours)
+                LabeledContent("On union productions", value: unionHours.hours)
                 LabeledContent("Non-union", value: otherHours.hours)
                 LabeledContent("Earned", value: jobs.totals.earnings.money)
                 if belowScale > 0 {

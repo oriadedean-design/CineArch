@@ -38,7 +38,7 @@ export const JobDetail = () => {
     companyName: '',
     role: '',
     department: 'Camera Department',
-    isUnion: true,
+    isUnion: undefined,   // asked, never assumed: the person tells us whether the production was union
     unionTypeId: '',
     startDate: today(),
     daysWorked: 1,
@@ -146,6 +146,8 @@ export const JobDetail = () => {
 
   const handleSave = async () => {
     if (!form.productionName?.trim()) return setError('Add the production name.');
+    if (form.isUnion === undefined) return setError('Say whether the production was union.');
+    if (form.isUnion && !form.unionTypeId) return setError('Choose which union the production was under.');
     if (!form.companyName?.trim()) return setError('Add the production company. It keeps your record accurate for union applications.');
     if (!form.hoursPerDay || form.hoursPerDay <= 0) return setError('Add the hours you worked (call to wrap).');
     if (!pay && !form.grossEarnings) return setError(form.isUnion
@@ -295,15 +297,15 @@ export const JobDetail = () => {
 
             <Card className="p-8 md:p-10 border-white/5 bg-white/[0.02] space-y-8">
               <div className="flex justify-between items-center border-b border-white/5 pb-6">
-                <label className="text-xs font-black uppercase tracking-widest text-white/40">The Set</label>
-                <div className="flex gap-2">
-                  <button onClick={() => set({ isUnion: true })} className={clsx("px-5 py-3 text-xs font-black uppercase tracking-widest border transition-all", form.isUnion ? "bg-accent text-black border-accent" : "text-white/20 border-white/5")}>Union</button>
-                  <button onClick={() => set({ isUnion: false, unionTypeId: '', productionTier: undefined, ratePosition: undefined })} className={clsx("px-5 py-3 text-xs font-black uppercase tracking-widest border transition-all", !form.isUnion ? "bg-accent text-black border-accent" : "text-white/20 border-white/5")}>Non-union</button>
+                <span id="union-q" className="text-xs font-black uppercase tracking-widest text-white">Was the production union?</span>
+                <div role="radiogroup" aria-labelledby="union-q" className="flex gap-2">
+                  <button role="radio" aria-checked={form.isUnion === true} onClick={() => set({ isUnion: true })} className={clsx("px-5 py-3 text-xs font-black uppercase tracking-widest border transition-all", form.isUnion === true ? "bg-accent text-black border-accent" : "text-white/70 border-white/20 hover:border-white")}>Union production</button>
+                  <button role="radio" aria-checked={form.isUnion === false} onClick={() => set({ isUnion: false, unionTypeId: '', productionTier: undefined, ratePosition: undefined })} className={clsx("px-5 py-3 text-xs font-black uppercase tracking-widest border transition-all", form.isUnion === false ? "bg-accent text-black border-accent" : "text-white/70 border-white/20 hover:border-white")}>Non-union</button>
                 </div>
               </div>
-              {form.isUnion && <p className="text-xs text-white/50 italic -mt-4">Not a member yet? Still pick Union. Permit days on a union set count toward joining.</p>}
+              <p className="text-xs text-white/60 -mt-4">Was the production under a union agreement? Say so even if you're not a member: your days on it count toward that union's card.</p>
 
-              {form.isUnion ? (
+              {form.isUnion === undefined ? null : form.isUnion ? (
                 <div className="space-y-6 animate-in slide-in-from-top-2 duration-500">
                   <div>
                     <Label>Union</Label>
@@ -345,7 +347,7 @@ export const JobDetail = () => {
                   )}
 
                   <p className="text-xs text-white/40 italic leading-relaxed">
-                    On a union set, union minimums apply to everyone hired under the agreement, member or not.
+                    On a union production, union minimums apply to everyone hired under the agreement, member or not.
                   </p>
                 </div>
               ) : (

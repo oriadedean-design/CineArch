@@ -26,7 +26,7 @@ export interface DayInput {
   hoursOnClock: number;        // call to wrap
   mealBreakMinutes?: number;   // unpaid
   hourlyRate: number;
-  rule?: PayRuleInput | null;  // null = no union rule (non-union set): rate x hours
+  rule?: PayRuleInput | null;  // null = no union rule (non-union production): rate x hours
   dailyMinimum?: number | null; // union daily fee, when the agreement has one
   workDay?: number;            // the day's place in the work week (6, 7 = premium days)
 }

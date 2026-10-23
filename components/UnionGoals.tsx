@@ -54,7 +54,7 @@ export const UnionGoals = () => {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-serif italic text-white leading-none">Your Road to the Union</h3>
-          <p className="text-xs text-white/40 italic mt-2">Days on a union set count before you're a member.</p>
+          <p className="text-xs text-white/40 italic mt-2">Days on a union production count before you're a member.</p>
         </div>
         {!adding && <Button variant="outline" onClick={() => setAdding(true)} className="h-12 px-6 text-[10px] flex items-center"><Plus size={14} className="mr-2" /> Track a union</Button>}
       </div>

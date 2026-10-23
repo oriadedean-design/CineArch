@@ -39,7 +39,7 @@ struct TrackedUnion: Codable, Identifiable, Hashable {
 
 // Progress toward one union, the same sums as services/career.ts. By default
 // only that union's jobs count, whether or not you're a member yet, so permit
-// and non-member days on a union set move you forward. Each step can change
+// and non-member days on a union production move you forward. Each step can change
 // that: relevant work anywhere (permit steps like NABET's 40 days), one
 // department, one province, some roles (or never some roles, like background
 // toward ACTRA credits), a recent window, short days as half days, and a

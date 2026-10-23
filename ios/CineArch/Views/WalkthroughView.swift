@@ -21,13 +21,13 @@ struct WalkthroughView: View {
 
     static let scenes = [
         Scene(slug: "Mark the slate", title: "Every day on set, one tap.",
-              body: "Tap the clapperboard after each day: the production, your role, your hours and whose set it was. It lands on your Slate.",
+              body: "Tap the clapperboard after each day: the production, your role, your hours and whether the production was union. It lands on your Slate.",
               plan: nil),
         Scene(slug: "Check the pay", title: "Know you were paid right.",
               body: "CineArch works out overtime from the union's rules and checks your rate against the union minimum for your role.",
               plan: nil),
         Scene(slug: "Get your card", title: "Every union day counts.",
-              body: "Days on a union set count toward that union's card, even before you're a member. Your Wrap shows how close you are.",
+              body: "Days on a union production count toward that union's card, even before you're a member. Your Wrap shows how close you are.",
               plan: nil),
         Scene(slug: "Wrap Wallet", title: "Tax, set aside as you earn.",
               body: "Income and expenses with Canadian tax rules: your $30k GST/HST line, and what to set aside for CPP and income tax.",
@@ -181,7 +181,7 @@ private struct MarkTheSlate: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Northern Lights").font(Theme.sans(.headline))
-                    Text("Camera Trainee · 10h · union set").font(Theme.sans(.caption)).foregroundStyle(.secondary)
+                    Text("Camera Trainee · 10h · union production").font(Theme.sans(.caption)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Text("$440.00").font(Theme.sans(.headline)).monospacedDigit()

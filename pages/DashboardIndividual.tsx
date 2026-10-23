@@ -120,7 +120,7 @@ export const DashboardIndividual = () => {
             </div>
             <div className="space-y-4 md:space-y-6">
               <p className="text-sm md:text-base text-white/60 italic leading-relaxed">
-                You're based in <span className="text-white">{user.province}</span>. Working union sets before you're a member? Those days count toward joining too.
+                You're based in <span className="text-white">{user.province}</span>. Working union productions before you're a member? Those days count toward joining too.
               </p>
               <div className="p-4 md:p-6 bg-white/5 border border-white/5 space-y-3 md:space-y-4">
                 <span className="text-xs font-black uppercase tracking-widest text-white/20 flex items-center gap-2 italic"><Info size={10} /> Heads up</span>

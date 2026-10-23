@@ -179,7 +179,7 @@ export const BulkJobUpload = ({ userId, onComplete }: { userId: string, onComple
             ))}
           </dl>
           <p className="text-xs text-white/50 italic">
-            {result.totals.union} on union sets, {result.totals.nonUnion} non-union.
+            {result.totals.union} on union productions, {result.totals.nonUnion} non-union.
             {result.duplicates > 0 && ` ${result.duplicates} already on your slate (same production, role and date) will be skipped.`}
           </p>
 
