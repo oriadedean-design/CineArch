@@ -64,6 +64,12 @@ final class JobsStore {
     private(set) var isLoading = false
     private(set) var place = DataPlace.none
     var error: String?
+    /// A-List Pro: jobs saved on this phone that haven't reached the database yet.
+    private(set) var waiting: Set<UUID> = []
+    /// A-List Pro: showing the copy on this phone because there's no connection.
+    private(set) var isOffline = false
+    private let sync = SyncedTable<Job>(table: "jobs", file: "jobs-pro", conflict: "id",
+                                        key: { $0.id?.uuidString.lowercased() ?? "" }, delete: { key, _ in ("id", key) })
 
     var totals: (hours: Double, union: Double, earnings: Double) {
         let confirmed = jobs.filter { $0.status != "TENTATIVE" }
@@ -93,27 +99,74 @@ final class JobsStore {
     func load() async {
         isLoading = true
         defer { isLoading = false }
-        do {
-            switch place {
-            case .phone(let user):
+        switch place {
+        case .phone(let user):
+            do {
                 // First time on the phone (new account, or no longer Pro): bring down what's online.
                 if !OnDevice.exists("jobs", user: user) { try persist(await fetchOnline(), user: user) }
-                jobs = (OnDevice.read("jobs", user: user) ?? []).sorted { $0.startDate > $1.startDate }
-            case .online(let user):
-                // Just went Pro: send up what was kept on this phone, then it lives online.
-                if let local: [Job] = OnDevice.read("jobs", user: user), !local.isEmpty {
-                    let rows = local.map { var j = $0; j.userId = user; return j }
-                    try await Backend.client.from("jobs").upsert(rows, onConflict: "id").execute()
+                var list: [Job] = OnDevice.read("jobs", user: user) ?? []
+                // No longer Pro with changes that never synced: keep them here.
+                if !sync.pending(user).isEmpty { list = sync.merge(list, user); try persist(list, user: user); sync.discardPending(user) }
+                jobs = list.sorted { $0.startDate > $1.startDate }
+                error = nil
+            } catch {
+                self.error = "Couldn't load your jobs. Pull to try again."
+            }
+        case .online(let user):
+            // The copy on this phone first, so the Slate shows straight away, signal or not.
+            if let copy = sync.cached(user) { jobs = copy.sorted { $0.startDate > $1.startDate } }
+            // Just went Pro: what was kept on this phone joins the queue and syncs from here.
+            if let local: [Job] = OnDevice.read("jobs", user: user), !local.isEmpty {
+                for var j in local {
+                    j.userId = user; j.id = j.id ?? UUID()
+                    sync.enqueue(.init(key: j.id!.uuidString.lowercased(), row: j), user)
                 }
                 OnDevice.remove("jobs", user: user)
-                jobs = try await fetchOnline()
-            default: return
             }
-            error = nil
-        } catch {
-            self.error = "Couldn't load your jobs. Pull to try again."
+            await syncOnline(user)
+        default: return
         }
     }
+
+    /// Sends what's waiting, then brings down the latest. Offline, the copy here stands.
+    func syncNow() async {
+        if case .online(let user) = place { await syncOnline(user) }
+    }
+
+    private func syncOnline(_ user: UUID) async {
+        let result = await sync.flush(user)
+        do {
+            jobs = sync.merge(try await fetchOnline(), user).sorted { $0.startDate > $1.startDate }
+            sync.cache(jobs, user)
+            isOffline = false
+            error = result.refused > 0 ? "\(result.refused) change\(result.refused == 1 ? "" : "s") couldn't sync. They're kept on this iPhone." : nil
+        } catch {
+            isOffline = true
+            if jobs.isEmpty, let copy = sync.cached(user) { jobs = copy.sorted { $0.startDate > $1.startDate } }
+        }
+        refreshWaiting(user)
+    }
+
+    private func refreshWaiting(_ user: UUID) {
+        waiting = Set(sync.waiting(user).compactMap(UUID.init(uuidString:)))
+    }
+
+    /// A-List Pro: keep the change on this phone, queue it, and send it when there's a connection.
+    private func keep(_ list: [Job], _ change: SyncedTable<Job>.Change, _ user: UUID) {
+        jobs = list.sorted { $0.startDate > $1.startDate }
+        sync.cache(jobs, user)
+        sync.enqueue(change, user)
+        refreshWaiting(user)
+        Task { await self.push(user) }
+    }
+
+    private func push(_ user: UUID) async {
+        let result = await sync.flush(user)
+        refreshWaiting(user)
+        if result.sent > 0 { isOffline = false }
+    }
+
+    private func change(_ job: Job) -> SyncedTable<Job>.Change { .init(key: job.id?.uuidString.lowercased() ?? "", row: job) }
 
     private func fetchOnline() async throws -> [Job] {
         try await Backend.client.from("jobs").select().order("start_date", ascending: false).execute().value
@@ -131,8 +184,9 @@ final class JobsStore {
             job.id = UUID(); job.userId = user
             try persist([job] + jobs, user: user)
         case .online(let user):
-            job.userId = user
-            job = try await Backend.client.from("jobs").insert(job).select().single().execute().value
+            job.userId = user; job.id = job.id ?? UUID()
+            keep([job] + jobs, change(job), user)
+            return job
         }
         jobs.insert(job, at: 0)
         jobs.sort { $0.startDate > $1.startDate }
@@ -147,10 +201,7 @@ final class JobsStore {
         do {
             switch place {
             case .phone(let user): try persist(updated, user: user)
-            case .online:
-                struct Agent: Encodable { let agent_name: String?; let agency_id: UUID?; let representative_id: UUID? }
-                try await Backend.client.from("jobs").update(Agent(agent_name: name, agency_id: agencyId, representative_id: representativeId))
-                    .eq("id", value: id).execute()
+            case .online(let user): keep(updated, change(updated[i]), user); return
             default: break
             }
             jobs = updated
@@ -170,7 +221,7 @@ final class JobsStore {
         do {
             switch place {
             case .phone(let user): try persist(updated, user: user)
-            case .online: try await Backend.client.from("jobs").update(["status": "CONFIRMED"]).eq("id", value: id).execute()
+            case .online(let user): keep(updated, change(updated[i]), user); return
             default: break
             }
             jobs = updated
@@ -185,6 +236,9 @@ final class JobsStore {
         switch place {
         case .preview: break
         case .online(let user):
+            // The job has to be online before its pay stub can point at it.
+            await sync.flush(user); refreshWaiting(user)
+            if waiting.contains(id) { throw WaitingToSync() }
             await ledger.loadUsage()
             guard ledger.usedBytes + Int64(file.data.count) <= Documents.accountLimitBytes else { throw LedgerStore.StorageFull() }
             let path = "\(user.uuidString.lowercased())/proof/job-\(id.uuidString.lowercased())-\(Int(Date().timeIntervalSince1970)).\(file.ext)"
@@ -192,6 +246,7 @@ final class JobsStore {
             try await Backend.client.from("jobs").update(["proof_path": path]).eq("id", value: id).execute()
             if let old = job.proofPath { _ = try? await Backend.client.storage.from("documents").remove(paths: [old]) }
             if let i = jobs.firstIndex(where: { $0.id == id }) { jobs[i].proofPath = path }
+            sync.cache(jobs, user)
             await ledger.loadUsage()
             return
         default: throw ProOnly()
@@ -214,7 +269,7 @@ final class JobsStore {
         do {
             switch place {
             case .phone(let user): try persist(remaining, user: user)
-            case .online: try await Backend.client.from("jobs").delete().eq("id", value: id).execute()
+            case .online(let user): keep(remaining, .init(key: id.uuidString.lowercased(), row: nil), user); return
             default: break
             }
             jobs = remaining

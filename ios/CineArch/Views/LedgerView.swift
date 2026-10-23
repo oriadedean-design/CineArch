@@ -143,14 +143,18 @@ struct LedgerView: View {
                     .foregroundStyle(.secondary)
             }
             ForEach(shown) { e in
-                Button { proofFor = e } label: { LedgerRow(entry: e) }.buttonStyle(.plain)
+                Button { proofFor = e } label: { LedgerRow(entry: e, waiting: e.id.map(ledger.waiting.contains) ?? false) }.buttonStyle(.plain)
             }
             .onDelete { idx in
                 let doomed = idx.map { shown[$0] }
                 Task { for e in doomed { await ledger.delete(e) } }
             }
         } footer: { Group {
-            Text("Tap an entry to back it with proof. Swipe left to delete.")
+            if ledger.isOffline {
+                Text("Offline. New entries are saved on this iPhone and sync when you're back online. Proof can be added once they've synced.")
+            } else {
+                Text("Tap an entry to back it with proof. Swipe left to delete.")
+            }
         }.font(Theme.sans(.footnote)) }
     }
 
@@ -293,6 +297,7 @@ struct GreenLitNotice: View {
 
 struct LedgerRow: View {
     let entry: LedgerEntry
+    var waiting = false              // saved on this iPhone, not yet synced
     var body: some View {
         HStack {
             Image(systemName: entry.isGreenLit ? "checkmark.square.fill" : "square.dashed")
@@ -305,6 +310,7 @@ struct LedgerRow: View {
                     Text("·")
                     Text(Date(isoDay: entry.dateIncurred)?.formatted(date: .abbreviated, time: .omitted) ?? entry.dateIncurred)
                     if entry.ruleTags?.contains("MEALS_50_LIMIT") == true, !entry.categoryName.contains("50%") { Text("· 50% rule").foregroundStyle(Theme.accent) }
+                    if waiting { Text("· Waiting to sync").accessibilityLabel("Saved on this iPhone, waiting to sync") }
                 }
                 .font(Theme.sans(.caption)).foregroundStyle(.secondary)
             }

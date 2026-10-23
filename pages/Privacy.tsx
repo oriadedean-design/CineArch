@@ -42,7 +42,7 @@ export const Privacy = () => {
 
       <Section title="Where it's kept">
         <p>On the free Indie Log plan, the CineArch iPhone app keeps your jobs and union progress on your iPhone only. Your account, your Setting the Scene answers, your agents and managers and any notes you send are kept online so you can sign in and use them on the website.</p>
-        <p>On A-List Pro, your jobs, union progress, Wrap Wallet and documents are kept online so they sync between your iPhone and the website.</p>
+        <p>On A-List Pro, your jobs, union progress, Wrap Wallet and documents are kept online so they sync between your iPhone and the website. The iPhone app also keeps a copy of your jobs, union progress and Wrap Wallet, so it works with no signal; anything you change offline is sent when you're back online.</p>
         <p>Information kept online is stored by Supabase in its Canada (Central) region. Supabase encrypts stored data (AES-256) and data in transit (TLS). Documents are kept in private storage that only your account can open.</p>
       </Section>
 
