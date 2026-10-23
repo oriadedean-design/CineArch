@@ -133,6 +133,13 @@ final class LedgerStore {
     private(set) var isLoading = false
     private(set) var isPreview = false
     var error: String?
+    /// Entries saved on this phone that haven't reached the database yet.
+    private(set) var waiting: Set<UUID> = []
+    /// Showing the copy on this phone because there's no connection.
+    private(set) var isOffline = false
+    private let sync = SyncedTable<LedgerEntry>(table: "finance_transactions", file: "wallet-pro", conflict: "id",
+                                                key: { $0.id?.uuidString.lowercased() ?? "" }, delete: { key, _ in ("id", key) })
+    private func sorted(_ list: [LedgerEntry]) -> [LedgerEntry] { list.sorted { $0.dateIncurred > $1.dateIncurred } }
 
     func usePreview() {
         isPreview = true; error = nil
@@ -144,8 +151,11 @@ final class LedgerStore {
     func load() async {
         guard !isPreview else { return }
         guard let userId = Backend.client.auth.currentUser?.id else { return }
+        // The copy on this phone first, so the Wallet shows straight away, signal or not.
+        if entries.isEmpty, let copy = sync.cached(userId) { entries = copy; stats = LedgerStats(entries: copy) }
         isLoading = true
-        defer { isLoading = false }
+        defer { isLoading = false; waiting = Set(sync.waiting(userId).compactMap(UUID.init(uuidString:))) }
+        let result = await sync.flush(userId)
         do {
             // All of this year (reports and the spreadsheet cover the whole year),
             // plus the latest 200 from earlier years to look back on.
@@ -156,11 +166,18 @@ final class LedgerStore {
                 .order("date_incurred", ascending: false).limit(200).execute().value
             async let totals: [LedgerStats] = Backend.client
                 .rpc("finance_stats", params: ["p_user_id": userId.uuidString.lowercased()]).execute().value
-            entries = try await thisYear + earlier
-            stats = try await totals.first ?? LedgerStats()
-            error = nil
+            let online = try await thisYear + earlier
+            let serverTotals = try await totals.first ?? LedgerStats()
+            let unsent = !sync.pending(userId).isEmpty
+            entries = sorted(sync.merge(online, userId))
+            // Same sums as finance_stats; worked out here while changes are still on their way.
+            stats = unsent ? LedgerStats(entries: entries) : serverTotals
+            sync.cache(entries, userId)
+            isOffline = false
+            error = result.refused > 0 ? "Some Wallet changes couldn't sync. They're kept on this iPhone." : nil
         } catch {
-            self.error = "Couldn't load your ledger. Pull to try again."
+            isOffline = true
+            if entries.isEmpty { self.error = "Couldn't load your ledger. Pull to try again." }
         }
     }
 
@@ -195,9 +212,10 @@ final class LedgerStore {
             stats = LedgerStats(entries: entries)
             return entry
         }
-        let saved: LedgerEntry = try await Backend.client.from("finance_transactions").insert(entry).select().single().execute().value
-        await load()
-        return saved
+        guard let user = entry.userId else { throw SignInNeeded() }
+        entry.id = entry.id ?? UUID()
+        keep(sorted(entries.filter { $0.id != entry.id } + [entry]), .init(key: entry.id!.uuidString.lowercased(), row: entry), user)
+        return entry
     }
 
     /// Documents stored online, for "X MB of 5 GB used".
@@ -219,6 +237,9 @@ final class LedgerStore {
         guard let id = entry.id else { return }
         if isPreview { setProof(id, "preview/proof/\(id)"); return }
         guard let user = try? await Backend.client.auth.session.user.id else { throw SignInNeeded() }
+        // The entry has to be online before its proof can point at it.
+        await sync.flush(user); waiting = Set(sync.waiting(user).compactMap(UUID.init(uuidString:)))
+        if waiting.contains(id) { throw WaitingToSync() }
         await loadUsage()
         guard usedBytes + Int64(file.data.count) <= Documents.accountLimitBytes else { throw StorageFull() }
         let path = "\(user.uuidString.lowercased())/proof/\(id.uuidString.lowercased())-\(Int(Date().timeIntervalSince1970)).\(file.ext)"
@@ -226,6 +247,7 @@ final class LedgerStore {
         try await Backend.client.from("finance_transactions").update(["proof_path": path]).eq("id", value: id).execute()
         if let old = entry.proofPath { _ = try? await Backend.client.storage.from("documents").remove(paths: [old]) }
         setProof(id, path)
+        sync.cache(entries, user)
         await loadUsage()
     }
 
@@ -256,13 +278,26 @@ final class LedgerStore {
     func delete(_ entry: LedgerEntry) async {
         guard let id = entry.id else { return }
         if isPreview { entries.removeAll { $0.id == id }; stats = LedgerStats(entries: entries); return }
-        do {
-            try await Backend.client.from("finance_transactions").delete().eq("id", value: id).execute()
-            await load()
-        } catch {
-            self.error = "Couldn't delete that entry."
+        guard let user = Backend.client.auth.currentUser?.id else { return }
+        keep(entries.filter { $0.id != id }, .init(key: id.uuidString.lowercased(), row: nil), user)
+    }
+
+    /// Keep the change on this phone, queue it, and send it when there's a connection.
+    private func keep(_ list: [LedgerEntry], _ change: SyncedTable<LedgerEntry>.Change, _ user: UUID) {
+        entries = list
+        stats = LedgerStats(entries: list)
+        sync.cache(list, user)
+        sync.enqueue(change, user)
+        waiting = Set(sync.waiting(user).compactMap(UUID.init(uuidString:)))
+        Task {
+            let result = await self.sync.flush(user)
+            self.waiting = Set(self.sync.waiting(user).compactMap(UUID.init(uuidString:)))
+            if result.sent > 0 { self.isOffline = false }
         }
     }
+
+    /// Sends what's waiting, then brings down the latest.
+    func syncNow() async { await load() }
 
     func clear() { entries = []; stats = LedgerStats(); isPreview = false }
 }

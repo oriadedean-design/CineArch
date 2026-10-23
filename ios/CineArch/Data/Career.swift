@@ -110,6 +110,11 @@ final class TrackingStore {
     private(set) var tracks: [TrackedUnion] = []
     private(set) var place = DataPlace.none
     var error: String?
+    /// A-List Pro: unions (by union id) saved on this phone that haven't reached the database yet.
+    private(set) var waiting: Set<String> = []
+    // One row per union per person, so the queue is keyed by union; the database keeps its own row ids.
+    private let sync = SyncedTable<TrackedUnion>(table: "union_tracking", file: "unions-pro", conflict: "user_id,union_type_id",
+                                                 key: { $0.unionTypeId }, delete: { key, _ in ("union_type_id", key) })
 
     /// Switches to an account's unions: the sample, this phone (free) or online (Pro).
     func use(_ newPlace: DataPlace) async {
@@ -122,24 +127,54 @@ final class TrackingStore {
     }
 
     func load() async {
-        do {
-            switch place {
-            case .phone(let user):
+        switch place {
+        case .phone(let user):
+            do {
                 if !OnDevice.exists("unions", user: user) { try OnDevice.write(try await fetchOnline(), "unions", user: user) }
-                tracks = OnDevice.read("unions", user: user) ?? []
-            case .online(let user):
-                if let local: [TrackedUnion] = OnDevice.read("unions", user: user), !local.isEmpty {
-                    let rows = local.map { var t = $0; t.id = nil; t.userId = user; return t }
-                    try await Backend.client.from("union_tracking").upsert(rows, onConflict: "user_id,union_type_id").execute()
-                }
-                OnDevice.remove("unions", user: user)
-                tracks = try await fetchOnline()
-            default: return
+                var list: [TrackedUnion] = OnDevice.read("unions", user: user) ?? []
+                // No longer Pro with changes that never synced: keep them here.
+                if !sync.pending(user).isEmpty { list = sync.merge(list, user); try OnDevice.write(list, "unions", user: user); sync.discardPending(user) }
+                tracks = list
+                error = nil
+            } catch {
+                self.error = "Couldn't load your unions."
             }
-            error = nil
-        } catch {
-            self.error = "Couldn't load your unions."
+        case .online(let user):
+            if let copy = sync.cached(user) { tracks = copy }
+            // Just went Pro: what was kept on this phone joins the queue.
+            if let local: [TrackedUnion] = OnDevice.read("unions", user: user), !local.isEmpty {
+                for t in local { sync.enqueue(.init(key: t.unionTypeId, row: forUpload(t, user)), user) }
+                OnDevice.remove("unions", user: user)
+            }
+            await syncOnline(user)
+        default: return
         }
+    }
+
+    /// Sends what's waiting, then brings down the latest. Offline, the copy here stands.
+    func syncNow() async {
+        if case .online(let user) = place { await syncOnline(user) }
+    }
+
+    private func syncOnline(_ user: UUID) async {
+        let result = await sync.flush(user)
+        if let online = try? await fetchOnline() {
+            tracks = sync.merge(online, user).map { var t = $0; t.id = t.id ?? UUID(); return t }
+            sync.cache(tracks, user)
+            error = result.refused > 0 ? "Some union changes couldn't sync. They're kept on this iPhone." : nil
+        }
+        waiting = sync.waiting(user)
+    }
+
+    /// The row as sent: no id, so the database keeps the one it has for this union.
+    private func forUpload(_ t: TrackedUnion, _ user: UUID) -> TrackedUnion { var t = t; t.id = nil; t.userId = user; return t }
+
+    private func keep(_ list: [TrackedUnion], _ change: SyncedTable<TrackedUnion>.Change, _ user: UUID) {
+        tracks = list
+        sync.cache(list, user)
+        sync.enqueue(change, user)
+        waiting = sync.waiting(user)
+        Task { await self.sync.flush(user); self.waiting = self.sync.waiting(user) }
     }
 
     private func fetchOnline() async throws -> [TrackedUnion] {
@@ -158,9 +193,9 @@ final class TrackingStore {
             try OnDevice.write(tracks.filter { $0.unionTypeId != track.unionTypeId } + [track], "unions", user: user)
         case .online(let user):
             track.userId = user
-            track.id = nil
-            track = try await Backend.client.from("union_tracking")
-                .upsert(track, onConflict: "user_id,union_type_id").select().single().execute().value
+            track.id = tracks.first { $0.unionTypeId == track.unionTypeId }?.id ?? UUID()
+            keep(tracks.filter { $0.unionTypeId != track.unionTypeId } + [track], .init(key: track.unionTypeId, row: forUpload(track, user)), user)
+            return
         }
         tracks.removeAll { $0.unionTypeId == track.unionTypeId }
         tracks.append(track)
@@ -171,9 +206,7 @@ final class TrackingStore {
         do {
             switch place {
             case .phone(let user): try OnDevice.write(remaining, "unions", user: user)
-            case .online(let user):
-                try await Backend.client.from("union_tracking").delete()
-                    .eq("user_id", value: user).eq("union_type_id", value: track.unionTypeId).execute()
+            case .online(let user): keep(remaining, .init(key: track.unionTypeId, row: nil), user); return
             default: break
             }
             tracks = remaining

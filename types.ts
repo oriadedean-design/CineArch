@@ -226,7 +226,7 @@ export const PLANS: Record<string, Plan> = {
     desc: 'The business side of your career, handled.',
     benefits: [
       'Everything in Indie Log',
-      'Sync Online: one account on your phone, iPad and the website',
+      'Sync Online: works offline on iPhone, and syncs with iPad and the website',
       'Wrap Wallet: an income and expense ledger with Canadian tax rules',
       'Your $30k GST/HST line, tracked as you earn',
       'What to set aside for CPP and income tax',

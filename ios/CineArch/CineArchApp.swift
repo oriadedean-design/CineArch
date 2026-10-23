@@ -23,7 +23,20 @@ struct CineArchApp: App {
                 .preferredColorScheme(.dark)
                 .task { await engine.load() }
                 .task { await session.watch() }
+                // A-List Pro: send changes made offline when the connection comes back or the app reopens.
+                .onChange(of: Connectivity.shared.isOnline) { _, online in if online { Task { await syncPro() } } }
+                .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await syncPro() } } }
         }
+    }
+
+    @Environment(\.scenePhase) private var scenePhase
+
+    private func syncPro() async {
+        guard session.isPremium, !session.isPreview else { return }
+        async let a: Void = jobs.syncNow()
+        async let b: Void = tracking.syncNow()
+        async let c: Void = ledger.syncNow()
+        _ = await (a, b, c)
     }
 }
 
