@@ -218,6 +218,8 @@ struct FilterChip: View {
             .padding(.horizontal, 12).padding(.vertical, 6)
             .foregroundStyle(on ? Color.black : .primary)
             .background(on ? Theme.accent : Color.secondary.opacity(0.18))
+            .padding(.vertical, 6)              // a 44 pt tap area (Apple's default) around the 32 pt chip
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])
