@@ -2,7 +2,7 @@ import SwiftUI
 import CineArchKit
 
 // Many pay stubs at once: each is read on the phone and becomes a draft job on
-// your Slate (production, dates, hours, gross pay). You pick whose set it was and
+// your Slate (production, dates, hours, gross pay). You say whether each production was union, and
 // check each one before saving. Each stub is kept as the job's proof (Green Lit).
 struct BulkPayStubsView: View {
     @Environment(JobsStore.self) private var jobs
@@ -57,7 +57,7 @@ struct BulkPayStubsView: View {
                         })) { unionOptions }
                             .disabled(missingUnion == 0)
                     } footer: { Group {
-                        Text(missingUnion == 0 ? "Every job says whose set it was." : "\(missingUnion) still need a union (or non-union). Days on a union set count toward joining.")
+                        Text(missingUnion == 0 ? "Every job says whether the production was union." : "\(missingUnion) still need a union (or non-union). Days on a union production count toward joining.")
                     }.font(Theme.sans(.footnote)) }
                     Section {
                         ForEach(drafts) { d in

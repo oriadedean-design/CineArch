@@ -28,7 +28,9 @@ struct PayForm: View {
     @State private var showSave = false
 
     private static let nonUnion = "non-union"
-    private var isUnion: Bool { unionId != Self.nonUnion }
+    /// Whether the production was under a union agreement: what the person tells us (not checked).
+    @AppStorage("calc.unionProduction") private var unionProduction = true
+    private var isUnion: Bool { unionProduction && unionId != Self.nonUnion }
     private var day: String { date.isoDay }
 
     private var input: JobInput {
@@ -43,10 +45,16 @@ struct PayForm: View {
     var body: some View {
         let p = priced
         List {
-            Section("The job") {
-                Picker("Union", selection: $unionId) {
-                    Text("Non-union").tag(Self.nonUnion)
-                    ForEach(unionsWithRates) { Text($0.name).tag($0.id) }
+            Section {
+                Picker("Production", selection: $unionProduction) {
+                    Text("Union production").tag(true)
+                    Text("Non-union").tag(false)
+                }
+                .pickerStyle(.segmented)
+                if unionProduction {
+                    Picker("Which union", selection: $unionId) {
+                        ForEach(unionsWithRates) { Text($0.name).tag($0.id) }
+                    }
                 }
                 DatePicker("Date", selection: $date, displayedComponents: .date)
                 if isUnion && p.productionTypes.count > 1 {
@@ -62,7 +70,9 @@ struct PayForm: View {
                         LabeledContent("Position", value: position ?? "Choose…")
                     }
                 }
-            }
+            } header: { Text("The job") } footer: { Group {
+                Text("Was the production union? Say so even if you're not a member: your days on it count toward that union's card.")
+            }.font(Theme.sans(.footnote)) }
 
             Section("Hours") {
                 Stepper(value: $hours, in: 0.5...24, step: 0.5) { LabeledContent("Call to wrap", value: hours.hours) }
@@ -126,6 +136,11 @@ struct PayForm: View {
         .overlay { EngineStatus() }
         .scrollDismissesKeyboard(.interactively)
         .onChange(of: unionId) { productionType = nil; position = nil; rateText = "" }
+        .onChange(of: unionProduction) { productionType = nil; position = nil; rateText = "" }
+        .onAppear {
+            // Earlier versions kept "non-union" in the union picker.
+            if unionId == Self.nonUnion { unionProduction = false; unionId = "u-873" }
+        }
         .onChange(of: productionType) { position = nil }
         .task(id: p.schedule?.id) { if let s = p.schedule { await store.ensureLines([s.id]) } }
         .sheet(isPresented: $showAuth) {
@@ -222,9 +237,12 @@ struct SaveJobSheet: View {
                         }
                     }
                 }
-                if let pay = priced.pay {
-                    Section { LabeledContent("Pay", value: pay.gross.money); LabeledContent("Hours", value: pay.totalHours.hours) }
-                }
+                Section {
+                    LabeledContent("Production", value: input.isUnion ? "Union · \(unionName ?? "union")" : "Non-union")
+                    if let pay = priced.pay { LabeledContent("Pay", value: pay.gross.money); LabeledContent("Hours", value: pay.totalHours.hours) }
+                } footer: { Group {
+                    Text("As you told us. To change it, go back to the calculator.")
+                }.font(Theme.sans(.footnote)) }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
             .navigationTitle("Mark the slate")

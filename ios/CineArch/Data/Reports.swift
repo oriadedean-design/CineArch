@@ -6,7 +6,7 @@ import CineArchKit
 
 // Branded PDF exports (A-List Pro), built on the phone from the person's own
 // Slate, Wrap Wallet and union goals:
-//   Union Pack  - days on union sets, each job's pay stub attached
+//   Union Pack  - days on union productions, each job's pay stub attached
 //   Tax Pack    - income, expenses by category, GST/HST, every receipt attached
 //   Wrap Report - the overview, with all proof attached
 // Proof pages show the photo with the lines CineArch read highlighted and
@@ -22,7 +22,7 @@ enum ReportKind: String, CaseIterable, Identifiable {
     }
     var blurb: String {
         switch self {
-        case .union: "For a union application: your days on union sets, each with its pay stub."
+        case .union: "For a union application: your days on union productions, each with its pay stub."
         case .tax: "For your accountant: income, expenses by category, GST/HST, every receipt."
         case .overview: "Your year at a glance, with all your proof attached."
         }
@@ -186,9 +186,9 @@ private struct ReportHTML {
         switch kind {
         case .union:
             body.append(cardBox() + greenLit(unionJobs.filter(\.isGreenLit).count, unionJobs.count, "union jobs")
-                        + "<h2>Days on union sets <span class=\"label\">Each backed by a pay stub</span></h2>")
-            body = chunk(rows: unionJobs.map(slateRow), header: slateHead, total: slateTotal(unionJobs, "On union sets"),
-                         firstLead: body[0], perPage: 9, perFirstPage: 6, title: "Days on union sets (continued)")
+                        + "<h2>Days on union productions <span class=\"label\">Each backed by a pay stub</span></h2>")
+            body = chunk(rows: unionJobs.map(slateRow), header: slateHead, total: slateTotal(unionJobs, "On union productions"),
+                         firstLead: body[0], perPage: 9, perFirstPage: 6, title: "Days on union productions (continued)")
         case .tax:
             body.append(money() + greenLit(entries.filter(\.isGreenLit).count, entries.count, "entries") + gstSetAside()
                         + "<h2>Expenses by category</h2>" + categories())
@@ -336,7 +336,7 @@ private struct ReportHTML {
             <span class="muted">\(p.jobs) job\(p.jobs == 1 ? "" : "s") logged in CineArch\(t.startingValue > 0 ? " + \(t.format(t.startingValue)) banked before" : "")\(p.windowMonths.map { ", counted over the last \($0) months" } ?? "")\(p.minProductions.map { ", \(p.productions) of \($0) productions" } ?? "")\(p.isConfirmed ? "" : ". Target not confirmed by the union").</span>
             """
         }.joined(separator: "<div style=\"height:10px\"></div>")
-        return "<h2>Getting your card <span class=\"label\">Days on union sets</span></h2><div class=\"box\">\(rows)</div>"
+        return "<h2>Getting your card <span class=\"label\">Days on union productions</span></h2><div class=\"box\">\(rows)</div>"
     }
 
     private var slateHead: String { "<tr><th>Dates</th><th>Production</th><th>Role</th><th>Set</th><th class=\"r\">Days</th><th class=\"r\">Hours</th><th class=\"r\">Gross</th><th>Proof</th></tr>" }

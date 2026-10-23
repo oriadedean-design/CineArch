@@ -72,7 +72,7 @@ struct LookAroundWrap: View {
             Section {
                 LockedRow(title: "Track a union", systemImage: "chart.bar.fill", action: showAuth)
             } header: { Text("Getting your card") } footer: { Group {
-                Text("Count your days on union sets toward your card, member or not.")
+                Text("Count your days on union productions toward your card, member or not.")
             }.font(Theme.sans(.footnote)) }
             Section("Your year on set") {
                 Button(action: showAuth) {
@@ -122,7 +122,7 @@ struct LookAroundSlate: View {
             Section {
                 LockedRow(title: "Mark your first day", systemImage: "movieclapper", action: showAuth)
             } footer: { Group {
-                Text("Every day you work, with its hours, pay and whose set it was.")
+                Text("Every day you work, with its hours, pay and whether the production was union.")
             }.font(Theme.sans(.footnote)) }
         }
         .contentMargins(.bottom, 96, for: .scrollContent)     // clear of the clapperboard

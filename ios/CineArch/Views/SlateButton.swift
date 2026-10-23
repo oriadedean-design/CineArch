@@ -4,7 +4,7 @@ import CineArchKit
 // The floating clapperboard: one tap to mark today's slate.
 struct SlateButton: View {
     @Environment(Session.self) private var session
-    @State private var showSlate = false
+    @State private var showSlate = UserDefaults.standard.bool(forKey: "cinearch.slate")   // `-cinearch.slate YES` opens it (screenshots)
     @State private var showAuth = false
     @State private var claps = 0
 
@@ -60,7 +60,7 @@ struct MarkSlateSheet: View {
                             Label(jobs.lastJob == nil ? "Mark your first day" : "A different job", systemImage: "square.and.pencil")
                         }
                     } footer: { Group {
-                        Text("Pick the union whose set it was. Days on a union production count toward joining, even before you're a member.")
+                        Text("Say which union the production was under. Days on a union production count toward joining, even before you're a member.")
                     }.font(Theme.sans(.footnote)) }
                     if let error { Section { Text(error).foregroundStyle(.red) } }
                 }
@@ -85,7 +85,7 @@ struct MarkSlateSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(last.productionName).font(Theme.serif(.title3))
                 Text("\(last.role) · \(last.companyName)").font(Theme.sans(.subheadline)).foregroundStyle(.secondary)
-                Text([last.unionName ?? "Non-union", next.totalHours.hours, (next.grossEarnings ?? 0).money].joined(separator: " · "))
+                Text([last.unionName.map { "Union · \($0)" } ?? "Non-union", next.totalHours.hours, (next.grossEarnings ?? 0).money].joined(separator: " · "))
                     .font(Theme.sans(.caption)).foregroundStyle(.secondary).monospacedDigit()
             }
             .padding(.vertical, 2)
