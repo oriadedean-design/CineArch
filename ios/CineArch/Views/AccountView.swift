@@ -63,6 +63,10 @@ struct AccountView: View {
                         if !session.isPreview { Text("How you're paid decides what the Wrap Wallet tells you to set aside for tax. Setting the Scene is where you're based, what you do and who's in your corner.") }
                     }.font(Theme.sans(.footnote)) }
 
+                    Section { walkthroughRow } footer: { Group {
+                        Text("A one-minute walkthrough: mark the slate, check your pay, count your days toward your card.")
+                    }.font(Theme.sans(.footnote)) }
+
                     Section {
                         NavigationLink { RepresentationView() } label: {
                             LabeledContent("Your representation") {
@@ -124,6 +128,7 @@ struct AccountView: View {
                     Section {
                         Button("Sign in or create account") { showAuth = true }
                         Button("Take a look around") { session.startPreview() }
+                        walkthroughRow
                     } footer: { Group {
                         Text("The guide and pay calculator work without an account. Sign in to mark the slate, or look around a sample A-List Pro account first.")
                     }.font(Theme.sans(.footnote)) }
@@ -152,7 +157,6 @@ struct AccountView: View {
                 }
 
                 Section("CineArch") {
-                    Button { showWalkthrough = true } label: { Label("How CineArch works", systemImage: "play.rectangle") }
                     Link(destination: site.appending(path: "guide/")) { Label("Union guide on the web", systemImage: "safari") }
                     Link(destination: URL(string: "\(site)/#/privacy")!) { Label("Privacy policy", systemImage: "hand.raised") }
                     Link(destination: URL(string: "\(site)/#/about")!) { Label("Support", systemImage: "questionmark.circle") }
@@ -204,6 +208,18 @@ struct AccountView: View {
                 Text("Your account and all its data are deleted immediately. Type DELETE to confirm.")
             }
         }
+    }
+
+    private var walkthroughRow: some View {
+        Button { showWalkthrough = true } label: {
+            LabeledContent {
+                Text("1 min").foregroundStyle(.secondary)
+            } label: {
+                Label("How CineArch works", systemImage: "play.rectangle.fill")
+            }
+        }
+        .foregroundStyle(.primary)
+        .accessibilityHint("Plays the walkthrough")
     }
 
     private var sceneSummary: String {

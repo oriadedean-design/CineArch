@@ -37,6 +37,7 @@ struct LockedRow: View {
 struct LookAroundFooter: View {
     @Environment(Session.self) private var session
     let showAuth: () -> Void
+    @State private var showWalkthrough = false
 
     var body: some View {
         Section {
@@ -47,6 +48,10 @@ struct LookAroundFooter: View {
             Button("Or look around a sample account") { session.startPreview() }
                 .frame(maxWidth: .infinity)
                 .listRowBackground(Color.clear)
+            Button { showWalkthrough = true } label: { Label("How CineArch works · 1 min", systemImage: "play.rectangle.fill") }
+                .frame(maxWidth: .infinity)
+                .listRowBackground(Color.clear)
+                .fullScreenCover(isPresented: $showWalkthrough) { WalkthroughView(finish: "Roll camera") { showWalkthrough = false } }
         } footer: { Group {
             Text("Free to start. Your Slate and union tracking stay on your phone unless you go \(Plan.pro.name).")
                 .frame(maxWidth: .infinity).multilineTextAlignment(.center)

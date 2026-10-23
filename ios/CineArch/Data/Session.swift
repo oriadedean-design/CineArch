@@ -18,12 +18,13 @@ struct Profile: Codable, Equatable {
     var gstMethod: String?           // regular or quick
     var isOnboarded: Bool = false
     var isPremium: Bool = false
+    var walkthroughSeenAt: Date?     // the table read played for this account (any phone)
 
     enum CodingKeys: String, CodingKey {
         case name, province, region, department
         case selectedRoles = "selected_roles", memberStatus = "member_status", hasAgentFee = "has_agent_fee"
         case agentFeePct = "agent_fee_pct", isOnboarded = "is_onboarded", isPremium = "is_premium", earningGoal = "earning_goal"
-        case payType = "pay_type", gstMethod = "gst_method"
+        case payType = "pay_type", gstMethod = "gst_method", walkthroughSeenAt = "walkthrough_seen_at"
     }
 
     /// The columns a user may write (lock_profile_privileges), never is_premium.
@@ -41,6 +42,21 @@ final class Session {
     private(set) var user: User?
     private(set) var isPremium = false
     private(set) var profile: Profile?
+    /// Signed in for real and this account hasn't seen the table read yet. Comes
+    /// before Setting the Scene. Also remembered on this phone, in case saving
+    /// it online failed.
+    var needsWalkthrough: Bool {
+        guard !isPreview, let id = user?.id, let profile else { return false }
+        return profile.walkthroughSeenAt == nil && !UserDefaults.standard.bool(forKey: "cinearch.walkthrough.\(id.uuidString.lowercased())")
+    }
+
+    func markWalkthroughSeen() async {
+        guard let id = user?.id else { return }
+        UserDefaults.standard.set(true, forKey: "cinearch.walkthrough.\(id.uuidString.lowercased())")
+        profile?.walkthroughSeenAt = Date()
+        try? await Backend.client.from("profiles").update(["walkthrough_seen_at": AnyJSON.string(ISO8601DateFormatter().string(from: Date()))]).eq("id", value: id).execute()
+    }
+
     /// Signed in for real, profile loaded, call sheet not filled in yet.
     var needsOnboarding: Bool { !isPreview && user != nil && profile.map { !$0.isOnboarded } == true }
     /// Launch with `-cinearch.preview YES` (and `-cinearch.premium NO` for the free plan) to open in preview.
@@ -80,7 +96,7 @@ final class Session {
     private func loadPlan(_ id: UUID?) async {
         guard let id else { isPremium = false; profile = nil; return }
         profile = try? await Backend.client.from("profiles")
-            .select("name, province, region, department, selected_roles, member_status, has_agent_fee, agent_fee_pct, earning_goal, is_onboarded, is_premium")
+            .select("name, province, region, department, selected_roles, member_status, has_agent_fee, agent_fee_pct, earning_goal, pay_type, gst_method, is_onboarded, is_premium, walkthrough_seen_at")
             .eq("id", value: id).single().execute().value
         let key = "cinearch.pro.\(id.uuidString.lowercased())"
         if let profile { UserDefaults.standard.set(profile.isPremium, forKey: key) }

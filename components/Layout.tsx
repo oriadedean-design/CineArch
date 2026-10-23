@@ -1,4 +1,4 @@
-import { startTour, tourSeen } from '../services/tour';
+import { startTour, tourSeenHere } from '../services/tour';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Layers, FileText, Settings, Clapperboard, WalletCards, X, Users, BookOpen, Eye } from 'lucide-react';
@@ -30,12 +30,15 @@ export const Layout = ({ children, onLogout }: { children?: React.ReactNode, onL
 
   const isDashboardMode = user && user.isOnboarded;
 
-  // The table read, once, the first time someone lands with the dock showing.
+  // The table read, once per account, the first time the dock shows (after
+  // Setting the Scene). Saved on the profile so it doesn't repeat on another browser.
   useEffect(() => {
-    if (!isDashboardMode || user?.accountType === 'AGENT' || isDemoMode() || tourSeen()) return;
-    const t = setTimeout(startTour, 900);
+    if (!isDashboardMode || !user || user.accountType === 'AGENT' || isDemoMode() || user.webTourSeenAt || tourSeenHere()) return;
+    const t = setTimeout(() => startTour(() => {
+      api.auth.updateUser({ webTourSeenAt: new Date().toISOString() }).catch(() => { /* noted in this browser */ });
+    }), 900);
     return () => clearTimeout(t);
-  }, [isDashboardMode, user?.accountType]);
+  }, [isDashboardMode, user?.id, user?.accountType, user?.webTourSeenAt]);
   const isAuthPage = location.pathname === '/auth';
   const isViewingClient = !!user?.activeViewId;
 

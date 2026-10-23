@@ -1,11 +1,13 @@
 import SwiftUI
 
-// The table read: a short animated walkthrough of how CineArch works, shown on
-// first launch and any time from Account. Each scene acts out one step of the
+// The table read: a short animated walkthrough of how CineArch works, shown once
+// per account right after signing in, and any time from Account. Each scene acts out one step of the
 // flow with the app's own pieces (the clapperboard, the Slate, the progress
 // bar), so what you see here is what you'll tap later. Figures are examples.
 
 struct WalkthroughView: View {
+    /// The last button: "Set the scene" when Setting the Scene comes next.
+    var finish = "Roll camera"
     var onDone: () -> Void
     @State private var page = UserDefaults.standard.integer(forKey: "cinearch.walkthroughPage")   // launch argument, for screenshots
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -63,7 +65,7 @@ struct WalkthroughView: View {
             Button {
                 if isLast { onDone() } else { withAnimation { page += 1 } }
             } label: {
-                Text(isLast ? "Set the scene" : "Next").font(Theme.sans(.headline)).foregroundStyle(.black)
+                Text(isLast ? finish : "Next").font(Theme.sans(.headline)).foregroundStyle(.black)
                     .frame(maxWidth: .infinity).frame(height: 54)
                     .background(Theme.accent)
             }

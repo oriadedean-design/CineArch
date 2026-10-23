@@ -175,7 +175,7 @@ export const SettingsIndividual = () => {
             </div>
             <Representation />
             <Feedback />
-            <button onClick={startTour} className="block text-sm text-accent underline">How CineArch works (replay the walkthrough)</button>
+            <button onClick={() => startTour()} className="block text-sm text-accent underline">How CineArch works (replay the walkthrough, 1 min)</button>
             {user?.isAdmin && (
               <a href="#/admin" className="block text-sm text-accent underline">Verify the facts and read feedback (admins)</a>
             )}
