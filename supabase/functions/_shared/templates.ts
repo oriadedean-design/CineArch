@@ -88,7 +88,7 @@ export function render(kind: Kind, person: Person, links: Links): Email {
           { kind: 'p', text: 'Three first steps:' },
           { kind: 'steps', items: [
             '<strong>Set the scene.</strong> Four questions: where you work, what you do, who’s in your corner and what you’re working toward.',
-            '<strong>Mark your first day.</strong> Tap the clapperboard after a day on set: the production, your role, your hours and whose set it was.',
+            '<strong>Mark your first day.</strong> Tap the clapperboard after a day on set: the production, your role, your hours and whether the production was union.',
             '<strong>Track a union.</strong> Days on a union production count toward that union’s card, even before you’re a member.',
           ] },
         ],
