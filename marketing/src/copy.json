@@ -1,0 +1,111 @@
+{
+  "_note": "Every line comes from the app's own copy (WalkthroughView, Plans.swift). Keep it that way: no claims the app doesn't make.",
+  "preview": [
+    {
+      "clip": "walk0",
+      "secs": 4.0,
+      "kicker": "Mark the slate",
+      "title": "Log every day you work."
+    },
+    {
+      "clip": "jobs",
+      "secs": 3.6,
+      "kicker": "Your Slate",
+      "title": "Filter by who booked it."
+    },
+    {
+      "clip": "walk1",
+      "secs": 4.0,
+      "kicker": "Pay calculator",
+      "title": "Overtime, worked out for you."
+    },
+    {
+      "clip": "wrap",
+      "secs": 3.6,
+      "kicker": "Your Wrap",
+      "title": "Every union day counts."
+    },
+    {
+      "clip": "guide",
+      "secs": 3.6,
+      "kicker": "Union Guide",
+      "title": "Every union, by role and province."
+    },
+    {
+      "clip": "wallet",
+      "secs": 3.6,
+      "kicker": "Wrap Wallet · A-List Pro",
+      "title": "Tax, set aside as you earn."
+    },
+    {
+      "clip": "walk4",
+      "secs": 4.0,
+      "kicker": "Your Ledger · A-List Pro",
+      "title": "Reports for applications and tax time."
+    }
+  ],
+  "explainer": {
+    "open": {
+      "title": "CineArch",
+      "body": "Your days on set, your pay and your path to a union card, in one place."
+    },
+    "scenes": [
+      {
+        "clip": "walk0",
+        "kicker": "01 · Mark the slate",
+        "title": "One tap after wrap.",
+        "body": "It lands on your Slate with your pay worked out, ready for your union count and your taxes."
+      },
+      {
+        "clip": "jobs",
+        "kicker": "02 · Your Slate",
+        "title": "Everything you've worked.",
+        "body": "Filter by who booked it, union or non-union, and what still needs proof."
+      },
+      {
+        "clip": "walk1",
+        "kicker": "03 · Check the pay",
+        "title": "Overtime, worked out.",
+        "body": "Pick your union and role, and CineArch fills in the minimum rate to check against."
+      },
+      {
+        "clip": "wrap",
+        "kicker": "04 · Get your card",
+        "title": "Every union day counts.",
+        "body": "Days on a union set count toward that union's card, even before you're a member."
+      },
+      {
+        "clip": "guide",
+        "kicker": "05 · Union Guide",
+        "title": "Every union, in one guide.",
+        "body": "Who represents film and TV crew and performers, how to join, and the minimum rates."
+      },
+      {
+        "clip": "wallet",
+        "kicker": "06 · Wrap Wallet · A-List Pro",
+        "title": "Tax, set aside as you earn.",
+        "body": "Income and expenses with Canadian tax rules: your $30k GST/HST line, and what to set aside for CPP and income tax."
+      },
+      {
+        "clip": "walk4",
+        "kicker": "07 · Your Ledger · A-List Pro",
+        "title": "Reports, ready when asked.",
+        "body": "Up to 3 reports a month with A-List Pro."
+      },
+      {
+        "clip": "walk5",
+        "kicker": "08 · Where it's kept",
+        "title": "Free on your phone, or synced.",
+        "body": "Indie Log is free. A-List Pro is $15/mo."
+      }
+    ],
+    "close": {
+      "title": "CineArch",
+      "lines": [
+        "Indie Log · Free",
+        "A-List Pro · $15/mo"
+      ],
+      "url": "cine-arch.vercel.app"
+    }
+  }
+}

@@ -88,7 +88,8 @@ struct RootView: View {
 struct PreviewBadge: View {
     @Environment(Session.self) private var session
     var body: some View {
-        if session.isPreview {
+        // `-cinearch.capture YES` hides it for App Store screenshots and previews.
+        if session.isPreview && !UserDefaults.standard.bool(forKey: "cinearch.capture") {
             Menu {
                 Text("Sample account. Nothing you do here is saved.")
                 Button("Leave preview") { session.endPreview() }
