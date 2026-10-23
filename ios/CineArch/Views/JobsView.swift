@@ -159,7 +159,7 @@ struct JobsView: View {
 
             Section {
                 ForEach(rows) { j in
-                    Button { proofFor = j } label: { JobRow(job: j, showProof: session.isPremium) }.buttonStyle(.plain)
+                    Button { proofFor = j } label: { JobRow(job: j, showProof: session.isPremium, waiting: j.id.map(jobs.waiting.contains) ?? false) }.buttonStyle(.plain)
                 }
                 .onDelete { idx in
                     let doomed = idx.map { rows[$0] }
@@ -172,7 +172,13 @@ struct JobsView: View {
                 if !jobs.jobs.isEmpty {
                     HintedHeader(title: "\(rows.count) on the slate", hint: "Tap a job to see it in full, say which agent booked it, and back it with a pay stub. Swipe left to delete.")
                 }
-            }
+            } footer: { Group {
+                if jobs.isOffline {
+                    Label("Offline. Everything you mark is saved on this iPhone and syncs when you're back online.", systemImage: "wifi.slash")
+                } else if !jobs.waiting.isEmpty {
+                    Label("\(jobs.waiting.count) waiting to sync.", systemImage: "arrow.triangle.2.circlepath")
+                }
+            }.font(Theme.sans(.footnote)) }
             if let e = jobs.error { Section { Text(e).foregroundStyle(.red) } }
         }
         .refreshable { await jobs.load() }
@@ -218,6 +224,8 @@ struct FilterChip: View {
             .padding(.horizontal, 12).padding(.vertical, 6)
             .foregroundStyle(on ? Color.black : .primary)
             .background(on ? Theme.accent : Color.secondary.opacity(0.18))
+            .padding(.vertical, 6)              // a 44 pt tap area (Apple's default) around the 32 pt chip
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])
@@ -227,6 +235,7 @@ struct FilterChip: View {
 struct JobRow: View {
     let job: Job
     var showProof = false
+    var waiting = false              // A-List Pro: saved on this iPhone, not yet synced
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
@@ -239,7 +248,10 @@ struct JobRow: View {
                 Text("·"); Text(job.workedDays > 1 ? "\(job.workedDays) days" : job.totalHours.hours)
                 Text("·"); Text(job.unionName ?? "Non-union")
                 Spacer()
-                if job.status == "TENTATIVE" {
+                if waiting {
+                    Label("Waiting to sync", systemImage: "arrow.triangle.2.circlepath").labelStyle(.titleAndIcon)
+                        .accessibilityLabel("Saved on this iPhone, waiting to sync")
+                } else if job.status == "TENTATIVE" {
                     Text("Pencilled in").foregroundStyle(Theme.accent)
                 } else if job.isBelowScale {
                     Text("Below scale").foregroundStyle(.red)

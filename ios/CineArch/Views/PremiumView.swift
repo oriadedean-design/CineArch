@@ -30,7 +30,7 @@ struct PlansView: View {
                 }
             }
             Section {
-                Text("\(Plan.agency.name) (\(Plan.agency.price)) is for agencies and managers looking after a roster. It's on the website.")
+                Text("\(Plan.agency.name) is for agencies and managers looking after a roster.")
                     .font(Theme.sans(.footnote)).foregroundStyle(.secondary)
             }
         }
