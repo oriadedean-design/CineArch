@@ -13,7 +13,7 @@ struct JobsView: View {
     @State private var showPlans = false
     @State private var proofFor: Job?
     @State private var show = Show.all
-    @State private var agent: String?
+    @State private var bookedBy: BookedBy = .anyone      // the parent filter, above Show
     @Binding var tab: RootView.Tab
 
     var body: some View {
@@ -49,6 +49,18 @@ struct JobsView: View {
         }
     }
 
+    /// Who booked the job: the first cut, then Show narrows it.
+    enum BookedBy: Hashable {
+        case anyone, me, agent(String)
+        func matches(_ j: Job) -> Bool {
+            switch self {
+            case .anyone: true
+            case .me: j.agentName == nil && j.representativeId == nil
+            case .agent(let name): j.agentName == name
+            }
+        }
+    }
+
     enum Show: String, CaseIterable, Identifiable {
         case all = "All", union = "Union", nonUnion = "Non-union", needsProof = "Needs proof", pencilled = "Pencilled in"
         var id: String { rawValue }
@@ -63,8 +75,14 @@ struct JobsView: View {
             case .needsProof: j.status != "TENTATIVE" && j.isUnion && !j.isGreenLit
             case .pencilled: j.status == "TENTATIVE"
             }
-            return kind && (agent == nil || j.agentName == agent)
+            return kind && bookedBy.matches(j)
         }
+    }
+
+    /// An agent's chip: their name, and their commission when they're in Your representation.
+    private func agentTitle(_ name: String) -> String {
+        guard let r = representation.reps.first(where: { $0.name == name }) else { return name }
+        return "\(name) · \(r.commissionPct.formatted(.number.precision(.fractionLength(0...1))))%"
     }
 
     private var list: some View {
@@ -89,30 +107,50 @@ struct JobsView: View {
                 Section { Text("Nothing in the can yet. Tap the clapperboard to mark your first day.").foregroundStyle(.secondary) }
             } else {
                 Section {
+                    if !jobs.agents.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("BOOKED BY").font(Theme.sans(.caption2).weight(.heavy)).tracking(1.5).foregroundStyle(.secondary)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    FilterChip(title: "Anyone", on: bookedBy == .anyone) { bookedBy = .anyone }
+                                    FilterChip(title: "Me", on: bookedBy == .me, systemImage: "person") { bookedBy = .me }
+                                    ForEach(jobs.agents, id: \.self) { a in
+                                        FilterChip(title: agentTitle(a), on: bookedBy == .agent(a), systemImage: "person.crop.square") { bookedBy = .agent(a) }
+                                    }
+                                }
+                                .padding(.vertical, 2)
+                            }
+                        }
+                        .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 8, trailing: 16))
+                        .accessibilityElement(children: .contain)
+                        .accessibilityLabel("Booked by")
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                    if !jobs.agents.isEmpty {
+                        Text("SHOW").font(Theme.sans(.caption2).weight(.heavy)).tracking(1.5).foregroundStyle(.secondary)
+                    }
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(Show.allCases) { s in
                                 FilterChip(title: s == .needsProof && needsProof > 0 ? "\(s.rawValue) (\(needsProof))" : s.rawValue, on: show == s) { show = s }
                             }
-                            if !jobs.agents.isEmpty {
-                                Menu {
-                                    Button("Any agent") { agent = nil }
-                                    ForEach(jobs.agents, id: \.self) { a in Button(a) { agent = a } }
-                                } label: {
-                                    FilterChip(title: agent ?? "Agent", on: agent != nil, systemImage: "person.crop.square") {}
-                                        .allowsHitTesting(false)
-                                }
-                            }
                         }
                         .padding(.vertical, 2)
                     }
+                    }
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 } footer: { Group {
-                    if let a = agent {
+                    if bookedBy != .anyone {
                         let worked = rows.filter { $0.status != "TENTATIVE" }
                         let total = worked.reduce(0) { $0 + ($1.grossEarnings ?? 0) }
-                        let cut = worked.reduce(0) { $0 + representation.commissions(on: $1).filter { $0.representative.name == a }.reduce(0) { $0 + $1.amount } }
-                        Text("\(rows.count) job\(rows.count == 1 ? "" : "s") booked by \(a), \(total.money)\(cut > 0 ? ". Their commission: \(cut.money)" : "").")
+                        let jobsText = "\(rows.count) job\(rows.count == 1 ? "" : "s")"
+                        switch bookedBy {
+                        case .agent(let a):
+                            let cut = worked.reduce(0) { $0 + representation.commissions(on: $1).filter { $0.representative.name == a }.reduce(0) { $0 + $1.amount } }
+                            Text("\(jobsText) booked by \(a), \(total.money)\(cut > 0 ? ". Their commission: \(cut.money)" : "").")
+                        default:
+                            Text("\(jobsText) you booked yourself, \(total.money).")
+                        }
                     } else if show == .needsProof {
                         Text("Union days with no pay stub yet. Tap one to back it with proof.")
                     }
