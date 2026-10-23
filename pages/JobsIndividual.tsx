@@ -1,5 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { supabase } from '../services/supabase';
+import { commissionsOn, type Rep } from '../services/representation';
 import { api } from '../services/storage';
 import { Job, User } from '../types';
 import { Heading, Text, Button, Badge } from '../components/ui';
@@ -15,6 +17,9 @@ export const JobsIndividual = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [showIngest, setShowIngest] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [reps, setReps] = useState<Rep[]>([]);
+  // Booked by, as on the phone: everyone, jobs you booked yourself, or one agent's.
+  const [bookedBy, setBookedBy] = useState<'anyone' | 'me' | string>('anyone');
 
   const refresh = async () => {
     // Correctly await async session retrieval
@@ -22,9 +27,25 @@ export const JobsIndividual = () => {
     setUser(u);
     const jobList = await api.jobs.list();
     setJobs(jobList);
+    const { data } = await supabase.from('representatives').select('id, name, commission_pct, applies_to').order('created_at');
+    setReps((data ?? []) as Rep[]);
   };
   
   useEffect(() => { refresh(); }, []);
+
+  const agents = useMemo(() => [...new Set(jobs.map(j => j.agentName).filter((a): a is string => !!a))].sort(), [jobs]);
+  const shown = jobs.filter(j =>
+    bookedBy === 'anyone' ? true
+    : bookedBy === 'me' ? !j.agentName && !j.representativeId
+    : j.agentName === bookedBy);
+  const worked = shown.filter(j => j.status !== 'TENTATIVE');
+  const gross = worked.reduce((s, j) => s + (j.grossEarnings || 0), 0);
+  const cut = bookedBy === 'anyone' || bookedBy === 'me' ? 0
+    : worked.reduce((s, j) => s + commissionsOn(j, reps).filter(c => c.rep.name === bookedBy).reduce((t, c) => t + c.amount, 0), 0);
+  const money = (n: number) => `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const pctOf = (name: string) => reps.find(r => r.name === name)?.commission_pct;
+  const chip = (on: boolean) => clsx('h-11 px-4 border text-xs font-black uppercase tracking-widest transition-colors whitespace-nowrap',
+    on ? 'bg-accent text-black border-accent' : 'border-white/15 text-white/70 hover:text-white hover:border-white/40');
 
   return (
     <div className="space-y-10 md:space-y-16 animate-in fade-in duration-700">
@@ -48,8 +69,29 @@ export const JobsIndividual = () => {
 
       {showIngest && <div className="animate-in slide-in-from-top-4 duration-500"><BulkJobUpload userId={user?.id || 'anon'} onComplete={() => { setShowIngest(false); refresh(); }} /></div>}
 
+      {agents.length > 0 && (
+        <section aria-label="Booked by" className="space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/50">Booked by</p>
+          <div role="radiogroup" aria-label="Booked by" className="flex gap-2 overflow-x-auto pb-1">
+            <button role="radio" aria-checked={bookedBy === 'anyone'} onClick={() => setBookedBy('anyone')} className={chip(bookedBy === 'anyone')}>Anyone</button>
+            <button role="radio" aria-checked={bookedBy === 'me'} onClick={() => setBookedBy('me')} className={chip(bookedBy === 'me')}>Me</button>
+            {agents.map(a => (
+              <button key={a} role="radio" aria-checked={bookedBy === a} onClick={() => setBookedBy(a)} className={chip(bookedBy === a)}>
+                {a}{pctOf(a) != null && ` · ${Number(pctOf(a))}%`}
+              </button>
+            ))}
+          </div>
+          {bookedBy !== 'anyone' && (
+            <p className="text-xs text-white/50" role="status">
+              {shown.length} job{shown.length === 1 ? '' : 's'} {bookedBy === 'me' ? 'you booked yourself' : `booked by ${bookedBy}`}, {money(gross)}
+              {cut > 0 && `. Their commission: ${money(cut)}`}.
+            </p>
+          )}
+        </section>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0.5 md:gap-1">
-        {jobs.map(job => (
+        {shown.map(job => (
           <div key={job.id} onClick={() => navigate(`/jobs/${job.id}`)} className="glass-ui p-6 md:p-12 hover:border-accent/40 transition-all cursor-pointer space-y-6 md:space-y-8">
             <div className="flex justify-between items-start">
                <Badge color={job.isUnion ? "accent" : "neutral"}>{job.isUnion ? job.unionName : 'Non-Union'}</Badge>
@@ -67,6 +109,9 @@ export const JobsIndividual = () => {
             </div>
           </div>
         ))}
+        {jobs.length > 0 && shown.length === 0 && (
+          <p className="col-span-full py-16 text-center text-white/40 italic">No jobs booked {bookedBy === 'me' ? 'by you' : `by ${bookedBy}`} yet.</p>
+        )}
         {jobs.length === 0 && (
           <div className="col-span-full py-24 md:py-40 text-center border border-dashed border-white/5 opacity-30 italic">
              <Layers className="mx-auto mb-4 md:mb-6 opacity-20 w-8 h-8 md:w-12 md:h-12" />
