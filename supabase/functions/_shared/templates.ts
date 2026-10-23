@@ -89,7 +89,7 @@ export function render(kind: Kind, person: Person, links: Links): Email {
           { kind: 'steps', items: [
             '<strong>Set the scene.</strong> Four questions: where you work, what you do, who’s in your corner and what you’re working toward.',
             '<strong>Mark your first day.</strong> Tap the clapperboard after a day on set: the production, your role, your hours and whose set it was.',
-            '<strong>Track a union.</strong> Days on a union set count toward that union’s card, even before you’re a member.',
+            '<strong>Track a union.</strong> Days on a union production count toward that union’s card, even before you’re a member.',
           ] },
         ],
         cta: open,
@@ -124,12 +124,12 @@ export function render(kind: Kind, person: Person, links: Links): Email {
         ],
         cta: open,
       } : {
-        subject: 'How your union days add up', preheader: 'Days on a union set count before you’re a member.',
+        subject: 'How your union days add up', preheader: 'Days on a union production count before you’re a member.',
         kicker: 'Your first week', title: `Every union day counts${hi}.`,
         blocks: [
-          { kind: 'p', text: 'Days on a union set count toward that union’s card, even before you’re a member. Your Wrap shows how close you are.' },
+          { kind: 'p', text: 'Days on a union production count toward that union’s card, even before you’re a member. Your Wrap shows how close you are.' },
           { kind: 'list', items: [
-            'When you mark the slate, pick the union whose set it was, so the day counts toward the right card.',
+            'When you mark the slate, say which union the production was under, so the day counts toward the right card.',
             'CineArch checks your rate against the union minimum for your role.',
             `The Union Guide lists the unions${where}, how to join and their minimum rates.`,
           ] },
