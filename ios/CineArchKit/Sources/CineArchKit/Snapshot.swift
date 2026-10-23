@@ -24,6 +24,7 @@ public struct Union: Codable, Sendable, Identifiable, Hashable {
     public var id: String
     public var name: String
     public var scope: String?
+    public var allowsCash: Bool?          // ACTRA, UBCP/ACTRA: non-members can be hired "cash"
     public var description: String?
     public var website: String?
     public var contactEmail: String?

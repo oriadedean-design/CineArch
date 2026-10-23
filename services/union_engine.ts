@@ -19,6 +19,7 @@ interface SnapshotUnion {
   id: string;
   name: string;
   scope: string | null;
+  allowsCash?: boolean;        // ACTRA, UBCP/ACTRA: non-members can be hired "cash"
   description: string;
   website: string | null;
   contactEmail: string | null;
@@ -139,6 +140,7 @@ export const nextOccurrence = (d: Pick<Deadline, 'month' | 'day'>, today = new D
 
 export interface EngineUnion extends UnionType {
   scope?: string;
+  allowsCash: boolean;
   website?: string;
   duesNotes?: string;
   sourceUrls: string[];
@@ -184,6 +186,7 @@ const toUnion = (u: SnapshotUnion): EngineUnion => {
     departments: u.departments,
     needsVerification: u.needsVerification,
     scope: opt(u.scope),
+    allowsCash: u.allowsCash === true,
     website: opt(u.website),
     duesNotes: opt(u.duesNotes),
     sourceUrls: u.sourceUrls,

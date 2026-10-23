@@ -14,6 +14,7 @@ struct Job: Codable, Identifiable, Hashable {
     var isUnion: Bool
     var unionTypeId: String?
     var unionName: String?
+    var hiredAs: String?             // on a union production: union or cash (ACTRA, UBCP), member or permit (others)
     var productionTier: String?
     var startDate: String
     var endDate: String?
@@ -40,7 +41,7 @@ struct Job: Codable, Identifiable, Hashable {
         case hourlyRate = "hourly_rate", daysWorked = "days_worked", hoursPerDay = "hours_per_day"
         case mealBreakMinutes = "meal_break_minutes", overtimeHours = "overtime_hours"
         case unionMinimumRate = "union_minimum_rate", ratePosition = "rate_position", grossEarnings = "gross_earnings"
-        case proofPath = "proof_path", agentName = "agent_name", agencyId = "agency_id", representativeId = "representative_id"
+        case proofPath = "proof_path", agentName = "agent_name", agencyId = "agency_id", representativeId = "representative_id", hiredAs = "hired_as"
     }
 
     /// Days worked: the logged day count, else the inclusive date span (as services/career.ts).
@@ -369,5 +370,12 @@ final class RepresentationStore {
 
     func commissionTotal(_ jobs: [Job]) -> Double {
         jobs.filter { $0.status != "TENTATIVE" }.reduce(0) { $0 + commissions(on: $1).reduce(0) { $0 + $1.amount } }
+    }
+}
+
+extension Job {
+    /// "Union rate", "Cash", "Member" or "Permit", for how someone was hired on a union production.
+    static func hiringLabel(_ h: String) -> String {
+        switch h { case "union": "Union rate"; case "cash": "Cash"; case "member": "Member"; case "permit": "Permit"; default: h }
     }
 }

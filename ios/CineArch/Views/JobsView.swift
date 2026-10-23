@@ -246,7 +246,7 @@ struct JobRow: View {
             HStack(spacing: 6) {
                 Text(Date(isoDay: job.startDate)?.formatted(.dateTime.month(.abbreviated).day()) ?? job.startDate)
                 Text("·"); Text(job.workedDays > 1 ? "\(job.workedDays) days" : job.totalHours.hours)
-                Text("·"); Text(job.unionName ?? "Non-union")
+                Text("·"); Text(job.unionName.map { job.hiredAs == "cash" ? "\($0) · Cash" : $0 } ?? "Non-union")
                 Spacer()
                 if waiting {
                     Label("Waiting to sync", systemImage: "arrow.triangle.2.circlepath").labelStyle(.titleAndIcon)

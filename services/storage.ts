@@ -142,6 +142,7 @@ const toJob = (j: JobRow): Job => ({
   imageUrl: j.image_url ?? undefined,
   genre: j.genre ?? undefined,
   representativeId: j.representative_id ?? undefined,
+  hiredAs: (j.hired_as ?? undefined) as Job['hiredAs'],
   agentName: j.agent_name ?? undefined,
   province: j.province ?? undefined,
   createdAt: j.created_at,
@@ -185,6 +186,7 @@ const toJobRow = (job: Job) => ({
   image_url: job.imageUrl ?? null,
   genre: job.genre ?? null,
   representative_id: job.representativeId ?? null,
+  hired_as: job.isUnion ? job.hiredAs ?? null : null,
   agent_name: job.agentName ?? null,
   province: job.province ?? null,
 });

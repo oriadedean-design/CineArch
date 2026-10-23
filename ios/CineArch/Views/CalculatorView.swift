@@ -31,16 +31,29 @@ struct PayForm: View {
     /// Whether the production was under a union agreement: what the person tells us (not checked).
     @AppStorage("calc.unionProduction") private var unionProduction = true
     private var isUnion: Bool { unionProduction && unionId != Self.nonUnion }
+    /// How they were hired on the union production: union or cash (ACTRA, UBCP), member or permit (others).
+    @State private var hiredAs: String?
+    private var offersCash: Bool { store.engine.union(unionId)?.allowsCash == true }
+    /// A cash day is paid at the person's own rate: no union minimum or overtime.
+    private var pricedAsUnion: Bool { isUnion && hiredAs != "cash" }
+    private var hiringOptions: [(String, String)] { offersCash ? [("union", "Union rate"), ("cash", "Cash")] : [("member", "Member"), ("permit", "Permit")] }
+    /// Members are hired under the agreement; non-members on crew work on a permit. A non-member
+    /// performer chooses between union rate and cash.
+    private func defaultHiring() -> String? {
+        if session.isMember { return offersCash ? "union" : "member" }
+        return offersCash ? nil : "permit"
+    }
     private var day: String { date.isoDay }
 
     private var input: JobInput {
-        JobInput(isUnion: isUnion, unionId: isUnion ? unionId : nil, role: nil, date: day,
+        JobInput(isUnion: pricedAsUnion, unionId: pricedAsUnion ? unionId : nil, role: nil, date: day,
                  productionType: productionType, ratePosition: position, hoursPerDay: hours,
                  mealMinutes: Double(meal), days: days, hourlyRate: Double(rateText.replacingOccurrences(of: ",", with: ".")),
                  workDay: workDay)
     }
     private var priced: PricedJob { store.engine.price(input) }
-    private var unionsWithRates: [Union] { store.engine.unions.filter { !store.engine.schedules($0.id).isEmpty } }
+    /// Every union: one without a rate card yet is priced at your rate × hours.
+    private var unionsForPicker: [Union] { store.engine.unions.sorted { $0.name < $1.name } }
 
     var body: some View {
         let p = priced
@@ -53,17 +66,21 @@ struct PayForm: View {
                 .pickerStyle(.segmented)
                 if unionProduction {
                     Picker("Which union", selection: $unionId) {
-                        ForEach(unionsWithRates) { Text($0.name).tag($0.id) }
+                        ForEach(unionsForPicker) { Text($0.name).tag($0.id) }
+                    }
+                    Picker("Hired as", selection: $hiredAs) {
+                        if hiredAs == nil { Text("Choose").tag(String?.none) }
+                        ForEach(hiringOptions, id: \.0) { Text($0.1).tag(String?.some($0.0)) }
                     }
                 }
                 DatePicker("Date", selection: $date, displayedComponents: .date)
-                if isUnion && p.productionTypes.count > 1 {
+                if pricedAsUnion && p.productionTypes.count > 1 {
                     Picker("Production", selection: $productionType) {
                         Text("Choose…").tag(String?.none)
                         ForEach(p.productionTypes.compactMap { $0 }, id: \.self) { Text($0).tag(String?.some($0)) }
                     }
                 }
-                if isUnion, let s = p.schedule {
+                if pricedAsUnion, let s = p.schedule {
                     NavigationLink {
                         PositionPicker(schedule: s, selection: $position)
                     } label: {
@@ -71,7 +88,11 @@ struct PayForm: View {
                     }
                 }
             } header: { Text("The job") } footer: { Group {
-                Text("Was the production union? Say so even if you're not a member: your days on it count toward that union's card.")
+                if hiredAs == "cash" {
+                    Text("Cash: hired as a non-union performer at the production's rate, so union minimums and overtime don't apply. The day still counts toward \(store.engine.union(unionId)?.name ?? "the union"), because the production is union.")
+                } else {
+                    Text("Was the production union? Say so even if you're not a member: your days on it count toward that union's card.")
+                }
             }.font(Theme.sans(.footnote)) }
 
             Section("Hours") {
@@ -130,13 +151,18 @@ struct PayForm: View {
                     } label: {
                         Label("Mark the slate", systemImage: "movieclapper").frame(maxWidth: .infinity)
                     }
-                }
+                    .disabled(isUnion && hiredAs == nil)
+                } footer: { Group {
+                    if isUnion && hiredAs == nil { Text("Say how you were hired (union rate or cash) to mark the slate.") }
+                }.font(Theme.sans(.footnote)) }
             }
         }
         .overlay { EngineStatus() }
         .scrollDismissesKeyboard(.interactively)
         .onChange(of: unionId) { productionType = nil; position = nil; rateText = "" }
         .onChange(of: unionProduction) { productionType = nil; position = nil; rateText = "" }
+        .onChange(of: unionId, initial: true) { hiredAs = defaultHiring() }
+        .onChange(of: hiredAs) { productionType = nil; position = nil }
         .onAppear {
             // Earlier versions kept "non-union" in the union picker.
             if unionId == Self.nonUnion { unionProduction = false; unionId = "u-873" }
@@ -149,7 +175,8 @@ struct PayForm: View {
             }
         }
         .sheet(isPresented: $showSave) {
-            SaveJobSheet(input: input, priced: p, unionName: store.engine.union(unionId)?.name) { onSaved?() }
+            SaveJobSheet(input: input, priced: p, unionProduction: isUnion, unionId: isUnion ? unionId : nil,
+                         unionName: isUnion ? store.engine.union(unionId)?.name : nil, hiredAs: isUnion ? hiredAs : nil) { onSaved?() }
         }
     }
 }
@@ -205,7 +232,11 @@ struct SaveJobSheet: View {
     @Environment(\.dismiss) private var dismiss
     let input: JobInput
     let priced: PricedJob
+    /// The production, as the person told us. `input` is how it's priced (a cash day is priced as non-union).
+    let unionProduction: Bool
+    let unionId: String?
     let unionName: String?
+    let hiredAs: String?
     var onSaved: () -> Void
 
     @State private var production = ""
@@ -238,7 +269,8 @@ struct SaveJobSheet: View {
                     }
                 }
                 Section {
-                    LabeledContent("Production", value: input.isUnion ? "Union · \(unionName ?? "union")" : "Non-union")
+                    LabeledContent("Production", value: unionProduction ? "Union · \(unionName ?? "union")" : "Non-union")
+                    if let h = hiredAs { LabeledContent("Hired as", value: Job.hiringLabel(h)) }
                     if let pay = priced.pay { LabeledContent("Pay", value: pay.gross.money); LabeledContent("Hours", value: pay.totalHours.hours) }
                 } footer: { Group {
                     Text("As you told us. To change it, go back to the calculator.")
@@ -264,7 +296,7 @@ struct SaveJobSheet: View {
         defer { saving = false }
         let pay = priced.pay
         let job = Job(productionName: production.trimmed, companyName: company.trimmed, role: role.trimmed,
-                      department: priced.minimum?.department, isUnion: input.isUnion, unionTypeId: input.unionId, unionName: unionName,
+                      department: priced.minimum?.department, isUnion: unionProduction, unionTypeId: unionId, unionName: unionName, hiredAs: hiredAs,
                       productionTier: input.productionType, startDate: input.date, totalHours: pay?.totalHours ?? 0,
                       hourlyRate: priced.rate, daysWorked: input.days, hoursPerDay: input.hoursPerDay,
                       mealBreakMinutes: Int(input.mealMinutes), overtimeHours: pay?.totalOvertimeHours ?? 0,

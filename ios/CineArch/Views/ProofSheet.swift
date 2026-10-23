@@ -145,6 +145,7 @@ struct JobProofSheet: View {
                 Section {
                     LabeledContent("Dates", value: [current.startDate, current.endDate].compactMap { $0.flatMap(Date.init(isoDay:))?.formatted(date: .abbreviated, time: .omitted) }.joined(separator: " – "))
                     LabeledContent("Production", value: current.unionName.map { "Union · \($0)" } ?? "Non-union")
+                    if current.isUnion, let h = current.hiredAs { LabeledContent("Hired as", value: Job.hiringLabel(h)) }
                     LabeledContent("Hours", value: current.totalHours.hours)
                     if let g = current.grossEarnings { LabeledContent("Gross", value: g.money) }
                     LabeledContent("Role", value: current.role)
