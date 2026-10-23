@@ -8,11 +8,13 @@ enum Sample {
 
     private static func job(_ production: String, _ company: String, _ role: String, union: (String, String)?,
                             _ start: String, _ end: String? = nil, days: Int, hoursPerDay: Double, rate: Double,
-                            hours: Double, overtime: Double, gross: Double, status: String = "CONFIRMED") -> Job {
-        Job(id: UUID(), status: status, productionName: production, companyName: company, role: role,
+                            hours: Double, overtime: Double, gross: Double, status: String = "CONFIRMED", agent: String? = nil) -> Job {
+        var j = Job(id: UUID(), status: status, productionName: production, companyName: company, role: role,
             department: "Camera", isUnion: union != nil, unionTypeId: union?.0, unionName: union?.1,
             startDate: start, endDate: end, totalHours: hours, hourlyRate: rate, daysWorked: days,
             hoursPerDay: hoursPerDay, mealBreakMinutes: 60, overtimeHours: overtime, grossEarnings: gross, province: "Ontario")
+        j.agentName = agent         // booked by the sample representative (RepresentationStore preview)
+        return j
     }
 
     static let iatse667 = ("u-667", "IATSE 667")
@@ -25,11 +27,11 @@ enum Sample {
         job("Northern Lights (Series)", "Apex Screen Partners", "2nd Assistant Camera", union: iatse667,
             "2026-10-14", days: 1, hoursPerDay: 12, rate: 42, hours: 11, overtime: 3, gross: 525),
         job("Northern Lights (Series)", "Apex Screen Partners", "2nd Assistant Camera", union: iatse667,
-            "2026-09-08", "2026-10-09", days: 20, hoursPerDay: 12, rate: 42, hours: 220, overtime: 60, gross: 10_500),
+            "2026-09-08", "2026-10-09", days: 20, hoursPerDay: 12, rate: 42, hours: 220, overtime: 60, gross: 10_500, agent: "Dana Whitfield"),
         job("Untitled Horror Feature", "Darkfield Productions", "2nd Assistant Camera", union: iatse667,
             "2026-06-01", "2026-06-19", days: 15, hoursPerDay: 12, rate: 40, hours: 165, overtime: 45, gross: 7_400),
         job("Maple & Main (Commercial)", "Northbound Creative", "Camera Operator", union: nil,
-            "2026-05-12", "2026-05-13", days: 2, hoursPerDay: 13, rate: 50, hours: 24, overtime: 6, gross: 1_400),
+            "2026-05-12", "2026-05-13", days: 2, hoursPerDay: 13, rate: 50, hours: 24, overtime: 6, gross: 1_400, agent: "Dana Whitfield"),
         job("The Long Weekend", "Junction Films", "1st Assistant Camera", union: nil,
             "2026-04-20", "2026-04-24", days: 5, hoursPerDay: 12, rate: 45, hours: 55, overtime: 0, gross: 2_750),
     ]
