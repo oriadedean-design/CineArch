@@ -75,6 +75,13 @@ export type Database = {
             foreignKeyName: "agency_invites_agency_id_fkey"
             columns: ["agency_id"]
             isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "agency_invites_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -208,6 +215,105 @@ export type Database = {
         }
         Relationships: []
       }
+      email_contacts: {
+        Row: {
+          props_hash: string
+          synced_at: string
+          user_id: string
+        }
+        Insert: {
+          props_hash: string
+          synced_at?: string
+          user_id: string
+        }
+        Update: {
+          props_hash?: string
+          synced_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "email_contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_forget: {
+        Row: {
+          email: string
+          requested_at: string
+        }
+        Insert: {
+          email: string
+          requested_at?: string
+        }
+        Update: {
+          email?: string
+          requested_at?: string
+        }
+        Relationships: []
+      }
+      email_log: {
+        Row: {
+          kind: string
+          resend_id: string | null
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          kind: string
+          resend_id?: string | null
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          kind?: string
+          resend_id?: string | null
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "email_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_settings: {
+        Row: {
+          id: boolean
+          lifecycle_starts_at: string
+        }
+        Insert: {
+          id?: boolean
+          lifecycle_starts_at?: string
+        }
+        Update: {
+          id?: boolean
+          lifecycle_starts_at?: string
+        }
+        Relationships: []
+      }
       fact_checks: {
         Row: {
           checked_at: string
@@ -237,6 +343,13 @@ export type Database = {
           subject_key?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fact_checks_checked_by_fkey"
+            columns: ["checked_by"]
+            isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "fact_checks_checked_by_fkey"
             columns: ["checked_by"]
@@ -281,6 +394,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "feedback_user_id_fkey"
             columns: ["user_id"]
@@ -364,6 +484,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "jobs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "finance_transactions_user_id_fkey"
@@ -500,6 +627,13 @@ export type Database = {
             foreignKeyName: "jobs_agency_id_fkey"
             columns: ["agency_id"]
             isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "jobs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -509,6 +643,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "representatives"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "jobs_user_id_fkey"
@@ -654,6 +795,7 @@ export type Database = {
           department: string | null
           earning_goal: number | null
           email: string
+          email_tips: boolean
           entity_type: string | null
           goals: string[] | null
           gst_method: string
@@ -666,11 +808,13 @@ export type Database = {
           managed_by_agency_id: string | null
           member_status: string | null
           name: string | null
+          onboarded_at: string | null
           organization_name: string | null
           pay_type: string | null
           phone: string | null
           plan: string
           primary_industry: string | null
+          pro_since: string | null
           program_name: string | null
           province: string | null
           region: string | null
@@ -693,6 +837,7 @@ export type Database = {
           department?: string | null
           earning_goal?: number | null
           email: string
+          email_tips?: boolean
           entity_type?: string | null
           goals?: string[] | null
           gst_method?: string
@@ -705,11 +850,13 @@ export type Database = {
           managed_by_agency_id?: string | null
           member_status?: string | null
           name?: string | null
+          onboarded_at?: string | null
           organization_name?: string | null
           pay_type?: string | null
           phone?: string | null
           plan?: string
           primary_industry?: string | null
+          pro_since?: string | null
           program_name?: string | null
           province?: string | null
           region?: string | null
@@ -732,6 +879,7 @@ export type Database = {
           department?: string | null
           earning_goal?: number | null
           email?: string
+          email_tips?: boolean
           entity_type?: string | null
           goals?: string[] | null
           gst_method?: string
@@ -744,11 +892,13 @@ export type Database = {
           managed_by_agency_id?: string | null
           member_status?: string | null
           name?: string | null
+          onboarded_at?: string | null
           organization_name?: string | null
           pay_type?: string | null
           phone?: string | null
           plan?: string
           primary_industry?: string | null
+          pro_since?: string | null
           program_name?: string | null
           province?: string | null
           region?: string | null
@@ -761,6 +911,13 @@ export type Database = {
           web_tour_seen_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_managed_by_agency_id_fkey"
+            columns: ["managed_by_agency_id"]
+            isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "profiles_managed_by_agency_id_fkey"
             columns: ["managed_by_agency_id"]
@@ -904,6 +1061,13 @@ export type Database = {
             foreignKeyName: "report_runs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "report_runs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -951,8 +1115,22 @@ export type Database = {
             foreignKeyName: "representatives_agency_id_fkey"
             columns: ["agency_id"]
             isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "representatives_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "representatives_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "representatives_user_id_fkey"
@@ -1001,6 +1179,13 @@ export type Database = {
           verified?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "residency_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "residency_documents_user_id_fkey"
             columns: ["user_id"]
@@ -1185,6 +1370,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sync_queue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "sync_queue_user_id_fkey"
             columns: ["user_id"]
@@ -1520,6 +1712,13 @@ export type Database = {
             foreignKeyName: "union_tracking_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "union_tracking_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1630,6 +1829,13 @@ export type Database = {
             foreignKeyName: "user_sessions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "email_contact_details"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1637,6 +1843,16 @@ export type Database = {
       }
     }
     Views: {
+      email_contact_details: {
+        Row: {
+          email: string | null
+          first_name: string | null
+          props: Json | null
+          unsubscribed: boolean | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       union_roles: {
         Row: {
           coverage_id: number | null
@@ -1683,6 +1899,38 @@ export type Database = {
       }
       delete_my_account: { Args: never; Returns: undefined }
       documents_used_bytes: { Args: { p_user: string }; Returns: number }
+      email_contact_synced: {
+        Args: { p_hash: string; p_user: string }
+        Returns: undefined
+      }
+      email_contacts_due: {
+        Args: { p_limit?: number }
+        Returns: {
+          email: string
+          first_name: string
+          props: Json
+          props_hash: string
+          unsubscribed: boolean
+          user_id: string
+        }[]
+      }
+      email_due: {
+        Args: { p_now?: string }
+        Returns: {
+          email: string
+          first_name: string
+          kind: string
+          member_status: string
+          province: string
+          user_id: string
+        }[]
+      }
+      email_forgotten: { Args: { p_email: string }; Returns: undefined }
+      email_sent: {
+        Args: { p_kind: string; p_resend_id: string; p_user: string }
+        Returns: undefined
+      }
+      email_unsubscribe: { Args: { p_user: string }; Returns: undefined }
       finance_stats: {
         Args: { p_user_id: string; p_year?: number }
         Returns: {

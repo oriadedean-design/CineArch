@@ -174,6 +174,13 @@ export const SettingsIndividual = () => {
               </div>
             </div>
             <Representation />
+            <label className="flex items-start gap-4 cursor-pointer">
+              <input type="checkbox" checked={profileForm.emailTips ?? true} onChange={e => setProfileForm({ ...profileForm, emailTips: e.target.checked })} className="mt-1 h-5 w-5 accent-[var(--accent)]" />
+              <span>
+                <span className="block text-xs font-black uppercase tracking-[0.4em] text-white">Tips by email</span>
+                <span className="block text-xs text-white/60 mt-1">Getting-started emails: the welcome, Setting the Scene, your first week and A-List Pro. Account emails like password resets always come. Save to apply.</span>
+              </span>
+            </label>
             <Feedback />
             <button onClick={() => startTour()} className="block text-sm text-accent underline">How CineArch works (replay the walkthrough, 1 min)</button>
             {user?.isAdmin && (

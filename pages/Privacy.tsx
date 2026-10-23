@@ -51,20 +51,20 @@ export const Privacy = () => {
       </Section>
 
       <Section title="How we use it">
-        <p>Only to run CineArch for you: to work out your pay, union progress and tax set-asides, to show your records on your devices, to make the reports you ask for, and to answer your notes. We don't sell your information or share it for advertising.</p>
+        <p>Only to run CineArch for you: to work out your pay, union progress and tax set-asides, to show your records on your devices, to make the reports you ask for, and to answer your notes. We also email you: account emails (confirming your email address, password resets), and a few getting-started tips after you sign up, chosen by your plan, union status and province. You can turn the tips off. We don't sell your information or share it for advertising.</p>
       </Section>
 
       <Section title="Who else handles it">
-        <p><strong className="text-white">Supabase</strong> runs our database, sign-in and file storage. <strong className="text-white">Vercel</strong> hosts the website and receives the technical details any website sees, such as your IP address. The website loads its fonts from <strong className="text-white">Google Fonts</strong>, which receives your IP address when a page loads. <strong className="text-white">Apple</strong> delivers the iPhone app. Each handles information only to provide its service to us, under its own privacy terms.</p>
+        <p><strong className="text-white">Supabase</strong> runs our database, sign-in and file storage. <strong className="text-white">Vercel</strong> hosts the website and receives the technical details any website sees, such as your IP address. The website loads its fonts from <strong className="text-white">Google Fonts</strong>, which receives your IP address when a page loads. <strong className="text-white">Resend</strong> sends our emails. It receives your email address and first name, and for the tips also your plan, union status, province, department, role, how you're paid, whether you have an agent and when you signed up. <strong className="text-white">Apple</strong> delivers the iPhone app. Each handles information only to provide its service to us, under its own privacy terms.</p>
       </Section>
 
       <Section title="Keeping and deleting it">
-        <p>We keep your information until you delete it or delete your account. Delete account (in Account on the iPhone, or Settings on the website) immediately and permanently deletes your login, jobs, union progress, agents and managers, documents, finance records and notes. Copies in our database provider's backups are removed when those backups expire.</p>
+        <p>We keep your information until you delete it or delete your account. Delete account (in Account on the iPhone, or Settings on the website) immediately and permanently deletes your login, jobs, union progress, agents and managers, documents, finance records and notes. Copies in our database provider's backups are removed when those backups expire. Your contact at Resend is removed within the hour.</p>
         <p>Deleting the iPhone app also deletes anything kept only on that iPhone.</p>
       </Section>
 
       <Section title="Your choices">
-        <p>You can see and change your information in the app at any time, ask us what we hold about you, ask us to correct it, or withdraw your consent by deleting your account. To ask us anything about your privacy, send a note from Feedback to the developers (in Account on the iPhone, or Settings on the website).</p>
+        <p>You can see and change your information in the app at any time, ask us what we hold about you, ask us to correct it, or withdraw your consent by deleting your account. Turn off email tips in Account in the iPhone app, in Settings on the website, or with the link in any tip. To ask us anything about your privacy, send a note from Feedback to the developers (in Account on the iPhone, or Settings on the website).</p>
       </Section>
     </div>
   );

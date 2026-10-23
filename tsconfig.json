@@ -30,6 +30,7 @@
     "ios",
     "node_modules",
     "dist",
-    "site"
+    "site",
+    "supabase/functions/*/index.ts"
   ]
 }

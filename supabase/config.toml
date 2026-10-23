@@ -412,3 +412,12 @@ enabled = true
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# Onboarding emails (supabase/functions). Neither is called by a signed-in
+# user: email-lifecycle checks the x-cron-secret header, and
+# email-unsubscribe checks an HMAC token from the email.
+[functions.email-lifecycle]
+verify_jwt = false
+
+[functions.email-unsubscribe]
+verify_jwt = false
