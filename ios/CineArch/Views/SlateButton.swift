@@ -85,7 +85,7 @@ struct MarkSlateSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(last.productionName).font(Theme.serif(.title3))
                 Text("\(last.role) · \(last.companyName)").font(Theme.sans(.subheadline)).foregroundStyle(.secondary)
-                Text([last.unionName.map { "Union · \($0)" } ?? "Non-union", next.totalHours.hours, (next.grossEarnings ?? 0).money].joined(separator: " · "))
+                Text([last.unionName.map { "Union · \($0)" + (last.hiredAs.map { " · " + Job.hiringLabel($0) } ?? "") } ?? "Non-union", next.totalHours.hours, (next.grossEarnings ?? 0).money].joined(separator: " · "))
                     .font(Theme.sans(.caption)).foregroundStyle(.secondary).monospacedDigit()
             }
             .padding(.vertical, 2)
@@ -111,7 +111,9 @@ struct MarkSlateSheet: View {
     /// One more day like the last one logged, priced again for the chosen date.
     private func repeatJob(_ last: Job) -> Job {
         let perDayHours = last.hoursPerDay ?? (last.totalHours / Double(max(1, last.workedDays)))
-        let input = JobInput(isUnion: last.isUnion, unionId: last.unionTypeId, role: last.role, date: date.isoDay,
+        // A cash day is priced at the person's own rate: no union minimum or overtime.
+        let pricedAsUnion = last.isUnion && last.hiredAs != "cash"
+        let input = JobInput(isUnion: pricedAsUnion, unionId: pricedAsUnion ? last.unionTypeId : nil, role: last.role, date: date.isoDay,
                              productionType: last.productionTier, ratePosition: last.ratePosition,
                              hoursPerDay: last.hoursPerDay, mealMinutes: Double(last.mealBreakMinutes), days: 1,
                              hourlyRate: last.hourlyRate)
@@ -126,7 +128,7 @@ struct MarkSlateSheet: View {
             job.totalHours = pay.totalHours
             job.overtimeHours = pay.totalOvertimeHours
             job.grossEarnings = pay.gross
-            job.unionMinimumRate = priced?.minimum?.hourly ?? last.unionMinimumRate
+            job.unionMinimumRate = pricedAsUnion ? (priced?.minimum?.hourly ?? last.unionMinimumRate) : nil
         } else {
             // Logged without day details (e.g. imported): split the last job evenly.
             let days = Double(max(1, last.workedDays))

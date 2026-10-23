@@ -94,7 +94,7 @@ export const JobsIndividual = () => {
         {shown.map(job => (
           <div key={job.id} onClick={() => navigate(`/jobs/${job.id}`)} className="glass-ui p-6 md:p-12 hover:border-accent/40 transition-all cursor-pointer space-y-6 md:space-y-8">
             <div className="flex justify-between items-start">
-               <Badge color={job.isUnion ? "accent" : "neutral"}>{job.isUnion ? job.unionName : 'Non-Union'}</Badge>
+               <Badge color={job.isUnion ? "accent" : "neutral"}>{job.isUnion ? `${job.unionName}${job.hiredAs === 'cash' ? ' · Cash' : ''}` : 'Non-Union'}</Badge>
                <span className="text-xs md:text-xs font-black text-white/20 uppercase tracking-widest italic">{job.startDate}</span>
             </div>
             <h3 className="text-3xl md:text-4xl font-serif italic text-white leading-tight min-h-[2.5em]">{job.productionName}</h3>

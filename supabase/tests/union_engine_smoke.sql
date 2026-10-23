@@ -78,6 +78,12 @@ begin
                     where j.union_id = c.union_id and j.province = c.province and (j.region is null or c.region is null or j.region = c.region));
   if n > 0 then raise exception 'FAIL: % coverage rows point at a union outside its jurisdictions', n; end if;
 
+  -- Cash jobs are offered only where they exist: ACTRA and UBCP/ACTRA.
+  if (select array_agg(u->>'id' order by u->>'id') from jsonb_array_elements(public.union_engine_snapshot()->'unions') u
+       where (u->>'allowsCash')::boolean) is distinct from array['u-actra', 'u-ubcp'] then
+    raise exception 'FAIL: only ACTRA and UBCP/ACTRA should offer cash jobs';
+  end if;
+
   raise exception 'ENGINE_TESTS_PASSED: % unions, % roles, % coverage rows, % rate schedules, % rate lines, % pay rules, snapshot % KB',
     jsonb_array_length(snap->'unions'), (select count(*) from public.roles),
     jsonb_array_length(snap->'roleCoverage'), jsonb_array_length(snap->'rateSchedules'),

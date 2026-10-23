@@ -177,6 +177,7 @@ export interface Job {
   imageUrl?: string;
   genre?: string;
   representativeId?: string;   // who booked it (public.representatives)
+  hiredAs?: 'union' | 'cash' | 'member' | 'permit';  // how they were hired on a union production, as they told us
   agentName?: string;          // a typed name, from the phone's "Pick or type"
   province?: string;
 }

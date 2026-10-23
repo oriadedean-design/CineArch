@@ -70,6 +70,23 @@ begin
   exception when check_violation then v_checks := v_checks + 1;
   end;
 
+  -- How someone was hired only applies to a union production, and only these four answers.
+  begin
+    insert into public.jobs (user_id, production_name, company_name, role, is_union, hired_as, start_date)
+    values (v_pro, 'Cash on a non-union set', 'Co', 'Background', false, 'cash', current_date);
+    raise exception 'FAIL: "cash" was saved on a non-union production';
+  exception when check_violation then v_checks := v_checks + 1;
+  end;
+  begin
+    insert into public.jobs (user_id, production_name, company_name, role, is_union, union_type_id, hired_as, start_date)
+    values (v_pro, 'Odd answer', 'Co', 'Background', true, 'u-actra', 'freelance', current_date);
+    raise exception 'FAIL: an unknown hiring answer was saved';
+  exception when check_violation then v_checks := v_checks + 1;
+  end;
+  insert into public.jobs (user_id, production_name, company_name, role, is_union, union_type_id, hired_as, start_date)
+  values (v_pro, 'Cash day', 'Co', 'Background', true, 'u-actra', 'cash', current_date);
+  v_checks := v_checks + 1;
+
   -- Representation: your own only, commission 0 to 50%.
   insert into public.representatives (user_id, name, commission_pct) values (v_pro, 'Smoke Agent', 10);
   begin

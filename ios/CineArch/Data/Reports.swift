@@ -342,7 +342,8 @@ private struct ReportHTML {
     private var slateHead: String { "<tr><th>Dates</th><th>Production</th><th>Role</th><th>Set</th><th class=\"r\">Days</th><th class=\"r\">Hours</th><th class=\"r\">Gross</th><th>Proof</th></tr>" }
 
     private func slateRow(_ j: Job) -> String {
-        let set = j.unionName.map { "<span class=\"tag u\">\(Fmt.esc($0))</span>" } ?? "<span class=\"tag\">Non-union</span>"
+        let hired = j.hiredAs.map { " · " + Job.hiringLabel($0) } ?? ""
+        let set = j.unionName.map { "<span class=\"tag u\">\(Fmt.esc($0 + hired))</span>" } ?? "<span class=\"tag\">Non-union</span>"
         return """
         <tr><td class="num">\(Fmt.span(j))</td><td>\(Fmt.esc(j.productionName))<br><span class="muted">\(Fmt.esc(j.companyName))</span></td>
         <td>\(Fmt.esc(j.role))</td><td>\(set)</td><td class="r num">\(j.workedDays)</td><td class="r num">\(j.totalHours.formatted())</td>

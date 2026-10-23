@@ -80,7 +80,7 @@ export const JobDetail = () => {
       setResolvedUnionIds(suggestions);
 
       if (isNew && !form.unionTypeId && form.isUnion && suggestions.length > 0) {
-        set({ unionTypeId: suggestions[0] });
+        set({ unionTypeId: suggestions[0], hiredAs: defaultHiring(suggestions[0]) });
       }
     }
   }, [form.province, form.department, form.role, isNew, form.isUnion, user?.province, user?.region]);
@@ -108,6 +108,7 @@ export const JobDetail = () => {
       department: last.department ?? form.department,
       isUnion: last.isUnion,
       unionTypeId: last.unionTypeId ?? '',
+      hiredAs: last.hiredAs,
       productionTier: last.productionTier,
       ratePosition: last.ratePosition,
       hourlyRate: last.hourlyRate,
@@ -116,9 +117,18 @@ export const JobDetail = () => {
     });
   };
 
+  // A cash day is priced at the person's own rate: no union minimum or overtime.
+  // Members are hired under the agreement; non-members on crew work on a permit.
+  // A non-member performer chooses between union rate and cash.
+  const defaultHiring = (unionId: string): Job['hiredAs'] => {
+    const cash = !!getUnionSpec(unionId)?.allowsCash;
+    if (user?.memberStatus === 'MEMBER') return cash ? 'union' : 'member';
+    return cash ? undefined : 'permit';
+  };
+  const pricedAsUnion = !!form.isUnion && form.hiredAs !== 'cash';
   const payInput = {
-    isUnion: !!form.isUnion,
-    unionId: form.unionTypeId || undefined,
+    isUnion: pricedAsUnion,
+    unionId: pricedAsUnion ? form.unionTypeId || undefined : undefined,
     department: form.department,
     role: form.role,
     date: form.startDate || today(),
@@ -148,6 +158,7 @@ export const JobDetail = () => {
     if (!form.productionName?.trim()) return setError('Add the production name.');
     if (form.isUnion === undefined) return setError('Say whether the production was union.');
     if (form.isUnion && !form.unionTypeId) return setError('Choose which union the production was under.');
+    if (form.isUnion && !form.hiredAs) return setError('Say how you were hired on the union production.');
     if (!form.companyName?.trim()) return setError('Add the production company. It keeps your record accurate for union applications.');
     if (!form.hoursPerDay || form.hoursPerDay <= 0) return setError('Add the hours you worked (call to wrap).');
     if (!pay && !form.grossEarnings) return setError(form.isUnion
@@ -309,7 +320,7 @@ export const JobDetail = () => {
                 <div className="space-y-6 animate-in slide-in-from-top-2 duration-500">
                   <div>
                     <Label>Union</Label>
-                    <Select value={form.unionTypeId || ''} onChange={e => set({ unionTypeId: e.target.value, productionTier: undefined, ratePosition: undefined })} className="h-16 text-lg font-serif italic">
+                    <Select value={form.unionTypeId || ''} onChange={e => set({ unionTypeId: e.target.value, productionTier: undefined, ratePosition: undefined, hiredAs: defaultHiring(e.target.value) })} className="h-16 text-lg font-serif italic">
                       {!form.unionTypeId && <option value="" className="bg-black">Choose a union</option>}
                       {resolvedUnionIds.map(uid => <option key={uid} value={uid} className="bg-black">{getUnionSpec(uid)?.name}</option>)}
                       <option disabled className="text-white/20">—— Other unions ——</option>
@@ -321,6 +332,24 @@ export const JobDetail = () => {
                       </p>
                     )}
                   </div>
+                  {form.unionTypeId && (() => {
+                    const cash = !!getUnionSpec(form.unionTypeId)?.allowsCash;
+                    const options: [NonNullable<Job['hiredAs']>, string][] = cash ? [['union', 'Union rate'], ['cash', 'Cash']] : [['member', 'Member'], ['permit', 'Permit']];
+                    return (
+                      <div className="space-y-3">
+                        <span id="hired-q" className="text-xs font-black uppercase tracking-widest text-white">How were you hired?</span>
+                        <div role="radiogroup" aria-labelledby="hired-q" className="flex gap-2">
+                          {options.map(([v, label]) => (
+                            <button key={v} role="radio" aria-checked={form.hiredAs === v} onClick={() => set({ hiredAs: v, productionTier: undefined, ratePosition: undefined })}
+                              className={clsx("px-5 py-3 text-xs font-black uppercase tracking-widest border transition-all", form.hiredAs === v ? "bg-accent text-black border-accent" : "text-white/70 border-white/20 hover:border-white")}>{label}</button>
+                          ))}
+                        </div>
+                        {form.hiredAs === 'cash' && (
+                          <p className="text-xs text-white/60">Cash: hired as a non-union performer at the production's rate, so union minimums and overtime don't apply. The day still counts toward {getUnionSpec(form.unionTypeId)?.name}, because the production is union.</p>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {productionTypes.length > 1 && (
                     <div>
