@@ -140,9 +140,14 @@ struct AccountView: View {
                         Toggle("Phone reminders", isOn: Binding(get: { reminders }, set: { on in
                             Task { reminders = on ? await Notes.requestPermission() : false }
                         }))
+                        if !session.isPreview {
+                            Toggle("Tips by email", isOn: Binding(get: { session.profile?.emailTips ?? true }, set: { on in
+                                Task { try? await session.saveProfileField("email_tips", .bool(on)) }
+                            }))
+                        }
                         NavigationLink { PermissionsView() } label: { Label("Permissions and scanning", systemImage: "lock.shield") }
                     } footer: { Group {
-                        Text("A 9 a.m. reminder before tax dates and days leaving your union window. Everything else waits in Notes from set on Your Wrap.")
+                        Text("Phone reminders: a 9 a.m. reminder before tax dates and days leaving your union window. Tips by email: a few getting-started emails after you sign up. Account emails like password resets always come.")
                     }.font(Theme.sans(.footnote)) }
                 }
 

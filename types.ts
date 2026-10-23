@@ -19,7 +19,8 @@ export interface User {
   region?: 'TORONTO' | 'NORTHERN_ON' | 'OTTAWA' | 'OTHER' | 'MONTREAL' | 'QUEBEC_CITY';
   isOnboarded: boolean;
   isPremium?: boolean;
-  webTourSeenAt?: string;        // the dock tour ran for this account (profiles.web_tour_seen_at)
+  webTourSeenAt?: string;
+  emailTips?: boolean;           // onboarding emails (profiles.email_tips)        // the dock tour ran for this account (profiles.web_tour_seen_at)
   isAdmin?: boolean;             // can verify facts on /admin (set in the database only)
   memberStatus?: 'ASPIRING' | 'MEMBER';
   

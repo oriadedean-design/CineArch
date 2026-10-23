@@ -19,12 +19,13 @@ struct Profile: Codable, Equatable {
     var isOnboarded: Bool = false
     var isPremium: Bool = false
     var walkthroughSeenAt: Date?     // the table read played for this account (any phone)
+    var emailTips: Bool?             // getting-started emails (Resend); nil means on
 
     enum CodingKeys: String, CodingKey {
         case name, province, region, department
         case selectedRoles = "selected_roles", memberStatus = "member_status", hasAgentFee = "has_agent_fee"
         case agentFeePct = "agent_fee_pct", isOnboarded = "is_onboarded", isPremium = "is_premium", earningGoal = "earning_goal"
-        case payType = "pay_type", gstMethod = "gst_method", walkthroughSeenAt = "walkthrough_seen_at"
+        case payType = "pay_type", gstMethod = "gst_method", walkthroughSeenAt = "walkthrough_seen_at", emailTips = "email_tips"
     }
 
     /// The columns a user may write (lock_profile_privileges), never is_premium.
@@ -96,7 +97,7 @@ final class Session {
     private func loadPlan(_ id: UUID?) async {
         guard let id else { isPremium = false; profile = nil; return }
         profile = try? await Backend.client.from("profiles")
-            .select("name, province, region, department, selected_roles, member_status, has_agent_fee, agent_fee_pct, earning_goal, pay_type, gst_method, is_onboarded, is_premium, walkthrough_seen_at")
+            .select("name, province, region, department, selected_roles, member_status, has_agent_fee, agent_fee_pct, earning_goal, pay_type, gst_method, is_onboarded, is_premium, walkthrough_seen_at, email_tips")
             .eq("id", value: id).single().execute().value
         let key = "cinearch.pro.\(id.uuidString.lowercased())"
         if let profile { UserDefaults.standard.set(profile.isPremium, forKey: key) }
