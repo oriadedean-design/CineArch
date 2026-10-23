@@ -5,14 +5,14 @@ import { PLANS } from '../types';
 
 // The table read on the website: a spotlight walk through the real dock, one
 // step of the flow at a time (same order as WalkthroughView on the phone).
-// Shown once after Setting the Scene; replay it from Your Config.
+// Shown once per account after Setting the Scene (profiles.web_tour_seen_at,
+// also noted in this browser in case saving fails); replay it from Your Config.
 
 const SEEN = 'cinearch.tourSeen';
 
-export const tourSeen = () => { try { return localStorage.getItem(SEEN) === '1'; } catch { return true; } };
-const markSeen = () => { try { localStorage.setItem(SEEN, '1'); } catch { /* private window */ } };
+export const tourSeenHere = () => { try { return localStorage.getItem(SEEN) === '1'; } catch { return false; } };
 
-export const startTour = () => {
+export const startTour = (onDone?: () => void) => {
   const pro = PLANS.pro.label;
   const tour = driver({
     showProgress: true,
@@ -24,7 +24,7 @@ export const startTour = () => {
     stagePadding: 6,
     stageRadius: 0,
     overlayOpacity: 0.8,
-    onDestroyed: markSeen,
+    onDestroyed: () => { try { localStorage.setItem(SEEN, '1'); } catch { /* private window */ } onDone?.(); },
     steps: [
       { popover: { title: 'Table read', description: 'A one-minute walk through CineArch: mark your days, check your pay, count toward your card, and keep the business side in order. Skip any time with Esc.' } },
       { element: '[data-tour="mark"]', popover: { title: 'Mark the slate', description: 'After each day on set, hit the clapperboard: the production, your role, hours and whose set it was. CineArch works out overtime and checks your rate against the union minimum.', side: 'top' } },

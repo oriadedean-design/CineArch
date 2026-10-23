@@ -56,6 +56,7 @@ const toUser = (p: ProfileRow): User => ({
   isOnboarded: p.is_onboarded || !!p.province,
   isPremium: p.is_premium,
   isAdmin: p.is_admin ?? false,
+  webTourSeenAt: p.web_tour_seen_at ?? undefined,
   memberStatus: (p.member_status ?? undefined) as User['memberStatus'],
   careerFocus: p.career_focus ?? undefined,
   department: p.department ?? undefined,
@@ -90,6 +91,7 @@ const toProfileUpdate = (u: Partial<User>): TablesUpdate<'profiles'> => {
   if (u.region !== undefined) row.region = u.region;
   if (u.isOnboarded !== undefined) row.is_onboarded = u.isOnboarded;
   if (u.memberStatus !== undefined) row.member_status = u.memberStatus;
+  if (u.webTourSeenAt !== undefined) row.web_tour_seen_at = u.webTourSeenAt;
   if (u.careerFocus !== undefined) row.career_focus = u.careerFocus;
   if (u.department !== undefined) row.department = u.department;
   if (u.selectedRoles !== undefined) row.selected_roles = u.selectedRoles;

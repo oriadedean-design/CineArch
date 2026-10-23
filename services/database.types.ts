@@ -679,6 +679,8 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
+          walkthrough_seen_at: string | null
+          web_tour_seen_at: string | null
         }
         Insert: {
           account_type?: string
@@ -716,6 +718,8 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
+          walkthrough_seen_at?: string | null
+          web_tour_seen_at?: string | null
         }
         Update: {
           account_type?: string
@@ -753,6 +757,8 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
+          walkthrough_seen_at?: string | null
+          web_tour_seen_at?: string | null
         }
         Relationships: [
           {

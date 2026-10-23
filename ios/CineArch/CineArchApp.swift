@@ -37,9 +37,8 @@ struct RootView: View {
     /// `-cinearch.onboarding YES` opens the call sheet (for screenshots).
     @State private var showOnboarding = UserDefaults.standard.bool(forKey: "cinearch.onboarding")
     @State private var showPermissions = false
-    // The table read (WalkthroughView): once on first launch, then from Account.
-    // `-cinearch.walkthrough YES` shows it again (for screenshots).
-    @AppStorage("cinearch.walkthroughSeen") private var walkthroughSeen = false
+    // The table read (WalkthroughView): once per account, right after signing in,
+    // then from Account. `-cinearch.walkthrough YES` shows it (for screenshots).
     @State private var replayWalkthrough = UserDefaults.standard.bool(forKey: "cinearch.walkthrough")
     enum Tab: String { case wrap, jobs, ledger = "wallet", guide, account }
 
@@ -60,11 +59,14 @@ struct RootView: View {
         .font(Theme.sans(.body))          // brand type for every Text without its own font
         .listStyle(.grouped)
         .buttonBorderShape(.roundedRectangle(radius: 0))
-        .fullScreenCover(isPresented: Binding(get: { replayWalkthrough || (!walkthroughSeen && !session.isPreview) },
+        .fullScreenCover(isPresented: Binding(get: { replayWalkthrough || session.needsWalkthrough },
                                               set: { if !$0 { replayWalkthrough = false } })) {
-            WalkthroughView { walkthroughSeen = true; replayWalkthrough = false }
+            WalkthroughView(finish: session.needsOnboarding ? "Set the scene" : "Roll camera") {
+                replayWalkthrough = false
+                Task { await session.markWalkthroughSeen() }
+            }
         }
-        .fullScreenCover(isPresented: Binding(get: { walkthroughSeen && (session.needsOnboarding || showOnboarding) }, set: { if !$0 { showOnboarding = false } })) {
+        .fullScreenCover(isPresented: Binding(get: { !session.needsWalkthrough && !replayWalkthrough && (session.needsOnboarding || showOnboarding) }, set: { if !$0 { showOnboarding = false } })) {
             OnboardingView().tint(Theme.accent).listStyle(.grouped).buttonBorderShape(.roundedRectangle(radius: 0))
         }
         // Again after Setting the Scene: its agent answer becomes "Your agent".
@@ -74,8 +76,8 @@ struct RootView: View {
             NavigationStack { PermissionsView(firstTime: true) }
                 .tint(Theme.accent).listStyle(.grouped).buttonBorderShape(.roundedRectangle(radius: 0))
         }
-        .task(id: session.identity.map { "\($0)-\(session.needsOnboarding)-\(walkthroughSeen)" }) {
-            guard walkthroughSeen, session.user != nil, !session.isPreview, !session.needsOnboarding,
+        .task(id: session.identity.map { "\($0)-\(session.needsOnboarding)-\(session.needsWalkthrough)" }) {
+            guard !session.needsWalkthrough, session.user != nil, !session.isPreview, !session.needsOnboarding,
                   !UserDefaults.standard.bool(forKey: Permissions.shownKey) else { return }
             showPermissions = true
         }
